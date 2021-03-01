@@ -25,7 +25,7 @@ execute_process(
     OUTPUT_VARIABLE TT_GIT_REMOTE_URL
 )
 
-configure_file(git_version.hpp.in git_version.hpp @ONLY)
+#configure_file(git_version.hpp.in git_version.hpp @ONLY)
 
 
 target_sources(ttauri PRIVATE
@@ -95,7 +95,7 @@ target_sources(ttauri PRIVATE
     format.hpp
     forward_value.hpp
     gap_buffer.hpp
-    git_version.hpp
+    #git_version.hpp
     glob.hpp
     hash.hpp
     hires_utc_clock.cpp
@@ -108,7 +108,7 @@ target_sources(ttauri PRIVATE
     int_carry.hpp
     int_overflow.hpp
     interval.hpp
-    interval_vec2.hpp
+    interval_extent2.hpp
     l10n.hpp
     label.hpp
     logger.cpp
@@ -220,7 +220,7 @@ target_sources(ttauri_tests PRIVATE
     gap_buffer_tests.cpp
     glob_tests.cpp
     int_overflow_tests.cpp
-    interval_vec2_tests.cpp
+    interval_extent2_tests.cpp
     math_tests.cpp
     numeric_array_tests.cpp
     graphic_path_tests.cpp
