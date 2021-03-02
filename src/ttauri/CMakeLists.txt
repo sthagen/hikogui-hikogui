@@ -13,20 +13,7 @@ add_subdirectory(codec)
 add_subdirectory(formula)
 add_subdirectory(skeleton)
 
-execute_process(
-    COMMAND "git describe --tags --abbrev=40 --dirty --broken --long --match='v[0-9][0-9.]*'"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE TT_GIT_DESCRIBE
-)
-
-execute_process(
-    COMMAND "git remote get-url origin"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE TT_GIT_REMOTE_URL
-)
-
-#configure_file(git_version.hpp.in git_version.hpp @ONLY)
-
+configure_file(current_version.hpp.in current_version.hpp @ONLY)
 
 target_sources(ttauri PRIVATE
     detail/f32x4_sse.hpp
@@ -95,7 +82,6 @@ target_sources(ttauri PRIVATE
     format.hpp
     forward_value.hpp
     gap_buffer.hpp
-    #git_version.hpp
     glob.hpp
     hash.hpp
     hires_utc_clock.cpp
@@ -186,23 +172,25 @@ target_sources(ttauri PRIVATE
     wfree_unordered_map.hpp
 )
 
-if(NOT TTAURI_ENABLE_CODE_ANALYSIS)
-target_precompile_headers(ttauri PRIVATE
-    aarect.hpp
-    assert.hpp
-    counters.hpp
-    datum.hpp
-    debugger.hpp
-    exception.hpp
-    logger.hpp
-    numeric_array.hpp
-    os_detect.hpp
-    rect.hpp
-    required.hpp
-    strings.hpp
-    trace.hpp
-    URL.hpp
-)
+if(TT_BUILD_PCH)
+    if(NOT TT_ENABLE_ANALYSIS)
+    target_precompile_headers(ttauri PRIVATE
+        aarect.hpp
+        assert.hpp
+        counters.hpp
+        datum.hpp
+        debugger.hpp
+        exception.hpp
+        logger.hpp
+        numeric_array.hpp
+        os_detect.hpp
+        rect.hpp
+        required.hpp
+        strings.hpp
+        trace.hpp
+        URL.hpp
+    )
+    endif()
 endif()
 
 target_sources(ttauri_tests PRIVATE
@@ -237,21 +225,23 @@ target_sources(ttauri_tests PRIVATE
     URL_tests.cpp
 )
 
-if(NOT TTAURI_ENABLE_CODE_ANALYSIS)
-target_precompile_headers(ttauri_tests PRIVATE
-    aarect.hpp
-    assert.hpp
-    counters.hpp
-    datum.hpp
-    debugger.hpp
-    exception.hpp
-    logger.hpp
-    numeric_array.hpp
-    os_detect.hpp
-    rect.hpp
-    required.hpp
-    strings.hpp
-    trace.hpp
-    URL.hpp
-)
+if(TT_BUILD_PCH)
+    if(NOT TT_ENABLE_ANALYSIS)
+    target_precompile_headers(ttauri_tests PRIVATE
+        aarect.hpp
+        assert.hpp
+        counters.hpp
+        datum.hpp
+        debugger.hpp
+        exception.hpp
+        logger.hpp
+        numeric_array.hpp
+        os_detect.hpp
+        rect.hpp
+        required.hpp
+        strings.hpp
+        trace.hpp
+        URL.hpp
+    )
+    endif()
 endif()
