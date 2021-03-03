@@ -21,10 +21,10 @@ In order to avoid wasting your time, we highly encourage opening an issue to dis
 whether the PR you're thinking about making will be acceptable.
 
 If you like to work on an already existing issue, you may want to assign
-youself to that issue before working on it, to reduce the chance of
+yourself to that issue before working on it, to reduce the chance of
 two people working on the same pull request.
 
-It could be helpfull having a more realtime discussion through discord at:
+It could be helpful having a more real time discussion through discord at:
 <https://discord.gg/7e8pFTsujw>
 
 We have written down a [code style](code_style.md) which may help you
@@ -34,7 +34,7 @@ to this, don't worry about this :smile:
 
 Install
 -------
-Here is a discription on how to install for the development of ttauri
+Here is a description on how to install for the development of ttauri
 
 ### Windows 10
 
@@ -47,16 +47,72 @@ Install requirements:
    + Windows 10 SDK
  - git from <https://git-scm.com>
  - vcpkg from <https://github.com/microsoft/vcpkg> (see below for instructions)
+ - Vulkan SDK from <https://www.lunarg.com/vulkan-sdk/>
  - optional: RenderDoc (for Vulkan debugging) from <https://renderdoc.org/>
  - optional: Doxygen (for documentation generation) from <https://www.doxygen.nl/>
 
-The ttauri library builds the following of its dependencies using vcpkg:
+To install vcpkg, we will need to do the following:
+```
+c:\tools>git clone https://github.com/microsoft/vcpkg
+c:\tools>cd vcpkg
+c:\tools\vcpkg>bootstrap-vcpkg.bat
+c:\tools\vcpkg>vcpkg integrate install --feature-flags=manifests
+```
 
- - date
- - fmt
- - Vulkan SDK
- - Vulkan Memory Allocator
+To clone ttauri:
+```
+c:\Users\Tjienta\Projects>git clone https://github.com/ttauri-project/ttauri
+```
 
+#### Visual Studio 2019
+You can open ttauri directly in Visual Studio using the
+"[open folder](https://docs.microsoft.com/en-us/cpp/build/open-folder-projects-cpp?view=msvc-160)" method.
+
+Since it is a large project you may have to wait a minute before Visual Studio is finished with fully loading
+the project. Once it is loaded you will see a selection box with a set of build configurations:
+ - x64-MSVC-Debug
+ - x64-MSVC-Release
+ - x64-MSVC-ReleaseWithDebugInfo
+ - x64-Clang-Debug (currently not supported)
+ - x64-Clang-Release (currently not supported)
+ - x64-Clang-ReleaseWithDebugInfo (currently not supported)
+
+Select the x64-MSVC-Debug and use the following menu items to build the project:
+ - Project / Generate Cache for ttauri
+ - Build / Build All
+
+After building you can select "ttauri_demo.exe" from "Select Startup Item..." next to the run-button. Then
+press that button to run the debug build (with the debugger attached).
+
+You may also want to read the following about how to use CMake projects with visual studio:
+<https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=msvc-160>
+
+#### Developer Command Prompt for VS 2019
+If you already have vcpkg installed you still will need to set VCPKG_ROOT and 'integrate'
+each time you start a new shell.
+```
+c:\build>set VCPKG_ROOT=c:\tools\vcpkg
+c:\build>call %VCPKG_ROOT%\vcpkg integrate install --feature-flags=manifests
+```
+
+```
+c:\build>cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBUILD_SHARED_LIBS=OFF ..
+```
+
+```
+c:\build>cmake --build .
+```
+
+Debugging with RenderDoc
+------------------------
+Debug builds of ttauri are linked against the RenderDoc API. Which means
+that once an ttauri-application is started you can "Attach to running process"
+and select the application there.
+
+Since a ttauri-application tries to reduce the amount of window redraws; the
+application may not show on this list, or you are unable to capture a frame
+or the frame is not captured. You can force a redraw by selecting the
+application window, or mouse-over the window.
 
 Testing the demo application
 ----------------------------
@@ -80,6 +136,6 @@ To make crash mini-dump when the ttauri demo application crashes create the foll
 
 Code of Conduct
 ---------------
-This project and everyone participating in it is coverned by the
+This project and everyone participating in it is governed by the
 (TTauri Code of Conduct)[https://github.com/ttauri-project/ttauri/blob/main/docs/CODE_OF_CONDUCT.md]
 
