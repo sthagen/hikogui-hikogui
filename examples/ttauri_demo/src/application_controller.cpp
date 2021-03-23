@@ -4,19 +4,13 @@
 
 #include "application_controller.hpp"
 #include "application_preferences.hpp"
-#include "ttauri/system_status.hpp"
+#include "ttauri/log_level.hpp"
 #include "ttauri/GUI/gui_system.hpp"
 #include "ttauri/audio/audio_system.hpp"
 #include "ttauri/application.hpp"
 #include "ttauri/CommandLineParser.hpp"
 
-#include "demo_version.hpp"
-
 namespace demo {
-
-tt::version application_controller::application_version(tt::application &self) const noexcept {
-    return demo_version;
-}
 
 tt::datum application_controller::configuration(tt::application &self, int argc, char *argv[]) const noexcept {
     using namespace std::literals;

@@ -12,7 +12,7 @@
  * This header should be included only once by a only a single
  * translation-unit, as it defines `main()` or `WinMain()`.
  *
- * The work done by this abstraction is purposfully very limitted,
+ * The work done by this abstraction is purposefully very limited,
  * its task it to make sure the command-line arguments are split into
  * tokens according to the rules of the operating system's shell. And
  * that the command line arguments are encoded as UTF-8.
@@ -21,7 +21,7 @@
 #pragma once
 
 #include "os_detect.hpp"
-#include "system_status.hpp"
+#include "subsystem.hpp"
 #include "URL.hpp"
 #include "strings.hpp"
 #include "cast.hpp"
@@ -40,6 +40,19 @@
 
 #include <date/tz.h>
 
+namespace tt {
+
+/** Configure the process for use with ttauri library.
+ * This function is used to put the process in a state
+ * that is compatible with the ttauri library.
+ * 
+ * Examples of configurations:
+ *  - win32: GetSystemTimePreciseAsFileTime() should include leap-seconds.
+ */
+void crt_configure_process() noexcept;
+
+}
+
 /** Main entry-point.
  *
  * @param argc Number of arguments
@@ -50,6 +63,7 @@
  */
 int tt_main(int argc, char *argv[], tt::os_handle instance);
 
+#if not defined(TT_CRT_NO_MAIN)
 #if TT_OPERATING_SYSTEM == TT_OS_WINDOWS
 
 /** Windows entry-point.
@@ -68,6 +82,8 @@ int WINAPI WinMain(
     [[maybe_unused]] _In_ LPSTR lpCmdLine,
     _In_ int nShowCmd)
 {
+    tt::crt_configure_process();
+    
     // lpCmdLine does not handle UTF-8 command line properly.
     // So use GetCommandLineW() to get wide string arguments.
     // CommandLineToArgW properly unescapes the command line
@@ -108,10 +124,11 @@ int WINAPI WinMain(
 
     // Make sure the console is in a valid state to write text to it.
     tt::console_init();
+    tt::start_system();
 
     ttlet r = tt_main(tt::narrow_cast<int>(arguments.size() - 1), arguments.data(), hInstance);
 
-    tt::system_status_shutdown();
+    tt::shutdown_system();
 
     for (auto argument: arguments) {
         delete [] argument;
@@ -123,6 +140,8 @@ int WINAPI WinMain(
 
 int main(int argc, char *argv[])
 {
+    crt_configure_process();
+
     // XXX - The URL system needs to know about the location of the executable.
 #if USE_OS_TZDB == 0
     ttlet tzdata_location = tt::URL::urlFromResourceDirectory() / "tzdata";
@@ -136,11 +155,12 @@ int main(int argc, char *argv[])
 
     // Make sure the console is in a valid state to write text to it.
     tt::console_init();
+    tt::start_system();
 
     ttlet r = tt_main(argc, argv, {});
-    tt::system_status_shutdown();
+    tt::shutdown_system();
     return r;
 }
 
 #endif
-
+#endif

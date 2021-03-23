@@ -7,6 +7,7 @@
 #include "gui_system_vulkan_win32.hpp"
 #include "theme_book.hpp"
 #include "../widgets/window_widget.hpp"
+#include "../logger.hpp"
 #include "../strings.hpp"
 #include "../thread.hpp"
 #include "../application_win32.hpp"
@@ -569,9 +570,8 @@ int gui_window_vulkan_win32::windowProc(unsigned int uMsg, uint64_t wParam, int6
     case WM_GETMINMAXINFO: {
         ttlet lock = std::scoped_lock(gui_system_mutex);
         tt_axiom(widget);
-        ttlet widget_size = widget->preferred_size();
-        ttlet minimum_widget_size = widget_size.minimum();
-        ttlet maximum_widget_size = widget_size.maximum();
+        ttlet minimum_widget_size = widget->minimum_size();
+        ttlet maximum_widget_size = widget->maximum_size();
         ttlet minmaxinfo = to_ptr<MINMAXINFO>(lParam);
         minmaxinfo->ptMaxSize.x = narrow_cast<LONG>(maximum_widget_size.width());
         minmaxinfo->ptMaxSize.y = narrow_cast<LONG>(maximum_widget_size.height());
