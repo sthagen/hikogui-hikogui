@@ -248,7 +248,8 @@ elseif (MSVC)
     # Allow system headers to be imported.
     target_compile_options(ttauri PUBLIC -experimental:module)
 
-    # Support Intel's IvyBridge and AMD's Steamroller
+    # Support Intel's SkyLake and AMD's Excavator.
+    # see hardware_support.md
     target_compile_options(ttauri PUBLIC -arch:AVX)
 
     # The ttauri generic tokenizer uses large constexpr tables.
@@ -341,7 +342,7 @@ endif()
 # Copy resources needed by executables
 #-------------------------------------------------------------------
 
-add_shader(ttauri_static_resources
+add_shader(ttauri_shader_objects
     src/ttauri/GUI/pipeline_image.vert
     src/ttauri/GUI/pipeline_image.frag
     src/ttauri/GUI/pipeline_flat.vert
@@ -354,12 +355,11 @@ add_shader(ttauri_static_resources
     src/ttauri/GUI/pipeline_tone_mapper.frag
 )
 
-set(ttauri_static_resources ${ttauri_static_resources}
+target_static_resource(ttauri
+    ${ttauri_shader_objects}
     data/elusiveicons-webfont.ttf
     data/ttauri_icons.ttf
 )
-
-target_static_resource(ttauri ${ttauri_static_resources})
 
 add_custom_target(ttauri_resources
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources

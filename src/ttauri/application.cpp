@@ -24,18 +24,6 @@
 #include <memory>
 
 #include "ttauri/metadata.hpp"
-#include "data/elusiveicons-webfont.ttf.inl"
-#include "data/ttauri_icons.ttf.inl"
-#include "ttauri/GUI/pipeline_image.vert.spv.inl"
-#include "ttauri/GUI/pipeline_image.frag.spv.inl"
-#include "ttauri/GUI/pipeline_flat.vert.spv.inl"
-#include "ttauri/GUI/pipeline_flat.frag.spv.inl"
-#include "ttauri/GUI/pipeline_box.vert.spv.inl"
-#include "ttauri/GUI/pipeline_box.frag.spv.inl"
-#include "ttauri/GUI/pipeline_SDF.vert.spv.inl"
-#include "ttauri/GUI/pipeline_SDF.frag.spv.inl"
-#include "ttauri/GUI/pipeline_tone_mapper.vert.spv.inl"
-#include "ttauri/GUI/pipeline_tone_mapper.frag.spv.inl"
 
 namespace tt {
 
@@ -103,25 +91,10 @@ void application::init_foundation()
     } else {
         log_level_global = make_log_level(log_level::info);
     }
-
-    // First we need a clock, it is used by almost any other service.
-    // It will immediately be synchronized, but inaccurately, it will take a while to become
-    // more accurate, but we don't want to block here.
-    sync_clock_calibration<hires_utc_clock, cpu_counter_clock> =
-        new sync_clock_calibration_type<hires_utc_clock, cpu_counter_clock>("cpu_utc");
-
-    clock_maintenance_callback = timer::global->add_callback(100ms, [](auto...) {
-        ttlet t2 = trace<"clock_maintenance">{};
-
-        sync_clock_calibration<hires_utc_clock, cpu_counter_clock>->calibrate_tick();
-    });
 }
 
 void application::init_text()
 {
-    static_resource_view::add_static_resource(elusiveicons_webfont_ttf_filename, elusiveicons_webfont_ttf_bytes);
-    static_resource_view::add_static_resource(ttauri_icons_ttf_filename, ttauri_icons_ttf_bytes);
-
     font_book::global = std::make_unique<font_book>(std::vector<URL>{URL::urlFromSystemfontDirectory()});
     elusive_icons_font_id = font_book::global->register_font(URL("resource:elusiveicons-webfont.ttf"));
     ttauri_icons_font_id = font_book::global->register_font(URL("resource:ttauri_icons.ttf"));
@@ -149,17 +122,6 @@ void application::init_gui()
 
             theme_book::global = std::make_unique<theme_book>(std::vector<URL>{URL::urlFromResourceDirectory() / "themes"});
             theme_book::global->set_current_theme_mode(read_os_theme_mode());
-
-            static_resource_view::add_static_resource(pipeline_image_vert_spv_filename, pipeline_image_vert_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_image_frag_spv_filename, pipeline_image_frag_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_flat_vert_spv_filename, pipeline_flat_vert_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_flat_frag_spv_filename, pipeline_flat_frag_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_box_vert_spv_filename, pipeline_box_vert_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_box_frag_spv_filename, pipeline_box_frag_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_SDF_vert_spv_filename, pipeline_SDF_vert_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_SDF_frag_spv_filename, pipeline_SDF_frag_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_tone_mapper_vert_spv_filename, pipeline_tone_mapper_vert_spv_bytes);
-            static_resource_view::add_static_resource(pipeline_tone_mapper_frag_spv_filename, pipeline_tone_mapper_frag_spv_bytes);
 
             try {
                 keyboardBindings.loadSystemBindings();
@@ -198,8 +160,6 @@ void application::deinit_foundation()
     timer::global->remove_callback(clock_maintenance_callback);
     timer::global->remove_callback(logger_maintenance_callback);
     timer::global = {};
-
-    delete sync_clock_calibration<hires_utc_clock, cpu_counter_clock>;
 }
 
 void application::deinit_text()
