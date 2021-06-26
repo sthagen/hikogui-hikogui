@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "gui_surface_vulkan.hpp"
+#include "../GFX/gfx_surface_vulkan.hpp"
+#include "gui_window.hpp"
 #include <unordered_map>
 
 struct HWND__;
@@ -20,13 +21,14 @@ class gui_window_win32 final : public gui_window {
 public:
     HWND win32Window = nullptr;
 
-    gui_window_win32(gui_system &system, std::weak_ptr<gui_window_delegate> const &delegate, label const &title);
-    ~gui_window_win32();
+    gui_window_win32(label const &title, weak_or_unique_ptr<gui_window_delegate> delegate) noexcept;
 
-    gui_window_win32(const gui_window_win32 &) = delete;
-    gui_window_win32 &operator=(const gui_window_win32 &) = delete;
-    gui_window_win32(gui_window_win32 &&) = delete;
-    gui_window_win32 &operator=(gui_window_win32 &&) = delete;
+    gui_window_win32(label const &title) noexcept :
+        gui_window_win32(title, std::make_unique<gui_window_delegate>())
+    {
+    }
+
+    ~gui_window_win32();
 
     void create_window() override;
     int windowProc(unsigned int uMsg, uint64_t wParam, int64_t lParam) noexcept;
@@ -66,4 +68,4 @@ private:
     [[nodiscard]] mouse_event createmouse_event(unsigned int uMsg, uint64_t wParam, int64_t lParam) noexcept;
 };
 
-}
+} // namespace tt
