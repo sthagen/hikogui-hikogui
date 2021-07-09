@@ -96,24 +96,14 @@ endif()
 #-------------------------------------------------------------------
 
 #
-# GoogleTest
-#
-#find_package(GTest)
-
-#
 # GoogleTest - non-vcpkg, directly build from externals
 #
 if(TT_BUILD_TESTS)
     set(INSTALL_GTEST OFF CACHE INTERNAL "Don't install gtest")
     set(INSTALL_GMOCK OFF CACHE INTERNAL "Don't install gmock")
-    FetchContent_Declare(googletest GIT_REPOSITORY https://github.com/google/googletest.git GIT_TAG release-1.10.0)
+    FetchContent_Declare(googletest GIT_REPOSITORY https://github.com/google/googletest.git GIT_TAG release-1.11.0)
     FetchContent_MakeAvailable(googletest)
 endif()
-
-#
-# Vulkan Memory Allocator
-#
-find_package(unofficial-vulkan-memory-allocator CONFIG REQUIRED)
 
 #
 # Vulkan SDK Headers
@@ -125,6 +115,22 @@ if(NOT DEFINED ENV{VULKAN_SDK})
         "set VULKAN_SDK=\"C:\\VulkanSDK\\1.0.0.0\"\n")
 endif()
 find_package(Vulkan REQUIRED)
+
+#
+# Vulkan Memory Allocator
+#
+if(VCPKG_TOOLCHAIN)
+    find_package(unofficial-vulkan-memory-allocator CONFIG REQUIRED)
+else()
+    FetchContent_Declare(VulkanMemoryAllocator GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator GIT_TAG v2.3.0)
+    FetchContent_MakeAvailable(VulkanMemoryAllocator)
+    add_library(unofficial::vulkan-memory-allocator::vulkan-memory-allocator INTERFACE IMPORTED)
+    set_target_properties(
+        unofficial::vulkan-memory-allocator::vulkan-memory-allocator
+        PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${vulkanmemoryallocator_SOURCE_DIR}/src")
+endif()
+
 
 #-------------------------------------------------------------------
 # Setup Build Targets
@@ -155,10 +161,8 @@ add_subdirectory(tools)
 set_target_properties(ttauri PROPERTIES VERSION ${TTAURI_PROJECT_VERSION_SHORT} SOVERSION ${TTAURI_MAJOR_VERSION})
 set_target_properties(ttauri PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-target_link_libraries(ttauri PUBLIC
-    ${Vulkan_LIBRARIES}
-    unofficial::vulkan-memory-allocator::vulkan-memory-allocator
-)
+target_link_libraries(ttauri PUBLIC ${Vulkan_LIBRARIES})
+target_link_libraries(ttauri PUBLIC unofficial::vulkan-memory-allocator::vulkan-memory-allocator)
 
 if(APPLE)
     target_link_libraries(ttauri PUBLIC "-framework Foundation -framework AppKit")
@@ -231,9 +235,6 @@ elseif (MSVC)
 
     # Set the execution character encoding to UTF-8
     target_compile_options(ttauri PUBLIC -execution-charset:utf-8)
-
-    # Allow system headers to be imported.
-    target_compile_options(ttauri PUBLIC -experimental:module)
 
     # Support Intel's SkyLake and AMD's Excavator.
     # see hardware_support.md
@@ -467,6 +468,7 @@ endif()
 #-------------------------------------------------------------------
 if(TT_BUILD_EXAMPLES)
     add_subdirectory(examples/ttauri_demo)
+    add_subdirectory(examples/widgets)
 endif()
 
 #-------------------------------------------------------------------
@@ -540,26 +542,40 @@ endif()
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
-    set(DOXYGEN_EXCLUDE_PATTERNS *.cpp)
+    set(DOXYGEN_EXCLUDE_PATTERNS *_tests.cpp)
     set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_GENERATE_XML NO)
     set(DOXYGEN_GENERATE_LATEX NO)
-    set(DOXYGEN_GENERATE_PDF NO)
     set(DOXYGEN_QUIET YES)
     set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
     set(DOXYGEN_WARN_NO_PARAMDOC NO)
-
     set(DOXYGEN_STRIP_FROM_PATH src)
     set(DOXYGEN_STRIP_FROM_INC_PATH src)
 
     set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
     set(DOXYGEN_ALWAYS_DETAILED_SEC YES)
-    set(DOXYGEN_INLINE_INHERITED_MEMB YES)
-    set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
-    set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_DISTRIBUTE_GROUP_DOC YES)
 
-    set(DOXYGEN_EXTRACT_ALL YES)
+    set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
+    set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+    #set(DOXYGEN_CLANG_ASSISTED_PARSING YES)
+    #set(DOXYGEN_CLANG_OPTIONS "-std:c++20")
+
+    set(DOXYGEN_TAGFILES "${CMAKE_SOURCE_DIR}/docs/media/style/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
+    set(DOXYGEN_IMAGE_PATH "${CMAKE_SOURCE_DIR}/src/" "${CMAKE_SOURCE_DIR}/docs/")
+    set(DOXYGEN_EXAMPLE_PATH "${CMAKE_SOURCE_DIR}/examples/")
+
+    set(DOXYGEN_LAYOUT_FILE "${CMAKE_SOURCE_DIR}/docs/media/style/DoxygenLayout.xml")
+    set(DOXYGEN_HTML_COLORSTYLE_HUE 24)
+    set(DOXYGEN_HTML_COLORSTYLE_SAT 150)
+    set(DOXYGEN_HTML_COLORSTYLE_GAMMA 80)
+    set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_SOURCE_DIR}/docs/media/style/customdoxygen.css")
+
+
+    # The following 4 settings are to get protected members to behave as private.
+    set(DOXYGEN_ENABLE_PREPROCESSING YES)
+    set(DOXYGEN_MACRO_EXPANSION YES)
+    set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
+    set(DOXYGEN_PREDEFINED "protected=private")
 
     doxygen_add_docs(doc src/ttauri docs)
 else()

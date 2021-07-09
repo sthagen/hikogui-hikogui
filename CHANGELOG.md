@@ -17,3 +17,26 @@ Here are some of the important changes for this release:
  * Fixed several bugs.
  * Made several documentation improvements.
  * Improved the pull-request work flow with continuous integration requirements before merging.
+
+0.4.0 Lovely Lizard
+-------------------
+This version is focused on simplifying the API for the usage of GUI widgets.
+
+Here are some of the important changes for this release:
+ * Most widgets are no longer templates.
+   - Some widgets will automatically instantiate an appropriate default delegate based on
+     the arguments passed to the widget's constructor.
+ * The event loop and rendering are now done on the same thread removing the need for locking.
+ * Added documentation of how to use GUI widgets.
+ * Lazy or optional subsystem initialization is much more consistent.
+ * Minimum CPU requirements have been reduced.
+ * Reduced dependencies to only:
+   - Vulkan SDK
+   - CMake
+   - C++20 compiler (MSVC)
+   - Vulkan Memory Allocator (automatically installed by cmake or vcpkg)
+   - Google Test (automatically installed by cmake)
+   - Doxygen (optional)
+   - RenderDoc (optional)
+   - vcpkg (optional)
+ * Can be build with or without vcpkg.
