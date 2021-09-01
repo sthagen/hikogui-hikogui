@@ -177,7 +177,12 @@ target_include_directories(ttauri PUBLIC
 target_include_directories(ttauri PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(ttauri PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src)
 
-target_compile_features(ttauri INTERFACE cxx_std_20)
+if(${CMAKE_VERSION} VERSION_LESS "3.21.0")
+    target_compile_features(ttauri PUBLIC cxx_std_20)
+else()
+    # CMake uses the incorrect /std:c++20 on MSVC when cxx_std_20 is used.
+    target_compile_features(ttauri PUBLIC cxx_std_23)
+endif()
 
 #
 # We will support the following CPUs:
@@ -279,7 +284,7 @@ elseif (MSVC)
     # C4648: standard attribute 'no_unique_address' is ignored
     target_compile_options(ttauri PUBLIC -wd4648)
 
-    if (NOT ${CMAKE_BUILD_TYPE} MATCHES "Release")
+    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
         # Enable Security Development Lifecycle checks.
         # This includes run-time checks, don't include this in the Release type
         # Do include it with ReleaseWithDebug.
