@@ -6,7 +6,7 @@
 #include "strings.hpp"
 #include "required.hpp"
 #include "url_parser.hpp"
-#include "logger.hpp"
+#include "log.hpp"
 #include "metadata.hpp"
 #include <regex>
 
@@ -73,6 +73,11 @@ URL URL::urlFromSystemfontDirectory() noexcept
 {
     // FOLDERID_Fonts has the default path: %windir%\Fonts
     return get_folder_by_id(FOLDERID_Fonts);
+}
+
+URL URL::urlFromApplicationPreferencesFile() noexcept
+{
+    return URL::urlFromApplicationDataDirectory() / "preferences.json";
 }
 
 std::vector<std::string> URL::filenamesByScanningDirectory(std::string_view path) noexcept

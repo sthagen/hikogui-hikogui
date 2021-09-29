@@ -6,6 +6,7 @@
 #include "../text/font_book.hpp"
 #include "../subsystem.hpp"
 #include "../trace.hpp"
+#include "../log.hpp"
 
 namespace tt {
 

@@ -6,7 +6,7 @@
 
 #include "../cast.hpp"
 #include "../utils.hpp"
-#include "../logger.hpp"
+#include "../log.hpp"
 #include "../subsystem.hpp"
 #include "../notifier.hpp"
 #include "../timer.hpp"
@@ -163,6 +163,8 @@ private:
 
     [[nodiscard]] static bool subsystem_init() noexcept
     {
+        using namespace std::literals::chrono_literals;
+
         _languages_maintenance_callback = timer::global().add_callback(5s, [](auto...) {
             ttlet new_preferred_language_tags = language::read_os_preferred_languages();
 

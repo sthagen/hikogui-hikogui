@@ -10,7 +10,7 @@
 #include "file_view.hpp"
 #include "exception.hpp"
 #include "static_resource_view.hpp"
-#include "logger.hpp"
+#include "log.hpp"
 #include <regex>
 
 namespace tt {
@@ -278,7 +278,7 @@ std::unique_ptr<resource_view> URL::loadView() const
             return view;
         }
 
-    } else if (scheme() == "file") {
+    } else if (scheme() == "file" or scheme() == "") {
         auto view = file_view::loadView(*this);
         tt_log_info("Loaded resource {} from filesystem.", *this);
         return view;

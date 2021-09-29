@@ -7,7 +7,7 @@
 #include "audio_system_aggregate.hpp"
 #include "audio_device_id.hpp"
 #include "../required.hpp"
-#include "../logger.hpp"
+#include "../log.hpp"
 #include "../exception.hpp"
 #include "../locked_memory_allocator.hpp"
 #include "../event_queue.hpp"
@@ -152,10 +152,10 @@ void audio_system_win32::update_device_list() noexcept
         IMMDevice *win32_device;
         tt_hresult_check(device_collection->Item(i, &win32_device));
 
-        ttlet device_id = audio_device_win32::get_id_from_device(win32_device);
+        ttlet device_id = audio_device_win32::get_id(win32_device);
 
         auto it = std::find_if(old_devices.begin(), old_devices.end(), [&device_id](auto &item) {
-            return item->id() == device_id;
+            return item->id == device_id;
         });
 
         if (it != old_devices.end()) {

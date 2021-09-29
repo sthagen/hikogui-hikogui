@@ -10,7 +10,6 @@
 #include "../cast.hpp"
 #include "../check.hpp"
 #include <span>
-#include <string>
 #include <cstdint>
 #include <array>
 #include <string>
@@ -240,7 +239,7 @@ public:
     {
         auto r = bstring{};
         auto i = decode(begin(str), end(str), std::back_inserter(r));
-        tt_parse_check(i == end(str));
+        tt_parse_check(i == end(str), "base-n encoded string not completely decoded");
         return r;
     }
 
