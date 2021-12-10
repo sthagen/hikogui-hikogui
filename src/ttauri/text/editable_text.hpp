@@ -12,11 +12,9 @@
 #include <string>
 #include <vector>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class editable_text {
-
-
 public:
     editable_text(tt::font_book const &font_book, text_style style) :
         _font_book(font_book), _text(), _shaped_text(), _current_style(style)
@@ -26,7 +24,7 @@ public:
     [[nodiscard]] operator std::string() const noexcept
     {
         auto r = std::string{};
-        
+
         for (ttlet &c : _text) {
             r += to_string(c.grapheme.NFC());
         }
@@ -42,7 +40,7 @@ public:
         gstring gstr = to_gstring(str);
 
         _text.clear();
-        _text.reserve(std::ssize(gstr));
+        _text.reserve(gstr.size());
         for (ttlet &g : gstr) {
             _text.emplace_back(g, _current_style);
         }
@@ -56,12 +54,13 @@ public:
 
     /** Update the shaped _text after changed to _text.
      */
-    void update_shaped_text() noexcept {
+    void update_shaped_text() noexcept
+    {
         auto text_ = make_vector(_text);
 
         // Make sure there is an end-paragraph marker in the _text.
         // This allows the shaped_text to figure out the style of the _text of an empty paragraph.
-        if (std::ssize(_text) == 0) {
+        if (ssize(_text) == 0) {
             text_.emplace_back(grapheme::PS(), _current_style, 0);
         } else {
             text_.emplace_back(grapheme::PS(), text_.back().style, 0);
@@ -70,60 +69,69 @@ public:
         _shaped_text = tt::shaped_text{_font_book, text_, _width, alignment::top_left, false};
     }
 
-    [[nodiscard]] shaped_text shaped_text() const noexcept {
+    [[nodiscard]] shaped_text shaped_text() const noexcept
+    {
         return _shaped_text;
     }
 
-    void set_width(float width) noexcept {
+    void set_width(float width) noexcept
+    {
         _width = width;
         update_shaped_text();
     }
 
-    void set_current_style(text_style style) noexcept {
+    void set_current_style(text_style style) noexcept
+    {
         this->_current_style = style;
     }
 
     /** Change the text style of all graphemes.
      */
-    void set_style_of_all(text_style style) noexcept {
+    void set_style_of_all(text_style style) noexcept
+    {
         set_current_style(style);
-        for (auto &c: _text) {
+        for (auto &c : _text) {
             c.style = style;
         }
         update_shaped_text();
     }
 
-    size_t size() const noexcept {
+    std::size_t size() const noexcept
+    {
         return _text.size();
     }
 
     /** Return the _text iterator at index.
      */
-    decltype(auto) it(ssize_t index) noexcept {
+    decltype(auto) it(ssize_t index) noexcept
+    {
         tt_axiom(index >= 0);
         // Index should never be at _text.cend();
-        tt_axiom(index < std::ssize(_text));
+        tt_axiom(index < ssize(_text));
 
         return _text.begin() + index;
     }
 
     /** Return the _text iterator at index.
-    */
-    decltype(auto) cit(ssize_t index) const noexcept {
+     */
+    decltype(auto) cit(ssize_t index) const noexcept
+    {
         tt_axiom(index >= 0);
         // Index should never be beyond _text.cend();
-        tt_axiom(index <= std::ssize(_text));
+        tt_axiom(index <= ssize(_text));
 
         return _text.cbegin() + index;
     }
 
-    decltype(auto) it(ssize_t index) const noexcept {
+    decltype(auto) it(ssize_t index) const noexcept
+    {
         return cit(index);
     }
 
     /** Get carets at the cursor position.
-    */
-    aarectangle partial_grapheme_caret() const noexcept {
+     */
+    aarectangle partial_grapheme_caret() const noexcept
+    {
         tt_axiom(is_valid());
 
         if (_has_partial_grapheme) {
@@ -136,14 +144,24 @@ public:
 
     /** Get carets at the cursor position.
      */
-    aarectangle left_to_right_caret() const noexcept {
+    aarectangle left_to_right_caret() const noexcept
+    {
         tt_axiom(is_valid());
         return _shaped_text.left_to_right_caret(_cursor_index, _insert_mode);
     }
 
+    /** Get carets at the cursor position.
+     */
+    aarectangle right_to_left_caret() const noexcept
+    {
+        tt_axiom(is_valid());
+        return _shaped_text.right_to_left_caret(_cursor_index, _insert_mode);
+    }
+
     /** Get a set of rectangles for which _text is selected.
      */
-    std::vector<aarectangle> selection_rectangles() const noexcept {
+    std::vector<aarectangle> selection_rectangles() const noexcept
+    {
         tt_axiom(is_valid());
         auto r = std::vector<aarectangle>{};
         if (_selection_index < _cursor_index) {
@@ -159,7 +177,8 @@ public:
      * This function should be called when a selection is active while new _text
      * is being inserted.
      */
-    void delete_selection() noexcept {
+    void delete_selection() noexcept
+    {
         tt_axiom(is_valid());
 
         if (_selection_index < _cursor_index) {
@@ -276,7 +295,8 @@ public:
         tt_axiom(is_valid());
     }
 
-    void cancel_partial_grapheme() noexcept {
+    void cancel_partial_grapheme() noexcept
+    {
         tt_axiom(is_valid());
 
         if (_has_partial_grapheme) {
@@ -298,7 +318,8 @@ public:
      *
      * Since the insertion has not been completed any selected _text should not yet be deleted.
      */
-    void insert_partial_grapheme(grapheme character) noexcept {
+    void insert_partial_grapheme(grapheme character) noexcept
+    {
         tt_axiom(is_valid());
 
         cancel_partial_grapheme();
@@ -316,7 +337,8 @@ public:
     /*! insert character at the cursor position.
      * Selected _text will be deleted.
      */
-    void insert_grapheme(grapheme character) noexcept {
+    void insert_grapheme(grapheme character) noexcept
+    {
         tt_axiom(is_valid());
 
         cancel_partial_grapheme();
@@ -333,7 +355,8 @@ public:
         tt_axiom(is_valid());
     }
 
-    void handle_paste(std::string str) noexcept {
+    void handle_paste(std::string str) noexcept
+    {
         tt_axiom(is_valid());
 
         cancel_partial_grapheme();
@@ -342,23 +365,24 @@ public:
         gstring gstr = to_gstring(str);
 
         auto str_attr = std::vector<attributed_grapheme>{};
-        str_attr.reserve(std::ssize(gstr));
-        for (ttlet &g: gstr) {
+        str_attr.reserve(gstr.size());
+        for (ttlet &g : gstr) {
             str_attr.emplace_back(g, _current_style);
         }
 
         _text.insert_after(cit(_cursor_index), str_attr.cbegin(), str_attr.cend());
-        _selection_index = _cursor_index += std::ssize(str_attr);
+        _selection_index = _cursor_index += ssize(str_attr);
 
         update_shaped_text();
         tt_axiom(is_valid());
     }
 
-    std::string handle_copy() noexcept {
+    std::string handle_copy() noexcept
+    {
         tt_axiom(is_valid());
 
         auto r = std::string{};
-        
+
         if (_selection_index < _cursor_index) {
             r.reserve(_cursor_index - _selection_index);
             for (auto i = cit(_selection_index); i != cit(_cursor_index); ++i) {
@@ -375,7 +399,8 @@ public:
         return r;
     }
 
-    std::string handle_cut() noexcept {
+    std::string handle_cut() noexcept
+    {
         tt_axiom(is_valid());
 
         auto r = handle_copy();
@@ -386,7 +411,8 @@ public:
         return r;
     }
 
-    bool handle_event(command command) noexcept {
+    bool handle_event(command command) noexcept
+    {
         tt_axiom(is_valid());
 
         auto handled = false;
@@ -518,7 +544,7 @@ public:
             if (_cursor_index != _selection_index) {
                 delete_selection();
 
-            } else if (_cursor_index < std::ssize(_text)) {
+            } else if (_cursor_index < ssize(_text)) {
                 // Don't delete the trailing paragraph separator.
                 _text.erase(cit(_cursor_index));
                 update_shaped_text();
@@ -532,7 +558,7 @@ public:
 
     bool is_valid() const noexcept
     {
-        return _selection_index >= 0 && _selection_index <= std::ssize(_text) && _cursor_index >= 0 && _cursor_index <= std::ssize(_text);
+        return _selection_index >= 0 && _selection_index <= ssize(_text) && _cursor_index >= 0 && _cursor_index <= ssize(_text);
     }
 
 private:
@@ -565,6 +591,4 @@ private:
     bool _has_partial_grapheme = false;
 };
 
-
-}
-
+} // namespace tt::inline v1

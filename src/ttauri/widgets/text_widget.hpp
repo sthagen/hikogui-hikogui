@@ -5,7 +5,6 @@
 #pragma once
 
 #include "widget.hpp"
-#include "../GFX/draw_context.hpp"
 #include "../GUI/theme_text_style.hpp"
 #include "../text/shaped_text.hpp"
 #include "../observable.hpp"
@@ -17,7 +16,7 @@
 #include <optional>
 #include <future>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A text widget.
  * The text widget is a simple widget that just displays text.
@@ -61,18 +60,15 @@ public:
     }
 
     /// @privatesection
-    void init() noexcept override;
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     /// @endprivatesection
 private:
-    decltype(text)::callback_ptr_type _text_callback;
-
     shaped_text _shaped_text;
     matrix2 _shaped_text_transform;
 
     text_widget(gui_window &window, widget *parent) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

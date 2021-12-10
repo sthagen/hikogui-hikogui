@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <string>
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 constexpr auto BON8_code_array_count0 = uint8_t{0x80};
 constexpr auto BON8_code_array_count1 = uint8_t{0x81};
@@ -369,8 +369,8 @@ public:
     void add(std::vector<T> const &items)
     {
         open_string = false;
-        if (std::size(items) <= 4) {
-            output += static_cast<std::byte>(BON8_code_array_count0 + std::size(items));
+        if (size(items) <= 4) {
+            output += static_cast<std::byte>(BON8_code_array_count0 + size(items));
         } else {
             output += static_cast<std::byte>(BON8_code_array);
         }
@@ -379,7 +379,7 @@ public:
             add(item);
         }
 
-        if (std::size(items) > 4) {
+        if (size(items) > 4) {
             output += static_cast<std::byte>(BON8_code_eoc);
             open_string = false;
         }
@@ -396,8 +396,8 @@ public:
         using key_type = typename std::remove_cvref_t<decltype(items)>::key_type;
 
         open_string = false;
-        if (std::size(items) <= 4) {
-            output += static_cast<std::byte>(BON8_code_object_count0 + std::size(items));
+        if (size(items) <= 4) {
+            output += static_cast<std::byte>(BON8_code_object_count0 + size(items));
         } else {
             output += static_cast<std::byte>(BON8_code_object);
         }
@@ -411,7 +411,7 @@ public:
             add(item.second);
         }
 
-        if (std::size(items) > 4) {
+        if (size(items) > 4) {
             output += static_cast<std::byte>(BON8_code_eoc);
             open_string = false;
         }
@@ -530,7 +530,7 @@ void BON8_encoder::add(datum const &value)
     throw parse_error("Incomplete array at end of buffer");
 }
 
-[[nodiscard]] datum decode_BON8_array(cbyteptr &ptr, cbyteptr last, size_t count)
+[[nodiscard]] datum decode_BON8_array(cbyteptr &ptr, cbyteptr last, std::size_t count)
 {
     auto r = datum::make_vector();
     auto &vector = get<datum::vector_type>(r);
@@ -562,7 +562,7 @@ void BON8_encoder::add(datum const &value)
     throw parse_error("Incomplete object at end of buffer");
 }
 
-[[nodiscard]] datum decode_BON8_object(cbyteptr &ptr, cbyteptr last, size_t count)
+[[nodiscard]] datum decode_BON8_object(cbyteptr &ptr, cbyteptr last, std::size_t count)
 {
     auto r = datum::make_map();
     auto &map = get<datum::map_type>(r);
@@ -763,4 +763,4 @@ void BON8_encoder::add(datum const &value)
     return encoder.get();
 }
 
-} // namespace tt
+} // namespace tt::inline v1

@@ -7,17 +7,17 @@
 #include <type_traits>
 #include <cstddef>
 
-namespace tt {
+namespace tt::inline v1 {
 
-[[nodiscard]] std::byte *locked_memory_allocator_allocate(size_t n) noexcept;
+[[nodiscard]] std::byte *locked_memory_allocator_allocate(std::size_t n) noexcept;
 
-void locked_memory_allocator_deallocate(std::byte *p, size_t n) noexcept;
+void locked_memory_allocator_deallocate(std::byte *p, std::size_t n) noexcept;
 
 template<typename T>
 class locked_memory_allocator {
 public:
     using value_type = T;
-    using size_type = size_t;
+    using size_type = std::size_t;
     using difference_type = ptrdiff_t;
 
     template<typename U>
@@ -30,7 +30,9 @@ public:
     constexpr locked_memory_allocator(locked_memory_allocator const &other) noexcept {}
 
     template<typename U>
-    constexpr locked_memory_allocator(locked_memory_allocator<U> const &other) noexcept {}
+    constexpr locked_memory_allocator(locked_memory_allocator<U> const &other) noexcept
+    {
+    }
 
     [[nodiscard]] value_type *allocate(size_type n) const noexcept
     {
@@ -44,4 +46,4 @@ public:
     }
 };
 
-}
+} // namespace tt::inline v1

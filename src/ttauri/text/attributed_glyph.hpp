@@ -10,26 +10,28 @@
 #include "../graphic_path.hpp"
 #include "../geometry/translate.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /**
-*/
+ */
 struct attributed_glyph {
     font_glyph_ids glyphs;
 
     /** The logical index of the grapheme before bidi-algorithm.
-    */
+     */
     ssize_t logicalIndex;
 
     /** Metrics taken from the font file, pre-scaled to the font-size. */
     glyph_metrics metrics;
 
     /** Position of the glyph.
-    */
+     */
     point2 position;
 
     /** Number of graphemes merged (ligature) into this attributed-glyph. */
     int8_t graphemeCount;
+
+    unicode_bidi_class bidi_class;
 
     unicode_general_category general_category;
 
@@ -48,7 +50,8 @@ struct attributed_glyph {
      * @param next_attr_glyph The next glyph in display-ordering, used for kerning.
      */
     attributed_glyph(
-        tt::font_book const &font_book, attributed_grapheme const &attr_grapheme,
+        tt::font_book const &font_book,
+        attributed_grapheme const &attr_grapheme,
         attributed_glyph const *next_attr_glyph = nullptr) noexcept;
 
     attributed_glyph(attributed_glyph const &other) = default;
@@ -59,7 +62,8 @@ struct attributed_glyph {
 
     /** Check if this glyph contains the grapheme at index.
      */
-    [[nodiscard]] bool containsLogicalIndex(ssize_t index) const noexcept {
+    [[nodiscard]] bool containsLogicalIndex(ssize_t index) const noexcept
+    {
         ttlet first = logicalIndex;
         ttlet last = first + graphemeCount;
         return index >= first && index < last;
@@ -75,7 +79,10 @@ struct attributed_glyph {
         return is_N(general_category);
     }
 
-    [[nodiscard]] bool isIdentifier() const noexcept { return isLetter() || isDigit(); }
+    [[nodiscard]] bool isIdentifier() const noexcept
+    {
+        return isLetter() || isDigit();
+    }
 
     [[nodiscard]] bool isWhiteSpace() const noexcept
     {
@@ -90,7 +97,7 @@ struct attributed_glyph {
     {
         return is_visible(general_category);
     }
-    
+
     /** return a cluster id for word selection.
      * This makes clusters of:
      *  - paragraph separator.
@@ -98,7 +105,8 @@ struct attributed_glyph {
      *  - visibles (other marks and symbols)
      *  - whitespace
      */
-    [[nodiscard]] int selectionWordClusterID() const noexcept {
+    [[nodiscard]] int selectionWordClusterID() const noexcept
+    {
         if (isParagraphSeparator()) {
             return 0;
         } else if (isIdentifier()) {
@@ -114,15 +122,17 @@ struct attributed_glyph {
      * Get the scaled and positioned bounding box.
      * @param border The 1EM scaled border around the glyph bounding box.
      */
-    [[nodiscard]] aarectangle boundingBox(float border) const noexcept {
-        return translate2{position} * expand(metrics.boundingBox, border * style.scaled_size());
+    [[nodiscard]] aarectangle boundingBox() const noexcept
+    {
+        return translate2{position} * metrics.boundingBox;
     }
 
     /** Find the logical index closest to the coordinate.
      * For a non-ligature, left of the halfway-point returns the current logicalIndex,
      * right of the halfway-point return the next logicalIndex.
      */
-    [[nodiscard]] ssize_t relativeIndexAtCoordinate(point2 coordinate) const noexcept {
+    [[nodiscard]] ssize_t relativeIndexAtCoordinate(point2 coordinate) const noexcept
+    {
         ttlet relativePositionInGlyph = (coordinate.x() - position.x()) / metrics.advance.x();
         ttlet relativePositionPergrapheme = relativePositionInGlyph * narrow_cast<float>(graphemeCount);
         return narrow_cast<ssize_t>(std::round(relativePositionPergrapheme));
@@ -131,4 +141,4 @@ struct attributed_glyph {
     [[nodiscard]] graphic_path get_path() const noexcept;
 };
 
-}
+} // namespace tt::inline v1

@@ -7,9 +7,9 @@
 #include "memory.hpp"
 #include <Windows.h>
 
-namespace tt {
+namespace tt::inline v1 {
 
-[[nodiscard]] std::byte *locked_memory_allocator_allocate(size_t n) noexcept
+[[nodiscard]] std::byte *locked_memory_allocator_allocate(std::size_t n) noexcept
 {
     auto p = VirtualAlloc(NULL, n, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (p == NULL) {
@@ -42,7 +42,7 @@ namespace tt {
     return reinterpret_cast<std::byte *>(p);
 }
 
-void locked_memory_allocator_deallocate(std::byte *p, size_t n) noexcept
+void locked_memory_allocator_deallocate(std::byte *p, std::size_t n) noexcept
 {
     if (!VirtualUnlock(reinterpret_cast<LPVOID>(p), n)) {
         tt_log_warning("Could not unlock memory. '{}'", get_last_error_message());
@@ -73,4 +73,4 @@ void locked_memory_allocator_deallocate(std::byte *p, size_t n) noexcept
     }
 }
 
-} // namespace tt
+} // namespace tt::inline v1

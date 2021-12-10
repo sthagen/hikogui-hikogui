@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 
-namespace tt {
+namespace tt::inline v1 {
 class gfx_system;
 class vertical_sync;
 class font_book;
@@ -35,7 +35,6 @@ public:
     std::unique_ptr<tt::font_book> font_book;
     std::unique_ptr<tt::theme_book> theme_book;
     std::unique_ptr<tt::keyboard_bindings> keyboard_bindings;
-
 
     thread_id const thread_id;
 
@@ -95,10 +94,10 @@ public:
     virtual void exit(int exit_code) = 0;
 
     /** Get the event queue.
-    * 
-    * This queue allows for adding jobs to the queue which will
-    * be executed on the gui thread.
-    */
+     *
+     * This queue allows for adding jobs to the queue which will
+     * be executed on the gui thread.
+     */
     tt::event_queue const &event_queue() const noexcept
     {
         return *_event_queue;
@@ -158,7 +157,7 @@ public:
         }
         std::erase(_windows, nullptr);
 
-        ttlet num_windows = std::size(_windows);
+        ttlet num_windows = size(_windows);
         if (num_windows == 0 && num_windows != _previous_num_windows) {
             // If last_window_closed() creates a new window we should
             // let it do that before entering the event queue again.
@@ -197,7 +196,7 @@ public:
 
     /** Request all windows to constrain.
      */
-    void request_constrain() noexcept;
+    void request_reconstrain() noexcept;
 
 protected:
     gui_system(
@@ -220,7 +219,7 @@ private:
     std::weak_ptr<gui_system_delegate> _delegate;
 
     std::vector<std::unique_ptr<gui_window>> _windows;
-    size_t _previous_num_windows = 0;
+    std::size_t _previous_num_windows = 0;
 
     /** The theme of the system.
      * Should never be nullptr in reality.
@@ -228,4 +227,4 @@ private:
     tt::theme const *_theme = nullptr;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

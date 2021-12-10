@@ -13,7 +13,7 @@
 #include <Windows.h>
 #include <ShlObj_core.h>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /*! Convenience function for SHGetKnownFolderPath().
  *  Retrieves a full path of a known folder identified by the folder's KNOWNFOLDERID.
@@ -38,7 +38,7 @@ URL URL::urlFromExecutableFile() noexcept
     std::wstring module_path;
     auto buffer_size = MAX_PATH; // initial default value = 256
     // iterative buffer resizing to max value of 32768 (256*2^7)
-    for (size_t i = 0; i < 7; ++i) {
+    for (std::size_t i = 0; i < 7; ++i) {
         module_path.resize(buffer_size);
         auto chars = GetModuleFileNameW(nullptr, &module_path[0], buffer_size);
         if (chars < module_path.length()) {
@@ -113,4 +113,4 @@ std::vector<std::string> URL::filenamesByScanningDirectory(std::string_view path
     return filenames;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

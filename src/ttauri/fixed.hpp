@@ -9,8 +9,9 @@
 #include "safe_int.hpp"
 #include <type_traits>
 #include <limits>
+#include <concepts>
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<typename T, int M>
 struct fixed {
@@ -26,109 +27,94 @@ struct fixed {
     fixed(fixed &&) = default;
     fixed &operator=(fixed &&) = default;
 
-    template<typename O, std::enable_if_t<std::is_floating_point_v<O>, int> = 0>  
-    explicit constexpr fixed(O other) noexcept :
-        value(static_cast<T>(other * M)) {
-        tt_assert(
-            other >= (std::numeric_limits<T>::min() / M) &&
-            other <= (std::numeric_limits<T>::max() / M)
-        );
+    explicit constexpr fixed(std::floating_point auto other) noexcept : value(static_cast<T>(other * M))
+    {
+        tt_assert(other >= (std::numeric_limits<T>::min() / M) && other <= (std::numeric_limits<T>::max() / M));
     }
 
-    template<typename O, std::enable_if_t<std::is_integral_v<O>, int> = 0>
-    explicit constexpr fixed(O other) noexcept :
-        value(static_cast<T>(other) * M) {
-        tt_assert(
-            other >= (std::numeric_limits<T>::min() / M) &&
-            other <= (std::numeric_limits<T>::max() / M)
-        );
+    explicit constexpr fixed(std::integral auto other) noexcept : value(static_cast<T>(other) * M)
+    {
+        tt_assert(other >= (std::numeric_limits<T>::min() / M) && other <= (std::numeric_limits<T>::max() / M));
     }
 
-    explicit fixed(std::string const &other) :
-        fixed(stod(other)) {}
+    explicit fixed(std::string const &other) : fixed(stod(other)) {}
 
-    template<typename O, std::enable_if_t<std::is_floating_point_v<O>, int> = 0>  
-    constexpr fixed &operator=(O other) noexcept {
+    constexpr fixed &operator=(std::floating_point auto other) noexcept
+    {
         value = static_cast<T>(other * M);
-        tt_assert(
-            other >= (std::numeric_limits<T>::min() / M) &&
-            other <= (std::numeric_limits<T>::max() / M)
-        );
+        tt_assert(other >= (std::numeric_limits<T>::min() / M) && other <= (std::numeric_limits<T>::max() / M));
         return *this;
     }
 
-    template<typename O, std::enable_if_t<std::is_integral_v<O>, int> = 0>
-    constexpr fixed &operator=(O other) noexcept {
+    constexpr fixed &operator=(std::integral auto other) noexcept
+    {
         value = static_cast<T>(other) * M;
-        tt_assert(
-            other >= (std::numeric_limits<T>::min() / M) &&
-            other <= (std::numeric_limits<T>::max() / M)
-        );
+        tt_assert(other >= (std::numeric_limits<T>::min() / M) && other <= (std::numeric_limits<T>::max() / M));
         return *this;
     }
 
-    fixed &operator=(std::string const &other) {
+    fixed &operator=(std::string const &other)
+    {
         value = static_cast<T>(stod(other) * M);
-        tt_assert(
-            other >= (std::numeric_limits<T>::min() / M) &&
-            other <= (std::numeric_limits<T>::max() / M)
-        );
+        tt_assert(other >= (std::numeric_limits<T>::min() / M) && other <= (std::numeric_limits<T>::max() / M));
         return *this;
     }
 
-    template<typename O, std::enable_if_t<std::is_floating_point_v<O>, int> = 0>  
-    explicit operator O () const noexcept {
+    template<std::floating_point O>
+    explicit operator O() const noexcept
+    {
         return static_cast<O>(value) / M;
     }
 
-    template<typename O, std::enable_if_t<std::is_integral_v<O>, int> = 0>
-    explicit operator O () const noexcept {
+    template<std::integral O>
+    explicit operator O() const noexcept
+    {
         return static_cast<O>(value / M);
     }
 
-    std::string string() const noexcept {
+    std::string string() const noexcept
+    {
         return std::format("{}", static_cast<double>(value) / M);
     }
-    
-    static fixed fromValue(T value) noexcept {
+
+    static fixed from_raw_value(T value) noexcept
+    {
         fixed r;
         r.value = value;
         return r;
     }
+
+    [[nodiscard]] constexpr friend bool operator==(fixed const &lhs, fixed const &rhs) noexcept
+    {
+        return lhs.value == rhs.value;
+    }
+
+    [[nodiscard]] constexpr friend auto operator<=>(fixed const &lhs, fixed const &rhs) noexcept
+    {
+        return lhs.value <=> rhs.value;
+    }
+
+    [[nodiscard]] constexpr friend fixed operator+(fixed const &lhs, fixed const &rhs) noexcept
+    {
+        return fixed<T, M>::from_raw_value(lhs.value + rhs.value);
+    }
+
+    [[nodiscard]] constexpr friend fixed operator-(fixed const &lhs, fixed const &rhs) noexcept
+    {
+        return fixed<T, M>::from_raw_value(lhs.value - rhs.value);
+    }
+
+    [[nodiscard]] friend std::string to_string(fixed const v)
+    {
+        return v.string();
+    }
+
+    friend std::ostream &operator<<(std::ostream &lhs, fixed const &rhs)
+    {
+        return lhs << rhs.string();
+    }
 };
 
-template<typename T, int M> inline bool operator==(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value == rhs.value; }
-template<typename T, int M> inline bool operator!=(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value != rhs.value; }
-template<typename T, int M> inline bool operator<(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value < rhs.value; }
-template<typename T, int M> inline bool operator>(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value > rhs.value; }
-template<typename T, int M> inline bool operator<=(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value <= rhs.value; }
-template<typename T, int M> inline bool operator>=(fixed<T,M> const &lhs, fixed<T,M> const &rhs) { return lhs.value >= rhs.value; }
+using money = fixed<safe_int<int64_t>, 100>;
 
-template<typename T, int M> 
-fixed<T,M> operator+(fixed<T,M> const &lhs, fixed<T,M> const &rhs)
-{
-    return fixed<T,M>::fromValue(lhs.value + rhs.value);
-}
-
-template<typename T, int M>
-fixed<T,M> operator-(fixed<T,M> const &lhs, fixed<T,M> const &rhs)
-{
-    return fixed<T,M>::fromValue(lhs.value - rhs.value);
-}
-
-template<typename T, int M>
-std::string to_string(fixed<T,M> const v)
-{
-    return v.string();
-}
-
-template<typename T, int M>
-std::ostream &operator<<(std::ostream &lhs, fixed<T,M> const &rhs)
-{
-    return lhs << rhs.string();
-}
-
-using money = fixed<safe_int<int64_t>,100>;
-
-}
-
+} // namespace tt::inline v1

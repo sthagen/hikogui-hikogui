@@ -14,7 +14,7 @@
 #include <vector>
 #include <limits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 struct jsonpath_root {
     [[nodiscard]] std::string string() const noexcept
@@ -95,7 +95,7 @@ struct jsonpath_names {
         return r;
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
         return names.size();
     }
@@ -107,12 +107,12 @@ struct jsonpath_names {
 
     [[nodiscard]] auto begin() const noexcept
     {
-        return std::begin(names);
+        return names.begin();
     }
 
     [[nodiscard]] auto end() const noexcept
     {
-        return std::end(names);
+        return names.end();
     }
 
     void push_back(std::string rhs) noexcept
@@ -122,7 +122,7 @@ struct jsonpath_names {
 
     [[nodiscard]] bool is_singular() const noexcept
     {
-        return std::size(names) == 1;
+        return names.size() == 1;
     }
 };
 
@@ -155,19 +155,19 @@ struct jsonpath_indices {
         return r;
     }
 
-    [[nodiscard]] generator<size_t> filter(size_t size) const noexcept
+    [[nodiscard]] generator<std::size_t> filter(std::size_t size) const noexcept
     {
         ttlet size_ = static_cast<ssize_t>(size);
 
         for (ttlet index : indices) {
             ttlet index_ = index >= 0 ? index : size_ + index;
             if (index_ >= 0 and index_ < size_) {
-                co_yield static_cast<size_t>(index_);
+                co_yield static_cast<std::size_t>(index_);
             }
         }
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
         return indices.size();
     }
@@ -184,7 +184,7 @@ struct jsonpath_indices {
 
     [[nodiscard]] bool is_singular() const noexcept
     {
-        return std::size(indices) == 1;
+        return indices.size() == 1;
     }
 };
 
@@ -205,11 +205,11 @@ struct jsonpath_slice {
      * @param size The size of the container.
      * @return The start offset of the slice.
      */
-    [[nodiscard]] size_t begin(size_t size) const noexcept
+    [[nodiscard]] std::size_t begin(std::size_t size) const noexcept
     {
         ttlet size_ = static_cast<ssize_t>(size);
         ttlet begin = first >= 0 ? first : size_ + first;
-        return static_cast<size_t>(std::clamp(begin, 0_z, size_));
+        return static_cast<std::size_t>(std::clamp(begin, 0_z, size_));
     }
 
     /** Get the one-step beyond last offset.
@@ -220,7 +220,7 @@ struct jsonpath_slice {
      * @param size The size of the container.
      * @return The one-step beyond last offset of the slice.
      */
-    [[nodiscard]] size_t end(size_t size) const noexcept
+    [[nodiscard]] std::size_t end(std::size_t size) const noexcept
     {
         ttlet size_ = static_cast<ssize_t>(size);
         ttlet last_ = std::clamp(
@@ -233,7 +233,7 @@ struct jsonpath_slice {
         ttlet first_ = begin(size);
         ttlet distance = last_ - first_;
         ttlet steps = distance / step;
-        return static_cast<size_t>(first_ + steps * step);
+        return static_cast<std::size_t>(first_ + steps * step);
     }
 
     [[nodiscard]] bool last_is_empty() const noexcept
@@ -386,8 +386,8 @@ public:
     [[nodiscard]] jsonpath(std::string_view rhs) : _nodes()
     {
         auto tokens = parseTokens(rhs);
-        ttlet it_end = std::cend(tokens);
-        for (auto it = std::cbegin(tokens); it != it_end; ++it) {
+        ttlet it_end = tokens.cend();
+        for (auto it = tokens.cbegin(); it != it_end; ++it) {
             if (*it == tokenizer_name_t::Operator and *it == ".") {
                 _nodes.emplace_back(parse_jsonpath_child_operator(it, it_end));
 
@@ -435,7 +435,7 @@ public:
         return r;
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
         return _nodes.size();
     }
@@ -487,7 +487,7 @@ private:
     std::vector<jsonpath_node> _nodes;
 };
 
-} // namespace tt
+} // namespace tt::inline v1
 
 namespace std {
 

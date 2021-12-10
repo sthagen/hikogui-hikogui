@@ -11,7 +11,7 @@
 #include <concepts>
 #include <climits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<typename T>
 [[nodiscard]] constexpr T copy(T value) noexcept
@@ -110,7 +110,7 @@ template<tt::pointer DerivedType, tt::strict_base_of<std::remove_pointer_t<Deriv
     static_assert(
         !std::is_const_v<BaseType> || std::is_const_v<std::remove_pointer_t<DerivedType>>,
         "narrow_cast must not cast away const");
-    tt_axiom(dynamic_cast<DerivedType>(value) != nullptr);
+    tt_axiom(value == nullptr or dynamic_cast<DerivedType>(value) != nullptr);
     return static_cast<DerivedType>(value);
 }
 
@@ -207,4 +207,4 @@ template<std::signed_integral OutType, std::unsigned_integral InType>
     return static_cast<std::underlying_type_t<decltype(rhs)>>(rhs);
 }
 
-} // namespace tt
+} // namespace tt::inline v1

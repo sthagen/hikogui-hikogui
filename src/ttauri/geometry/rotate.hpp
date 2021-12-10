@@ -7,7 +7,7 @@
 #include "matrix.hpp"
 #include "identity.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 namespace geo {
 
 template<int D>
@@ -22,7 +22,7 @@ public:
 
     [[nodiscard]] rotate(float angle, vector<3> axis) noexcept requires(D == 3) : _v()
     {
-        tt_axiom(axis.is_valid());
+        tt_axiom(axis.holds_invariant());
         tt_axiom(std::abs(hypot(axis) - 1.0f) < 0.0001f);
 
         ttlet half_angle = angle * 0.5f;
@@ -30,6 +30,16 @@ public:
         ttlet S = std::sin(half_angle);
 
         _v = static_cast<f32x4>(axis) * S;
+        _v.w() = C;
+    }
+
+    [[nodiscard]] rotate(float angle) noexcept requires(D == 2) : _v()
+    {
+        ttlet half_angle = angle * 0.5f;
+        ttlet C = std::cos(half_angle);
+        ttlet S = std::sin(half_angle);
+
+        _v = f32x4{0.0f, 0.0f, 1.0f, 0.0f} * S;
         _v.w() = C;
     }
 
@@ -74,16 +84,16 @@ public:
         return {2.0f * std::atan2(length), vector<3>{_v.xyz0() * rcp_length}};
     }
 
-private:
+private :
     /** rotation is stored as a quaternion
      * w + x*i + y*j + z*k
      */
     f32x4 _v;
 };
 
-}
+} // namespace geo
 
 using rotate2 = geo::rotate<2>;
 using rotate3 = geo::rotate<3>;
 
-}
+} // namespace tt::inline v1

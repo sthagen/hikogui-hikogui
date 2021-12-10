@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace tt {
+namespace tt::inline v1 {
 class URL;
 
 /** A read-only memory mapping of a resource.
@@ -27,29 +27,28 @@ public:
     /** Offset into the resource file.
      * @return offset into the resource file.
      */
-    [[nodiscard]] virtual size_t offset() const noexcept = 0;
+    [[nodiscard]] virtual std::size_t offset() const noexcept = 0;
 
     /** Get a span to the memory mapping.
      */
     [[nodiscard]] virtual std::span<std::byte const> bytes() const noexcept = 0;
 
     /** Get a span to the memory mapping.
-    */
+     */
     [[nodiscard]] virtual std::string_view string_view() const noexcept = 0;
 
-    operator std::span<std::byte const> () const noexcept {
+    operator std::span<std::byte const>() const noexcept
+    {
         return bytes();
     }
 
     /** Size of the memory mapping.
      */
-    [[nodiscard]] virtual size_t size() const noexcept = 0;
+    [[nodiscard]] virtual std::size_t size() const noexcept = 0;
 
     /** Pointer to the memory mapping.
      */
     [[nodiscard]] virtual std::byte const *data() const noexcept = 0;
-
-    
 };
 
-}
+} // namespace tt::inline v1

@@ -19,6 +19,7 @@ configure_file(metadata.cpp.in metadata.cpp @ONLY)
 
 target_sources(ttauri PRIVATE
     algorithm.hpp
+    arguments.hpp
     animator.hpp
     assert.hpp
     atomic.hpp
@@ -51,7 +52,6 @@ target_sources(ttauri PRIVATE
     datum.hpp
     dead_lock_detector.cpp
     dead_lock_detector.hpp
-    debugger.cpp
     debugger.hpp
     $<${TT_MACOS}:${CMAKE_CURRENT_SOURCE_DIR}/debugger_macos.mm>
     $<${TT_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/debugger_win32.cpp>
@@ -59,6 +59,7 @@ target_sources(ttauri PRIVATE
     dialog.hpp
     $<${TT_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/dialog_win32.cpp>
     endian.hpp
+    enum_metadata.hpp
     exception.hpp
     file.hpp
     $<${TT_POSIX}:${CMAKE_CURRENT_SOURCE_DIR}/file_posix.cpp>
@@ -73,13 +74,13 @@ target_sources(ttauri PRIVATE
     $<${TT_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/file_view_win32.cpp>
     fixed.hpp
     float16.hpp
-    flow_layout.hpp
     format.hpp
     forward_value.hpp
     gap_buffer.hpp
     global_state.hpp
     glob.hpp
     hash.hpp
+    hash_map.hpp
     huffman.hpp
     icon.cpp
     icon.hpp
@@ -125,6 +126,7 @@ target_sources(ttauri PRIVATE
     resource_view.hpp
     safe_int.hpp
     semantic_version.hpp
+    scoped_buffer.hpp
     source_location.hpp
     small_map.hpp
     small_vector.hpp
@@ -195,6 +197,7 @@ if(TT_BUILD_TESTS)
         datum_tests.cpp
         dead_lock_detector_tests.cpp
         decimal_tests.cpp
+        enum_metadata_tests.cpp
         exceptions_tests.cpp
         file_view_tests.cpp
         fixed_string_tests.cpp

@@ -7,77 +7,53 @@
 #include "../GFX/pipeline_SDF_device_shared.hpp"
 #include "../GUI/gui_window.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
-[[nodiscard]] float menu_button_widget::margin() const noexcept
+widget_constraints const &menu_button_widget::set_constraints() noexcept
 {
-    return 0.0f;
+    _layout = {};
+
+    // Make room for button and margin.
+    _check_size = {theme().size, theme().size};
+    _short_cut_size = {theme().size, theme().size};
+
+    // On left side a check mark, on right side short-cut. Around the label extra margin.
+    ttlet extra_size = extent2{theme().margin * 4.0f + _check_size.width() + _short_cut_size.width(), theme().margin * 2.0f};
+    _constraints = set_constraints_button() + extra_size;
+    _constraints.margin = 0.0f;
+    return _constraints;
 }
 
-[[nodiscard]] bool menu_button_widget::constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept
+void menu_button_widget::set_layout(widget_layout const &layout) noexcept
 {
-    tt_axiom(is_gui_thread());
-
-    if (super::constrain(display_time_point, need_reconstrain)) {
-        // Make room for button and margin.
-        _check_size = {theme().size, theme().size};
-        _short_cut_size = {theme().size, theme().size};
-
-        // On left side a check mark, on right side short-cut. Around the label extra margin.
-        ttlet extra_size =
-            extent2{theme().margin * 4.0f + _check_size.width() + _short_cut_size.width(), theme().margin * 2.0f};
-        _minimum_size += extra_size;
-        _preferred_size += extra_size;
-        _maximum_size += extra_size;
-
-        tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-[[nodiscard]] void menu_button_widget::layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept
-{
-    tt_axiom(is_gui_thread());
-
-    need_layout |= _request_layout.exchange(false);
-    if (need_layout) {
-        ttlet inside_rectangle = shrink(rectangle(), theme().margin);
+    if (compare_store(_layout, layout)) {
+        ttlet inside_rectangle = layout.rectangle() - theme().margin;
 
         _check_rectangle = align(inside_rectangle, _check_size, alignment::middle_left);
         _short_cut_rectangle = align(inside_rectangle, _short_cut_size, alignment::middle_right);
 
         _label_rectangle = aarectangle{
-            _check_rectangle.right() + theme().margin,
-            0.0f,
-            _short_cut_rectangle.left() - theme().margin,
-            height()};
+            _check_rectangle.right() + theme().margin, 0.0f, _short_cut_rectangle.left() - theme().margin, layout.height()};
 
         _check_glyph = font_book().find_glyph(elusive_icon::Ok);
         ttlet check_glyph_bb = _check_glyph.get_bounding_box();
-        _check_glyph_rectangle =
-            align(_check_rectangle, scale(check_glyph_bb, theme().icon_size), alignment::middle_center);
+        _check_glyph_rectangle = align(_check_rectangle, check_glyph_bb * theme().icon_size, alignment::middle_center);
     }
-    super::layout(displayTimePoint, need_layout);
+    set_layout_button(layout);
 }
 
-void menu_button_widget::draw(draw_context context, utc_nanoseconds display_time_point) noexcept
+void menu_button_widget::draw(draw_context const &context) noexcept
 {
-    tt_axiom(is_gui_thread());
-
-    if (overlaps(context, _clipping_rectangle)) {
+    if (visible and overlaps(context, layout())) {
         draw_menu_button(context);
         draw_check_mark(context);
+        draw_button(context);
     }
-
-    super::draw(std::move(context), display_time_point);
 }
 
 [[nodiscard]] bool menu_button_widget::accepts_keyboard_focus(keyboard_focus_group group) const noexcept
 {
-    tt_axiom(is_gui_thread());
-    return is_menu(group) and enabled;
+    return visible and enabled and any(group & tt::keyboard_focus_group::menu);
 }
 
 [[nodiscard]] bool menu_button_widget::handle_event(command command) noexcept
@@ -115,22 +91,19 @@ void menu_button_widget::draw(draw_context context, utc_nanoseconds display_time
 
 void menu_button_widget::draw_menu_button(draw_context const &context) noexcept
 {
-    tt_axiom(is_gui_thread());
-
-    ttlet foreground_color_ = _focus && window.active ? focus_color() : color::transparent();
-    context.draw_box_with_border_inside(rectangle(), background_color(), foreground_color_, corner_shapes{0.0f});
+    ttlet foreground_color_ = focus and active() ? focus_color() : color::transparent();
+    context.draw_box(
+        layout(), layout().rectangle(), background_color(), foreground_color_, theme().border_width, border_side::inside);
 }
 
 void menu_button_widget::draw_check_mark(draw_context const &context) noexcept
 {
-    tt_axiom(is_gui_thread());
-
     auto state_ = state();
 
     // Checkmark or tristate.
     if (state_ == tt::button_state::on) {
-        context.draw_glyph(_check_glyph, theme().icon_size, translate_z(0.1f) * _check_glyph_rectangle, accent_color());
+        context.draw_glyph(layout(), translate_z(0.1f) * _check_glyph_rectangle, accent_color(), _check_glyph);
     }
 }
 
-} // namespace tt
+} // namespace tt::inline v1

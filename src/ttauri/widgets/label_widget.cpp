@@ -6,128 +6,138 @@
 #include "../GUI/gui_window.hpp"
 #include "../GUI/gui_system.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
-label_widget::label_widget(gui_window &window, widget *parent) noexcept : super(window, parent) {}
-
-void label_widget::init() noexcept
+label_widget::label_widget(gui_window &window, widget *parent) noexcept : super(window, parent)
 {
-    _icon_widget = &super::make_widget<icon_widget>(label->icon);
+    _icon_widget = std::make_unique<icon_widget>(window, this, label->icon);
     _icon_widget->alignment = alignment;
-    _text_widget = &super::make_widget<text_widget>(label->text);
+    _text_widget = std::make_unique<text_widget>(window, this, label->text);
     _text_widget->alignment = alignment;
     _text_widget->text_style = text_style;
 
+    _text_style_callback = text_style.subscribe([this] {
+        switch (*text_style) {
+        case theme_text_style::label: _icon_widget->color = theme_color::foreground; break;
+        case theme_text_style::small_label: _icon_widget->color = theme_color::foreground; break;
+        case theme_text_style::warning: _icon_widget->color = theme_color::orange; break;
+        case theme_text_style::error: _icon_widget->color = theme_color::red; break;
+        case theme_text_style::help: _icon_widget->color = theme_color::indigo; break;
+        case theme_text_style::placeholder: _icon_widget->color = theme_color::gray; break;
+        case theme_text_style::link: _icon_widget->color = theme_color::blue; break;
+        default: _icon_widget->color = theme_color::foreground;
+        }
+    });
+
     _label_callback = label.subscribe([this] {
-        this->window.gui.run([this] {
-            _icon_widget->icon = label->icon;
-            _text_widget->text = label->text;
-        });
+        _icon_widget->icon = label->icon;
+        _text_widget->text = label->text;
     });
 }
 
-[[nodiscard]] bool
-label_widget::constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept
+widget_constraints const &label_widget::set_constraints() noexcept
 {
-    tt_axiom(is_gui_thread());
+    _layout = {};
+    ttlet &text_constraints = _text_widget->set_constraints();
+    ttlet &icon_constraints = _icon_widget->set_constraints();
 
-    if (super::constrain(display_time_point, need_reconstrain)) {
-        ttlet label_size = _text_widget->preferred_size();
-        ttlet icon_size = _icon_widget->preferred_size();
+    ttlet label_size = text_constraints.preferred;
+    ttlet icon_size = icon_constraints.preferred;
 
-        ttlet has_text = label_size.width() > 0.0f;
-        ttlet has_icon = icon_size.width() > 0.0f;
+    ttlet has_text = label_size.width() > 0.0f;
+    ttlet has_icon = icon_size.width() > 0.0f;
 
-        _inner_margin = (has_text and has_icon) ? theme().margin : 0.0f;
+    _inner_margin = (has_text and has_icon) ? theme().margin : 0.0f;
 
-        if (has_icon) {
-            // Override the natural icon size.
-            if (*alignment == horizontal_alignment::center) {
-                _icon_size = theme().large_icon_size;
-            } else {
-                _icon_size = std::ceil(theme().text_style(*text_style).scaled_size() * 1.4f);
-            }
+    if (has_icon) {
+        // Override the natural icon size.
+        if (*alignment == horizontal_alignment::center) {
+            _icon_size = theme().large_icon_size;
+        } else if (alignment == vertical_alignment::middle) {
+            _icon_size = std::ceil(theme().text_style(*text_style).scaled_size() * 1.4f);
         } else {
-            _icon_size = 0.0f;
+            _icon_size = std::ceil(theme().text_style(*text_style).scaled_size());
         }
-
-        auto size = label_size;
-        if (has_icon) {
-            if (*alignment != horizontal_alignment::center) {
-                // If the icon is on the left or right, add the icon to the width.
-                // Since the label is inline, we do not adjust the height of the label widget on the icon size.
-                size.width() += _inner_margin + _icon_size;
-
-            } else if (*alignment != vertical_alignment::middle) {
-                // If the icon is above or below the text, add the icon height and the
-                // minimum width is the maximum of the icon and text width.
-                size.width() = std::max(size.width(), _icon_size);
-                size.height() += _icon_size;
-
-            } else {
-                // The text is written across the icon. Take the maximum width and height
-                // of both the icon and text.
-                size.width() = std::max(size.width(), _icon_size);
-                size.height() = std::max(size.height(), _icon_size);
-            }
-        }
-
-        _minimum_size = size;
-        _preferred_size = _minimum_size;
-        _maximum_size = _preferred_size;
-        tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
-        return true;
     } else {
-        return false;
+        _icon_size = 0.0f;
     }
+
+    auto size = label_size;
+    if (has_icon) {
+        if (*alignment != horizontal_alignment::center) {
+            // If the icon is on the left or right, add the icon to the width.
+            // Since the label is inline, we do not adjust the height of the label widget on the icon size.
+            size.width() += _inner_margin + _icon_size;
+
+        } else if (*alignment != vertical_alignment::middle) {
+            // If the icon is above or below the text, add the icon height and the
+            // minimum width is the maximum of the icon and text width.
+            size.width() = std::max(size.width(), _icon_size);
+            size.height() += _icon_size;
+
+        } else {
+            // The text is written across the icon. Take the maximum width and height
+            // of both the icon and text.
+            size.width() = std::max(size.width(), _icon_size);
+            size.height() = std::max(size.height(), _icon_size);
+        }
+    }
+
+    return _constraints = {size, size, size, theme().margin};
 }
 
-[[nodiscard]] void label_widget::layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept
+void label_widget::set_layout(widget_layout const &layout) noexcept
 {
-    tt_axiom(is_gui_thread());
-
-    need_layout |= _request_layout.exchange(false);
-    if (need_layout) {
-        auto text_rect = aarectangle{};
+    if (compare_store(_layout, layout)) {
+        _text_rectangle = aarectangle{};
         if (*alignment == horizontal_alignment::left) {
-            ttlet text_width = width() - _icon_size - _inner_margin;
-            text_rect = {_icon_size + _inner_margin, 0.0f, text_width, height()};
+            ttlet text_width = layout.width() - _icon_size - _inner_margin;
+            _text_rectangle = {_icon_size + _inner_margin, 0.0f, text_width, layout.height()};
 
         } else if (*alignment == horizontal_alignment::right) {
-            ttlet text_width = width() - _icon_size - _inner_margin;
-            text_rect = {0.0f, 0.0f, text_width, height()};
+            ttlet text_width = layout.width() - _icon_size - _inner_margin;
+            _text_rectangle = {0.0f, 0.0f, text_width, layout.height()};
 
         } else if (*alignment == vertical_alignment::top) {
-            ttlet text_height = height() - _icon_size;
-            text_rect = {0.0f, 0.0f, width(), text_height};
+            ttlet text_height = layout.height() - _icon_size;
+            _text_rectangle = {0.0f, 0.0f, layout.width(), text_height};
 
         } else if (*alignment == vertical_alignment::bottom) {
-            ttlet text_height = height() - _icon_size;
-            text_rect = {0.0f, _icon_size, width(), text_height};
+            ttlet text_height = layout.height() - _icon_size;
+            _text_rectangle = {0.0f, _icon_size, layout.width(), text_height};
 
         } else {
-            text_rect = rectangle();
+            _text_rectangle = layout.rectangle();
         }
 
         auto icon_pos = point2{};
         switch (*alignment) {
-        case alignment::top_left: icon_pos = {0.0f, height() - _icon_size}; break;
-        case alignment::top_right: icon_pos = {width() - _icon_size, height() - _icon_size}; break;
-        case alignment::top_center: icon_pos = {(width() - _icon_size) / 2.0f, height() - _icon_size}; break;
+        case alignment::top_left: icon_pos = {0.0f, layout.height() - _icon_size}; break;
+        case alignment::top_right: icon_pos = {layout.width() - _icon_size, layout.height() - _icon_size}; break;
+        case alignment::top_center: icon_pos = {(layout.width() - _icon_size) / 2.0f, layout.height() - _icon_size}; break;
         case alignment::bottom_left: icon_pos = {0.0f, 0.0f}; break;
-        case alignment::bottom_right: icon_pos = {width() - _icon_size, 0.0f}; break;
-        case alignment::bottom_center: icon_pos = {(width() - _icon_size) / 2.0f, 0.0f}; break;
-        case alignment::middle_left: icon_pos = {0.0f, (height() - _icon_size) / 2.0f}; break;
-        case alignment::middle_right: icon_pos = {width() - _icon_size, (height() - _icon_size)}; break;
-        case alignment::middle_center: icon_pos = {(width() - _icon_size) / 2.0f, (height() - _icon_size)}; break;
+        case alignment::bottom_right: icon_pos = {layout.width() - _icon_size, 0.0f}; break;
+        case alignment::bottom_center: icon_pos = {(layout.width() - _icon_size) / 2.0f, 0.0f}; break;
+        case alignment::middle_left: icon_pos = {0.0f, (layout.height() - _icon_size) / 2.0f}; break;
+        case alignment::middle_right: icon_pos = {layout.width() - _icon_size, (layout.height() - _icon_size)}; break;
+        case alignment::middle_center: icon_pos = {(layout.width() - _icon_size) / 2.0f, (layout.height() - _icon_size)};
+            break;
         default: tt_no_default();
         }
-        ttlet icon_rect = aarectangle{icon_pos, extent2{_icon_size, _icon_size}};
-
-        _icon_widget->set_layout_parameters_from_parent(icon_rect);
-        _text_widget->set_layout_parameters_from_parent(text_rect);
+        _icon_rectangle = aarectangle{icon_pos, extent2{_icon_size, _icon_size}};
     }
-    super::layout(displayTimePoint, need_layout);
+
+    // Elevate the child widget by 0.0f since the label widget does not draw itself.
+    _icon_widget->set_layout(layout.transform(_icon_rectangle, 0.0f));
+    _text_widget->set_layout(layout.transform(_text_rectangle, 0.0f));
 }
 
-} // namespace tt
+void label_widget::draw(draw_context const &context) noexcept
+{
+    if (visible and overlaps(context, layout())) {
+        _icon_widget->draw(context);
+        _text_widget->draw(context);
+    }
+}
+
+} // namespace tt::inline v1

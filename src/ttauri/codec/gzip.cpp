@@ -7,7 +7,7 @@
 #include "../endian.hpp"
 #include "../placement.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 struct GZIPMemberHeader {
     uint8_t ID1;
@@ -19,7 +19,7 @@ struct GZIPMemberHeader {
     uint8_t OS;
 };
 
-static bstring gzip_decompress_member(std::span<std::byte const> bytes, ssize_t &offset, ssize_t max_size)
+static bstring gzip_decompress_member(std::span<std::byte const> bytes, std::size_t &offset, std::size_t max_size)
 {
     ttlet header = make_placement_ptr<GZIPMemberHeader>(bytes, offset);
 
@@ -42,7 +42,7 @@ static bstring gzip_decompress_member(std::span<std::byte const> bytes, ssize_t 
     if (FNAME) {
         std::byte c;
         do {
-            tt_parse_check(offset < std::ssize(bytes), "GZIP Member header FNAME reading beyond end of buffer");
+            tt_parse_check(offset < bytes.size(), "GZIP Member header FNAME reading beyond end of buffer");
             c = bytes[offset++];
         } while (c != std::byte{0});
     }
@@ -50,7 +50,7 @@ static bstring gzip_decompress_member(std::span<std::byte const> bytes, ssize_t 
     if (FCOMMENT) {
         std::byte c;
         do {
-            tt_parse_check(offset < std::ssize(bytes), "GZIP Member header FCOMMENT reading beyond end of buffer");
+            tt_parse_check(offset < bytes.size(), "GZIP Member header FCOMMENT reading beyond end of buffer");
             c = bytes[offset++];
         } while (c != std::byte{0});
     }
@@ -70,18 +70,18 @@ static bstring gzip_decompress_member(std::span<std::byte const> bytes, ssize_t 
     return r;
 }
 
-bstring gzip_decompress(std::span<std::byte const> bytes, ssize_t max_size)
+bstring gzip_decompress(std::span<std::byte const> bytes, std::size_t max_size)
 {
     auto r = bstring{};
 
-    ssize_t offset = 0;
-    while (offset < std::ssize(bytes)) {
+    auto offset = 0_uz;
+    while (offset < bytes.size()) {
         auto member = gzip_decompress_member(bytes, offset, max_size);
-        max_size -= std::ssize(member);
+        max_size -= member.size();
         r.append(member);
     }
 
     return r;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

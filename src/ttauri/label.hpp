@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <memory>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A label consisting of localizable text and an icon.
  *
@@ -60,6 +60,16 @@ public:
     label(label &&other) noexcept = default;
     label &operator=(label &&other) noexcept = default;
 
+    [[nodiscard]] constexpr bool empty() const noexcept
+    {
+        return icon.empty() and text.empty();
+    }
+
+    constexpr explicit operator bool() const noexcept
+    {
+        return not empty();
+    }
+
     /** Compare if both labels are equal.
      * @param lhs A label.
      * @param rhs A label.
@@ -83,7 +93,7 @@ public:
 private:
 };
 
-} // namespace tt
+} // namespace tt::inline v1
 
 namespace std {
 

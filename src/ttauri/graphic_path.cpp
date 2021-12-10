@@ -8,16 +8,16 @@
 #include "pixel_map.hpp"
 #include "required.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 ssize_t graphic_path::numberOfContours() const noexcept
 {
-    return std::ssize(contourEndPoints);
+    return ssize(contourEndPoints);
 }
 
 ssize_t graphic_path::numberOfLayers() const noexcept
 {
-    return std::ssize(layerEndContours);
+    return ssize(layerEndContours);
 }
 
 bool graphic_path::hasLayers() const noexcept
@@ -33,7 +33,7 @@ bool graphic_path::allLayersHaveSameColor() const noexcept
 
     ttlet &firstColor = layerEndContours.front().second;
 
-    for (ttlet &[endContour, color] : layerEndContours) {
+    for (ttlet & [ endContour, color ] : layerEndContours) {
         if (color != firstColor) {
             return false;
         }
@@ -43,13 +43,13 @@ bool graphic_path::allLayersHaveSameColor() const noexcept
 
 [[nodiscard]] aarectangle graphic_path::boundingBox() const noexcept
 {
-    if (std::ssize(points) == 0) {
+    if (ssize(points) == 0) {
         return aarectangle{0.0, 0.0, 0.0, 0.0};
     }
 
     auto r = aarectangle{points.front().p, points.front().p};
 
-    for (ttlet &point: points) {
+    for (ttlet &point : points) {
         r |= point.p;
     }
 
@@ -99,7 +99,7 @@ void graphic_path::setColorOfLayer(ssize_t layerNr, color fill_color) noexcept
     layerEndContours.at(layerNr).second = fill_color;
 }
 
-std::pair<graphic_path,color> graphic_path::getLayer(ssize_t layerNr) const noexcept
+std::pair<graphic_path, color> graphic_path::getLayer(ssize_t layerNr) const noexcept
 {
     tt_assert(hasLayers());
 
@@ -116,12 +116,12 @@ std::pair<graphic_path,color> graphic_path::getLayer(ssize_t layerNr) const noex
 
 void graphic_path::optimizeLayers() noexcept
 {
-    if (std::ssize(layerEndContours) == 0) {
+    if (ssize(layerEndContours) == 0) {
         return;
     }
 
     decltype(layerEndContours) tmp;
-    tmp.reserve(std::ssize(layerEndContours));
+    tmp.reserve(ssize(layerEndContours));
 
     auto prev_i = layerEndContours.begin();
     for (auto i = prev_i + 1; i != layerEndContours.end(); ++i) {
@@ -136,7 +136,6 @@ void graphic_path::optimizeLayers() noexcept
 
     std::swap(layerEndContours, tmp);
 }
-
 
 std::vector<bezier_point> graphic_path::getbezier_pointsOfContour(ssize_t subpathNr) const noexcept
 {
@@ -170,14 +169,14 @@ bool graphic_path::isContourOpen() const noexcept
     } else if (contourEndPoints.size() == 0) {
         return true;
     } else {
-        return contourEndPoints.back() != (std::ssize(points) - 1);
+        return contourEndPoints.back() != (ssize(points) - 1);
     }
 }
 
 void graphic_path::closeContour() noexcept
 {
     if (isContourOpen()) {
-        contourEndPoints.push_back(std::ssize(points) - 1);
+        contourEndPoints.push_back(ssize(points) - 1);
     }
 }
 
@@ -190,7 +189,7 @@ bool graphic_path::isLayerOpen() const noexcept
     } else if (layerEndContours.size() == 0) {
         return true;
     } else {
-        return layerEndContours.back().first != (std::ssize(contourEndPoints) - 1);
+        return layerEndContours.back().first != (ssize(contourEndPoints) - 1);
     }
 }
 
@@ -198,7 +197,7 @@ void graphic_path::closeLayer(color fill_color) noexcept
 {
     closeContour();
     if (isLayerOpen()) {
-        layerEndContours.emplace_back(std::ssize(contourEndPoints) - 1, fill_color);
+        layerEndContours.emplace_back(ssize(contourEndPoints) - 1, fill_color);
     }
 }
 
@@ -302,14 +301,8 @@ void graphic_path::arcTo(float radius, point2 position) noexcept
     ttlet k2 = (4.0f / 3.0f) * (std::sqrt(2.0f * q1 * q2) - q2) / cross(VC1, VC2);
 
     // Calculate the control points.
-    ttlet C1 = point2{
-        (C.x() + VC1.x()) - k2 * VC1.y(),
-        (C.y() + VC1.y()) + k2 * VC1.x()
-    };
-    ttlet C2 = point2{
-        (C.x() + VC2.x()) + k2 * VC2.y(),
-        (C.y() + VC2.y()) - k2 * VC2.x()
-    };
+    ttlet C1 = point2{(C.x() + VC1.x()) - k2 * VC1.y(), (C.y() + VC1.y()) + k2 * VC1.x()};
+    ttlet C2 = point2{(C.x() + VC2.x()) + k2 * VC2.y(), (C.y() + VC2.y()) - k2 * VC2.x()};
 
     cubicCurveTo(C1, C2, P2);
 }
@@ -380,7 +373,9 @@ void graphic_path::addCircle(point2 position, float radius) noexcept
     closeContour();
 }
 
-void graphic_path::addContour(std::vector<bezier_point>::const_iterator const &begin, std::vector<bezier_point>::const_iterator const &end) noexcept
+void graphic_path::addContour(
+    std::vector<bezier_point>::const_iterator const &begin,
+    std::vector<bezier_point>::const_iterator const &end) noexcept
 {
     tt_assert(!isContourOpen());
     points.insert(points.end(), begin, end);
@@ -396,12 +391,10 @@ void graphic_path::addContour(std::vector<bezier_curve> const &contour) noexcept
 {
     tt_assert(!isContourOpen());
 
-    for (ttlet &curve: contour) {
+    for (ttlet &curve : contour) {
         // Don't emit the first point, the last point of the contour will wrap around.
         switch (curve.type) {
-        case bezier_curve::Type::Linear:
-            points.emplace_back(curve.P2, bezier_point::Type::Anchor);
-            break;
+        case bezier_curve::Type::Linear: points.emplace_back(curve.P2, bezier_point::Type::Anchor); break;
         case bezier_curve::Type::Quadratic:
             points.emplace_back(curve.C1, bezier_point::Type::QuadraticControl);
             points.emplace_back(curve.P2, bezier_point::Type::Anchor);
@@ -411,8 +404,7 @@ void graphic_path::addContour(std::vector<bezier_curve> const &contour) noexcept
             points.emplace_back(curve.C2, bezier_point::Type::CubicControl2);
             points.emplace_back(curve.P2, bezier_point::Type::Anchor);
             break;
-        default:
-            tt_no_default();
+        default: tt_no_default();
         }
     }
 
@@ -425,13 +417,18 @@ void graphic_path::addPath(graphic_path const &path, color fill_color) noexcept
     closeLayer(fill_color);
 }
 
-void graphic_path::addStroke(graphic_path const &path, color strokeColor, float strokeWidth, LineJoinStyle lineJoinStyle, float tolerance) noexcept
+void graphic_path::addStroke(
+    graphic_path const &path,
+    color strokeColor,
+    float strokeWidth,
+    line_join_style line_join_style,
+    float tolerance) noexcept
 {
-    *this += path.toStroke(strokeWidth, lineJoinStyle, tolerance);
+    *this += path.toStroke(strokeWidth, line_join_style, tolerance);
     closeLayer(strokeColor);
 }
 
-graphic_path graphic_path::toStroke(float strokeWidth, LineJoinStyle lineJoinStyle, float tolerance) const noexcept
+graphic_path graphic_path::toStroke(float strokeWidth, line_join_style line_join_style, float tolerance) const noexcept
 {
     tt_assert(!hasLayers());
     tt_assert(!isContourOpen());
@@ -444,10 +441,10 @@ graphic_path graphic_path::toStroke(float strokeWidth, LineJoinStyle lineJoinSty
     for (int i = 0; i < numberOfContours(); i++) {
         ttlet baseContour = getBeziersOfContour(i);
 
-        ttlet starboardContour = makeParallelContour(baseContour, starboardOffset, lineJoinStyle, tolerance);
+        ttlet starboardContour = makeParallelContour(baseContour, starboardOffset, line_join_style, tolerance);
         r.addContour(starboardContour);
 
-        ttlet portContour = makeInverseContour(makeParallelContour(baseContour, portOffset, lineJoinStyle, tolerance));
+        ttlet portContour = makeInverseContour(makeParallelContour(baseContour, portOffset, line_join_style, tolerance));
         r.addContour(portContour);
     }
 
@@ -462,16 +459,16 @@ graphic_path &graphic_path::operator+=(graphic_path const &rhs) noexcept
     // Left hand layer can only be open if the right hand side contains no layers.
     tt_assert(!rhs.hasLayers() || !isLayerOpen());
 
-    ttlet pointOffset = std::ssize(points);
-    ttlet contourOffset = std::ssize(contourEndPoints);
+    ttlet pointOffset = ssize(points);
+    ttlet contourOffset = ssize(contourEndPoints);
 
     layerEndContours.reserve(layerEndContours.size() + rhs.layerEndContours.size());
-    for (ttlet &[x, fill_color]: rhs.layerEndContours) {
+    for (ttlet & [ x, fill_color ] : rhs.layerEndContours) {
         layerEndContours.emplace_back(contourOffset + x, fill_color);
     }
 
     contourEndPoints.reserve(contourEndPoints.size() + rhs.contourEndPoints.size());
-    for (ttlet x: rhs.contourEndPoints) {
+    for (ttlet x : rhs.contourEndPoints) {
         contourEndPoints.push_back(pointOffset + x);
     }
 
@@ -481,20 +478,15 @@ graphic_path &graphic_path::operator+=(graphic_path const &rhs) noexcept
 
 graphic_path graphic_path::centerScale(extent2 extent, float padding) const noexcept
 {
-    auto max_size = extent2{
-        std::max(1.0f, extent.width() - (padding * 2.0f)),
-        std::max(1.0f, extent.height() - (padding * 2.0f))
-    };
+    auto max_size =
+        extent2{std::max(1.0f, extent.width() - (padding * 2.0f)), std::max(1.0f, extent.height() - (padding * 2.0f))};
 
     auto bbox = boundingBox();
     if (bbox.width() <= 0.0 || bbox.height() <= 0.0) {
         return {};
     }
 
-    ttlet scale = std::min(
-        max_size.width() / bbox.width(),
-        max_size.height() / bbox.height()
-    );
+    ttlet scale = std::min(max_size.width() / bbox.width(), max_size.height() / bbox.height());
     bbox = scale2(scale) * bbox;
 
     ttlet offset = (point2{} - get<0>(bbox)) + (extent - bbox.size()) * 0.5;
@@ -502,7 +494,7 @@ graphic_path graphic_path::centerScale(extent2 extent, float padding) const noex
     return (translate2(offset) * scale2(scale, scale)) * *this;
 }
 
-void composit(pixel_map<sfloat_rgba16>& dst, color color, graphic_path const &path) noexcept
+void composit(pixel_map<sfloat_rgba16> &dst, color color, graphic_path const &path) noexcept
 {
     tt_assert(!path.hasLayers());
     tt_assert(!path.isContourOpen());
@@ -516,12 +508,12 @@ void composit(pixel_map<sfloat_rgba16>& dst, color color, graphic_path const &pa
     composit(dst, color, mask);
 }
 
-void composit(pixel_map<sfloat_rgba16>& dst, graphic_path const &src) noexcept
+void composit(pixel_map<sfloat_rgba16> &dst, graphic_path const &src) noexcept
 {
     tt_assert(src.hasLayers() && !src.isLayerOpen());
 
     for (int layerNr = 0; layerNr < src.numberOfLayers(); layerNr++) {
-        ttlet [layer, fill_color] = src.getLayer(layerNr);
+        ttlet[layer, fill_color] = src.getLayer(layerNr);
 
         composit(dst, fill_color, layer);
     }
@@ -532,4 +524,4 @@ void fill(pixel_map<sdf_r8> &dst, graphic_path const &path) noexcept
     fill(dst, path.getBeziers());
 }
 
-}
+} // namespace tt::inline v1

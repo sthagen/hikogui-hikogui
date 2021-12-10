@@ -5,31 +5,34 @@
 #include "shaped_text.hpp"
 #include "unicode_description.hpp"
 #include "font_book.hpp"
+#include "unicode_bidi.hpp"
 #include "../small_map.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
-[[nodiscard]] static std::vector<attributed_grapheme> makeattributed_graphemeVector(gstring const &text, text_style const &style) noexcept
+[[nodiscard]] static std::vector<attributed_grapheme>
+makeattributed_graphemeVector(gstring const &text, text_style const &style) noexcept
 {
     std::vector<attributed_grapheme> r;
-    r.reserve(std::ssize(text));
+    r.reserve(text.size());
 
     int index = 0;
-    for (ttlet &grapheme: text) {
+    for (ttlet &grapheme : text) {
         r.emplace_back(grapheme, style, index++);
     }
 
-    if (std::ssize(text) == 0 || text.back() != grapheme::PS()) {
+    if (text.empty() or text.back() != grapheme::PS()) {
         r.emplace_back(grapheme::PS(), style, index++);
     }
 
     return r;
 }
 
-[[nodiscard]] static std::vector<attributed_glyph> graphemes_to_glyphs(tt::font_book const &font_book, std::vector<attributed_grapheme> const &text) noexcept
+[[nodiscard]] static std::vector<attributed_glyph>
+graphemes_to_glyphs(tt::font_book const &font_book, std::vector<attributed_grapheme> const &text) noexcept
 {
     // The end-of-paragraph must end text.
-    tt_axiom(std::ssize(text) >= 1 && text.back().grapheme == grapheme::PS());
+    tt_axiom(ssize(text) >= 1);
 
     std::vector<attributed_glyph> glyphs;
     glyphs.reserve(size(text));
@@ -72,7 +75,7 @@ static void wrap_lines(std::vector<attributed_glyph_line> &lines, float width) n
         while (i->shouldWrap(width)) {
             // Wrap will modify the current line to the maximum width and return
             // the rest of that line, which we insert here after it.
-            i = lines.insert(i+1, i->wrap(width)); 
+            i = lines.insert(i + 1, i->wrap(width));
         }
     }
 }
@@ -84,22 +87,18 @@ static void wrap_lines(std::vector<attributed_glyph_line> &lines, float width) n
 {
     auto size = extent2{0.0f, 0.0f};
 
-    if (std::ssize(lines) == 0) {
+    if (ssize(lines) == 0) {
         return size;
     }
 
     // Top of first line.
-    size = extent2{
-        lines.front().width,
-        lines.front().lineGap + lines.front().ascender
-    };
+    size = extent2{lines.front().width, lines.front().lineGap + lines.front().ascender};
 
-    auto nr_lines = std::ssize(lines);
+    auto nr_lines = ssize(lines);
     for (ssize_t i = 1; i != nr_lines; ++i) {
         size = extent2{
             std::max(size.width(), lines[i].width),
-            size.height() + lines[i-1].descender + std::max(lines[i-1].lineGap, lines[i].lineGap) + lines[i].ascender
-        };
+            size.height() + lines[i - 1].descender + std::max(lines[i - 1].lineGap, lines[i].lineGap) + lines[i].ascender};
     }
 
     // Bottom of last line.
@@ -113,10 +112,7 @@ static void wrap_lines(std::vector<attributed_glyph_line> &lines, float width) n
     ttlet min_y = lines.back().y - lines.back().descender;
     ttlet max_y = lines.front().y + lines.front().ascender;
 
-    return {
-        0.0, min_y,
-        width, max_y - min_y
-    };
+    return {0.0, min_y, width, max_y - min_y};
 }
 
 [[nodiscard]] static float position_x(alignment alignment, float line_width, float width) noexcept
@@ -138,19 +134,19 @@ static void position_glyphs(std::vector<attributed_glyph_line> &lines, alignment
     ssize_t start_line_downward;
     float start_y_upward = 0.0f;
     float start_y_downward = 0.0f;
-    if (alignment == vertical_alignment::top || std::ssize(lines) == 1) {
+    if (alignment == vertical_alignment::top || ssize(lines) == 1) {
         start_line_upward = -1; // Don't go upward
         start_line_downward = 0;
 
     } else if (alignment == vertical_alignment::bottom) {
-        start_line_upward = std::ssize(lines) - 1;
-        start_line_downward = std::ssize(lines); // Don't go downward.
+        start_line_upward = ssize(lines) - 1;
+        start_line_downward = ssize(lines); // Don't go downward.
 
     } else if (alignment == vertical_alignment::middle) {
-        start_line_upward = (std::ssize(lines) / 2) - 1;
-        start_line_downward = std::ssize(lines) / 2; // The middle line (odd number of lines).
+        start_line_upward = (ssize(lines) / 2) - 1;
+        start_line_downward = ssize(lines) / 2; // The middle line (odd number of lines).
 
-        if (std::ssize(lines) % 2 == 0) {
+        if (ssize(lines) % 2 == 0) {
             // For even number of lines, the middle is at the gap between the two middle lines.
             ttlet &upward_line = lines[start_line_upward];
             ttlet &downward_line = lines[start_line_downward];
@@ -171,16 +167,16 @@ static void position_glyphs(std::vector<attributed_glyph_line> &lines, alignment
     } else {
         tt_no_default();
     }
-    
+
     {
         // Draw lines downwards.
         float y = start_y_downward;
         bool first_line = true;
-        for (ssize_t i = start_line_downward; i != std::ssize(lines); ++i) {
+        for (ssize_t i = start_line_downward; i != ssize(lines); ++i) {
             auto &line = lines[i];
 
             if (!first_line) {
-                ttlet &prev_line = lines[i-1];
+                ttlet &prev_line = lines[i - 1];
                 // Add the descender under the base-line of the previous line.
                 y -= prev_line.descender;
 
@@ -205,7 +201,7 @@ static void position_glyphs(std::vector<attributed_glyph_line> &lines, alignment
             auto &line = lines[i];
 
             if (!first_line) {
-                ttlet &prev_line = lines[i+1];
+                ttlet &prev_line = lines[i + 1];
                 // Add the ascender above the base-line of the previous line.
                 y += prev_line.ascender;
 
@@ -230,23 +226,23 @@ struct shape_text_result {
 };
 
 /** Shape the text.
-* The given text is in logical-order; the order in which humans write text.
-* The resulting glyphs are in left-to-right display order.
-*
-* The following operations are executed on the text by the `shape_text()` function:
-*  - Put graphemes in left-to-right display order using the unicode_data::global's bidi_algorithm.
-*  - Convert attributed-graphemes into attributes-glyphs using font_book's find_glyph algorithm.
-*  - Morph attributed-glyphs using the font's morph algorithm.
-*  - Calculate advance for each attributed-glyph using the font's advance and kern algorithms.
-*  - Add line-breaks to the text to fit within the maximum-width.
-*  - Calculate actual size of the text
-*  - Align the text within the given extent size.
-*
-* @param text The text to be shaped.
-* @param alignment How the text should be horizontally-aligned inside the maximum_width.
-* @param max_width Maximum width that the text should flow into.
-* @return preferred size of the text, size of the resulting text, shaped text.
-*/
+ * The given text is in logical-order; the order in which humans write text.
+ * The resulting glyphs are in left-to-right display order.
+ *
+ * The following operations are executed on the text by the `shape_text()` function:
+ *  - Put graphemes in left-to-right display order using the unicode_data::global's bidi_algorithm.
+ *  - Convert attributed-graphemes into attributes-glyphs using font_book's find_glyph algorithm.
+ *  - Morph attributed-glyphs using the font's morph algorithm.
+ *  - Calculate advance for each attributed-glyph using the font's advance and kern algorithms.
+ *  - Add line-breaks to the text to fit within the maximum-width.
+ *  - Calculate actual size of the text
+ *  - Align the text within the given extent size.
+ *
+ * @param text The text to be shaped.
+ * @param alignment How the text should be horizontally-aligned inside the maximum_width.
+ * @param max_width Maximum width that the text should flow into.
+ * @return preferred size of the text, size of the resulting text, shaped text.
+ */
 [[nodiscard]] static shape_text_result shape_text(
     tt::font_book const &font_book,
     std::vector<attributed_grapheme> text,
@@ -257,15 +253,29 @@ struct shape_text_result {
     std::vector<attributed_glyph> attributed_glyphs;
 
     // Put graphemes in left-to-right display order using the unicode_data::global's bidi_algorithm.
-    //bidi_algorithm(text);
+    // bidi_algorithm(text);
     ssize_t logicalIndex = 0;
-    for (auto &c: text) {
+    for (auto &c : text) {
         ttlet &description = unicode_description_find(c.grapheme[0]);
         c.logicalIndex = logicalIndex++;
-        c.bidi_class = description.bidi_class();
         c.general_category = description.general_category();
     }
     tt_axiom(text.back().general_category == unicode_general_category::Zp);
+
+    auto old_text = text;
+
+    unicode_bidi(
+        text.begin(),
+        text.end(),
+        [](ttlet &c) {
+            return c.grapheme.front();
+        },
+        [](auto &c, char32_t code_point) {
+            c.grapheme.set_front(code_point);
+        },
+        [](auto &c, unicode_bidi_class bidi_class) {
+            c.bidi_class = bidi_class;
+        });
 
     // Convert attributed-graphemes into attributes-glyphs using font_book's find_glyph algorithm.
     auto glyphs = graphemes_to_glyphs(font_book, text);
@@ -281,30 +291,23 @@ struct shape_text_result {
     }
 
     // Morph attributed-glyphs using the font's morph algorithm.
-    //morph_glyphs(glyphs);
+    // morph_glyphs(glyphs);
 
     // Align the text within the actual box size.
     position_glyphs(lines, alignment, width);
 
     ttlet bounding_box = calculate_bounding_box(lines, width);
 
-    return {
-        preferred_extent,
-        bounding_box,
-        lines
-    };
+    return {preferred_extent, bounding_box, lines};
 }
-
 
 shaped_text::shaped_text(
     tt::font_book const &font_book,
     std::vector<attributed_grapheme> const &text,
     float width,
     tt::alignment alignment,
-    bool wrap
-) noexcept :
-    alignment(alignment),
-    width(width)
+    bool wrap) noexcept :
+    alignment(alignment), width(width)
 {
     auto result = shape_text(font_book, text, width, alignment, wrap);
     _preferred_extent = result.preferred_extent;
@@ -318,9 +321,10 @@ shaped_text::shaped_text(
     text_style const &style,
     float width,
     tt::alignment alignment,
-    bool wrap)
-noexcept :
-    shaped_text(font_book, makeattributed_graphemeVector(text, style), width, alignment, wrap) {}
+    bool wrap) noexcept :
+    shaped_text(font_book, makeattributed_graphemeVector(text, style), width, alignment, wrap)
+{
+}
 
 shaped_text::shaped_text(
     tt::font_book const &font_book,
@@ -328,10 +332,10 @@ shaped_text::shaped_text(
     text_style const &style,
     float width,
     tt::alignment alignment,
-    bool wrap
-) noexcept :
-    shaped_text(font_book, to_gstring(text), style, width, alignment, wrap) {}
-
+    bool wrap) noexcept :
+    shaped_text(font_book, to_gstring(text), style, width, alignment, wrap)
+{
+}
 
 [[nodiscard]] shaped_text::const_iterator shaped_text::find(ssize_t index) const noexcept
 {
@@ -340,7 +344,7 @@ shaped_text::shaped_text(
     });
 }
 
-[[nodiscard]] aarectangle shaped_text::rectangleOfgrapheme(ssize_t index) const noexcept
+[[nodiscard]] std::pair<aarectangle, bool> shaped_text::rectangleOfgrapheme(ssize_t index) const noexcept
 {
     ttlet i = find(index);
 
@@ -365,41 +369,57 @@ shaped_text::shaped_text(
 
     ttlet p0 = ligature_position_left - vector2{0.0f, line_i->descender};
     ttlet p3 = ligature_position_right + vector2{0.0f, line_i->ascender};
-    return aarectangle{p0, p3};
+    return {aarectangle{p0, p3}, i->bidi_class == unicode_bidi_class::L};
 }
 
 [[nodiscard]] aarectangle shaped_text::left_to_right_caret(ssize_t index, bool insertMode) const noexcept
 {
-    auto r = rectangleOfgrapheme(index);
+    auto [r, ltor] = rectangleOfgrapheme(index);
 
     if (insertMode) {
         // Change width to a single pixel.
-        r.set_width(1.0);
-    }
-
-    return r;
-}
-
-[[nodiscard]] std::vector<aarectangle> shaped_text::selection_rectangles(ssize_t first, ssize_t last) const noexcept
-{
-    auto r = std::vector<aarectangle>{};
-
-    for (ssize_t i = first; i != last; ++i) {
-        auto newRect = rectangleOfgrapheme(i);
-        if (std::ssize(r) > 0 && overlaps(r.back(), newRect)) {
-            r.back() |= newRect;
+        if (ltor) {
+        return {get<0>(r), point2{get<2>(r).x() + 1.0f, get<2>(r).y()}};
         } else {
-            r.push_back(newRect);
+            return {point2{get<1>(r).x() - 1, get<1>(r).y()}, get<3>(r)};
         }
     }
 
     return r;
 }
 
+[[nodiscard]] aarectangle shaped_text::right_to_left_caret(ssize_t index, bool insertMode) const noexcept
+{
+    auto [r, ltor] = rectangleOfgrapheme(index);
+
+    if (insertMode) {
+        // Change width to a single pixel.
+        return {point2{get<1>(r).x() - 1, get<3>(r).y()}, get<3>(r)};
+    }
+
+    return r;
+}
+
+
+[[nodiscard]] std::vector<aarectangle> shaped_text::selection_rectangles(ssize_t first, ssize_t last) const noexcept
+{
+    auto r = std::vector<aarectangle>{};
+
+    for (ssize_t i = first; i != last; ++i) {
+        auto [new_rect, ltor] = rectangleOfgrapheme(i);
+        if (ssize(r) > 0 && overlaps(r.back(), new_rect)) {
+            r.back() |= new_rect;
+        } else {
+            r.push_back(new_rect);
+        }
+    }
+
+    return r;
+}
 
 [[nodiscard]] std::optional<ssize_t> shaped_text::index_of_grapheme_at_coordinate(point2 coordinate) const noexcept
 {
-    for (ttlet &line: lines) {
+    for (ttlet &line : lines) {
         auto i = line.find(coordinate);
         if (i == line.cend()) {
             continue;
@@ -415,7 +435,7 @@ shaped_text::shaped_text(
                 return i->logicalIndex;
             } else if (newLogicalIndex >= i->graphemeCount) {
                 // Closer to the next glyph.
-                return (i+1)->logicalIndex;
+                return (i + 1)->logicalIndex;
             } else {
                 return i->logicalIndex + newLogicalIndex;
             }
@@ -443,7 +463,7 @@ shaped_text::shaped_text(
     auto i = find(logicalIndex);
     if (i->isParagraphSeparator()) {
         return {};
-    } else if (logicalIndex < (i->logicalIndex + i->graphemeCount)) {
+    } else if (logicalIndex < (i->logicalIndex + i->graphemeCount - 1)) {
         // Go right inside a ligature.
         return logicalIndex + 1;
     } else {
@@ -452,12 +472,12 @@ shaped_text::shaped_text(
     }
 }
 
-[[nodiscard]] std::pair<ssize_t,ssize_t> shaped_text::indices_of_paragraph(ssize_t logicalIndex) const noexcept
+[[nodiscard]] std::pair<ssize_t, ssize_t> shaped_text::indices_of_paragraph(ssize_t logicalIndex) const noexcept
 {
     tt_axiom(size() != 0);
     if (size() == 1) {
         // One line with only a paragraph separator means this is empty.
-        return {0,0};
+        return {0, 0};
     }
 
     auto i = find(logicalIndex);
@@ -489,8 +509,8 @@ shaped_text::shaped_text(
 }
 
 /** Return the index at the left side of a word
-*/
-[[nodiscard]] std::pair<ssize_t,ssize_t> shaped_text::indices_of_word(ssize_t logicalIndex) const noexcept
+ */
+[[nodiscard]] std::pair<ssize_t, ssize_t> shaped_text::indices_of_word(ssize_t logicalIndex) const noexcept
 {
     auto i = find(logicalIndex);
 
@@ -507,7 +527,7 @@ shaped_text::shaped_text(
         if (i == cbegin()) {
             // Whitespace at start of line is counted as a word.
             ;
-        } else if (!(i-1)->isWhiteSpace()) {
+        } else if (!(i - 1)->isWhiteSpace()) {
             // The glyph on the left is not a white space, means we need to select the word on the left
             --i;
         } else {
@@ -529,12 +549,12 @@ shaped_text::shaped_text(
 [[nodiscard]] std::optional<ssize_t> shaped_text::indexOfWordOnTheLeft(ssize_t logicalIndex) const noexcept
 {
     // Find edge of current word.
-    ttlet [s, e] = indices_of_word(logicalIndex);
-    
+    ttlet[s, e] = indices_of_word(logicalIndex);
+
     // If the cursor was already on that edge, find the edges of the previous word.
     if (s == logicalIndex) {
         if (ttlet tmp = indexOfCharOnTheLeft(s)) {
-            ttlet [s2, e2] = indices_of_word(*tmp);
+            ttlet[s2, e2] = indices_of_word(*tmp);
             return s2;
         }
     }
@@ -544,14 +564,14 @@ shaped_text::shaped_text(
 [[nodiscard]] std::optional<ssize_t> shaped_text::indexOfWordOnTheRight(ssize_t logicalIndex) const noexcept
 {
     // Find edge of current word.
-    ttlet [s, e] = indices_of_word(logicalIndex);
+    ttlet[s, e] = indices_of_word(logicalIndex);
 
     // If the cursor was already on that edge, find the edges of the next word.
     if (e == logicalIndex || find(e)->isWhiteSpace()) {
         if (ttlet tmp = indexOfCharOnTheRight(e)) {
-            ttlet [s2, e2] = indices_of_word(*tmp);
+            ttlet[s2, e2] = indices_of_word(*tmp);
             return s2 == e ? e2 : s2;
-        }       
+        }
     }
     return e;
 }
@@ -560,11 +580,11 @@ shaped_text::shaped_text(
 {
     graphic_path r;
 
-    if (std::ssize(*this) == 0) {
+    if (empty()) {
         return r;
     }
 
-    for (ttlet &attr_glyph: *this) {
+    for (ttlet &attr_glyph : *this) {
         r += attr_glyph.get_path();
     }
     r.optimizeLayers();
@@ -572,5 +592,4 @@ shaped_text::shaped_text(
     return r;
 }
 
-
-}
+} // namespace tt::inline v1

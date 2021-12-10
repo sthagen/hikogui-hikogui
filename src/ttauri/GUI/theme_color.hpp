@@ -4,9 +4,10 @@
 
 #pragma once
 
+#include "theme_text_style.hpp"
 #include "../exception.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 enum class theme_color : unsigned char {
     blue,
@@ -37,7 +38,7 @@ enum class theme_color : unsigned char {
     _size
 };
 
-constexpr size_t num_theme_colors = static_cast<size_t>(theme_color::_size);
+constexpr std::size_t num_theme_colors = static_cast<std::size_t>(theme_color::_size);
 
 [[nodiscard]] inline theme_color theme_color_from_string(std::string_view str)
 {
@@ -90,4 +91,4 @@ constexpr size_t num_theme_colors = static_cast<size_t>(theme_color::_size);
     }
 }
 
-} // namespace tt
+} // namespace tt::inline v1

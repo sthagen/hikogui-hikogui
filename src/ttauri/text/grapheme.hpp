@@ -9,7 +9,7 @@
 #include "../hash.hpp"
 #include <array>
 
-namespace tt {
+namespace tt::inline v1 {
 
 // "Compatibility mappings are guaranteed to be no longer than 18 characters, although most consist of just a few characters."
 // https://unicode.org/reports/tr44/ (TR44 5.7.3)
@@ -31,8 +31,8 @@ class grapheme {
      *    - 0       '1'
      *
      * if bit 0 is '0' the value contains a length+pointer as follows:
-     *    - 63:48   Length
-     *    - 47:0    Pointer to long_grapheme on the heap;
+     *    - 63:59   Length
+     *    - 58:0    Pointer to long_grapheme on the heap;
      *              bottom two bits are zero, due to alignment.
      */
     uint64_t value;
@@ -115,7 +115,7 @@ public:
         } else {
             auto r = std::u32string{};
             auto tmp = value >> 1;
-            for (size_t i = 0; i < 3; i++, tmp >>= 21) {
+            for (std::size_t i = 0; i < 3; i++, tmp >>= 21) {
                 if (auto codePoint = static_cast<char32_t>(tmp & 0x1f'ffff)) {
                     r += codePoint;
                 } else {
@@ -131,41 +131,59 @@ public:
         return value != 1;
     }
 
-    [[nodiscard]] size_t hash() const noexcept
+    [[nodiscard]] std::size_t hash() const noexcept
     {
-        size_t r = 0;
-        for (ssize_t i = 0; i != std::ssize(*this); ++i) {
+        std::size_t r = 0;
+        for (std::size_t i = 0; i != size(); ++i) {
             r = hash_mix_two(r, std::hash<char32_t>{}((*this)[i]));
         }
         return r;
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
         if (has_pointer()) {
-            return value >> 48;
+            return value >> 59;
+        } else if (value == 1) {
+            return 0;
+        } else if (value <= 0x3f'ffff) {
+            return 1;
+        } else if (value <= 0x7ffffffffff) {
+            return 2;
         } else {
-            auto tmp = value >> 1;
-            size_t i;
-            for (i = 0; i < 3; i++, tmp >>= 21) {
-                if ((tmp & 0x1f'ffff) == 0) {
-                    return i;
-                }
-            }
-            return i;
+            return 3;
         }
+    }
+
+    [[nodiscard]] friend std::size_t size(grapheme const &rhs) noexcept
+    {
+        return rhs.size();
     }
 
     [[nodiscard]] char32_t front() const noexcept
     {
-        if (size() == 0) {
-            return 0;
+        if (has_pointer()) {
+            return (*get_pointer())[0];
         } else {
-            return (*this)[0];
+            return (value >> 1) & 0x1f'ffff;
         }
     }
 
-    [[nodiscard]] char32_t operator[](size_t i) const noexcept
+    /** Update the first code point of a grapheme.
+     */
+    [[nodiscard]] void set_front(char32_t code_point) noexcept
+    {
+        if (has_pointer()) {
+            (*get_pointer())[0] = code_point;
+
+        } else {
+            tt_axiom(code_point <= 0x10'ffff);
+            constexpr uint64_t mask = 0x1f'ffff << 1;            
+            value = (value & ~mask) | (static_cast<uint64_t>(code_point) << 1);
+        }
+    }
+
+    [[nodiscard]] char32_t operator[](std::size_t i) const noexcept
     {
         if (has_pointer()) {
             tt_axiom(i < std::tuple_size_v<long_grapheme>);
@@ -180,8 +198,8 @@ public:
     [[nodiscard]] std::u32string NFC() const noexcept
     {
         std::u32string r;
-        r.reserve(std::ssize(*this));
-        for (ssize_t i = 0; i != std::ssize(*this); ++i) {
+        r.reserve(size());
+        for (std::size_t i = 0; i != size(); ++i) {
             r += (*this)[i];
         }
         return r;
@@ -223,7 +241,7 @@ private:
         return (value & 1) == 0;
     }
 
-    [[nodiscard]] static uint64_t create_pointer(char32_t const *data, size_t size) noexcept
+    [[nodiscard]] static uint64_t create_pointer(char32_t const *data, std::size_t size) noexcept
     {
         tt_assert(size <= std::tuple_size<long_grapheme>::value);
 
@@ -231,14 +249,14 @@ private:
         memcpy(ptr->data(), data, size);
 
         auto iptr = reinterpret_cast<ptrdiff_t>(ptr);
-        auto uptr = static_cast<uint64_t>(iptr << 16) >> 16;
-        return (size << 48) | uptr;
+        auto uptr = static_cast<uint64_t>(iptr << 5) >> 5;
+        return (size << 59) | uptr;
     }
 
     [[nodiscard]] long_grapheme *get_pointer() const noexcept
     {
-        auto uptr = (value << 16);
-        auto iptr = static_cast<ptrdiff_t>(uptr) >> 16;
+        auto uptr = (value << 5);
+        auto iptr = static_cast<ptrdiff_t>(uptr) >> 5;
         return std::launder(reinterpret_cast<long_grapheme *>(iptr));
     }
 
@@ -249,29 +267,17 @@ private:
         }
     }
 
-    [[nodiscard]] friend bool operator<(grapheme const &a, grapheme const &b) noexcept
-    {
-        ttlet length = std::min(std::ssize(a), std::ssize(b));
-
-        for (ssize_t i = 0; i != length; ++i) {
-            if (a[i] < b[i]) {
-                return true;
-            }
-        }
-        return std::ssize(a) < std::ssize(b);
-    }
-
     [[nodiscard]] friend bool operator==(grapheme const &a, grapheme const &b) noexcept
     {
         if (a.value == b.value) {
             return true;
         }
 
-        if (std::ssize(a) != std::ssize(b)) {
+        if (a.size() != b.size()) {
             return false;
         }
 
-        for (ssize_t i = 0; i != std::ssize(a); ++i) {
+        for (std::size_t i = 0; i != a.size(); ++i) {
             if (a[i] != b[i]) {
                 return false;
             }
@@ -279,42 +285,35 @@ private:
         return true;
     }
 
-    [[nodiscard]] friend bool operator!=(grapheme const &a, grapheme const &b) noexcept
-    {
-        return !(a == b);
-    }
+    //[[nodiscard]] friend bool operator<=>(grapheme const &a, grapheme const &b) noexcept
+    //{
+    //    ttlet length = std::min(a.size(), b.size());
+    //
+    //    for (ssize_t i = 0; i != length; ++i) {
+    //        if (a[i] < b[i]) {
+    //            return true;
+    //        }
+    //    }
+    //    return a.size() < b.size();
+    //}
 
     [[nodiscard]] friend bool operator==(grapheme const &lhs, char32_t const &rhs) noexcept
     {
-        return (std::ssize(lhs) == 1) && (lhs[0] == rhs);
-    }
-
-    [[nodiscard]] friend bool operator!=(grapheme const &lhs, char32_t const &rhs) noexcept
-    {
-        return !(lhs == rhs);
+        return (lhs.size() == 1) && (lhs[0] == rhs);
     }
 
     [[nodiscard]] friend bool operator==(grapheme const &lhs, char const &rhs) noexcept
     {
         return lhs == static_cast<char32_t>(rhs);
     }
-
-    [[nodiscard]] friend bool operator!=(grapheme const &lhs, char const &rhs) noexcept
-    {
-        return !(lhs == rhs);
-    }
 };
 
-} // namespace tt
-
-namespace std {
+} // namespace tt::inline v1
 
 template<>
-struct hash<tt::grapheme> {
-    [[nodiscard]] size_t operator()(tt::grapheme const &rhs) const noexcept
+struct std::hash<tt::grapheme> {
+    [[nodiscard]] std::size_t operator()(tt::grapheme const &rhs) const noexcept
     {
         return rhs.hash();
     }
 };
-
-} // namespace std

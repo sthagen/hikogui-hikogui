@@ -12,7 +12,7 @@
 #include "text/ttauri_icon.hpp"
 #include <variant>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** An image, in different formats.
  */
@@ -31,9 +31,14 @@ public:
     icon &operator=(icon const &) noexcept = default;
     icon &operator=(icon &&) noexcept = default;
 
-    [[nodiscard]] explicit operator bool () const noexcept
+    [[nodiscard]] constexpr bool empty() const noexcept
     {
-        return !std::holds_alternative<std::monostate>(_image);
+        return std::holds_alternative<std::monostate>(_image);
+    }
+
+    [[nodiscard]] constexpr explicit operator bool() const noexcept
+    {
+        return not empty();
     }
 
     [[nodiscard]] friend bool operator==(icon const &lhs, icon const &rhs) noexcept
@@ -56,7 +61,19 @@ public:
     template<typename T>
     [[nodiscard]] friend T &get(tt::icon &icon) noexcept
     {
-        return std::get<T>(_image);
+        return std::get<T>(icon._image);
+    }
+
+    template<typename T>
+    [[nodiscard]] friend std::add_pointer_t<T const> get_if(tt::icon const *icon) noexcept
+    {
+        return std::get_if<T>(&icon->_image);
+    }
+
+    template<typename T>
+    [[nodiscard]] friend std::add_pointer_t<T> get_if(tt::icon *icon) noexcept
+    {
+        return std::get_if<T>(&icon->_image);
     }
 
 private:
@@ -67,5 +84,4 @@ private:
     friend class stencil;
 };
 
-
-}
+} // namespace tt::inline v1

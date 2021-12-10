@@ -8,12 +8,12 @@
 
 #include "widget.hpp"
 #include "row_column_delegate.hpp"
+#include "grid_layout.hpp"
 #include "../GUI/theme.hpp"
-#include "../flow_layout.hpp"
 #include "../geometry/axis.hpp"
 #include <memory>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A row/column widget lays out child widgets along a row or column.
  *
@@ -42,6 +42,13 @@ public:
     using delegate_type = row_column_delegate<Axis>;
     static constexpr tt::axis axis = Axis;
 
+    ~row_column_widget()
+    {
+        if (auto delegate = _delegate.lock()) {
+            delegate->deinit(*this);
+        }
+    }
+
     /** Constructs an empty row/column widget.
      *
      * @param window The window.
@@ -56,6 +63,9 @@ public:
 
         if (parent) {
             semantic_layer = parent->semantic_layer;
+        }
+        if (auto d = _delegate.lock()) {
+            d->init(*this);
         }
     }
 
@@ -74,89 +84,105 @@ public:
     template<typename Widget, typename... Args>
     Widget &make_widget(Args &&...args)
     {
-        return super::make_widget<Widget>(std::forward<Args>(args)...);
+        auto tmp = std::make_unique<Widget>(window, this, std::forward<Args>(args)...);
+        auto &ref = *tmp;
+        _children.push_back(std::move(tmp));
+        request_reconstrain();
+        return ref;
+    }
+
+    /** Remove and deallocate all child widgets.
+     */
+    void clear() noexcept
+    {
+        tt_axiom(is_gui_thread());
+        _children.clear();
+        request_reconstrain();
     }
 
     /// @privatesection
-    void init() noexcept override
+    [[nodiscard]] pmr::generator<widget *> children(std::pmr::polymorphic_allocator<> &) const noexcept override
     {
-        super::init();
-        if (auto delegate = _delegate.lock()) {
-            delegate->init(*this);
+        for (ttlet &child : _children) {
+            co_yield child.get();
         }
     }
 
-    void deinit() noexcept override
+    widget_constraints const &set_constraints() noexcept override
     {
-        if (auto delegate = _delegate.lock()) {
-            delegate->deinit(*this);
+        _layout = {};
+
+        ssize_t index = 0;
+
+        auto minimum_thickness = 0.0f;
+        auto preferred_thickness = 0.0f;
+        auto maximum_thickness = 0.0f;
+        _grid_layout.clear();
+        for (ttlet &child : _children) {
+            update_constraints_for_child(*child, index++, minimum_thickness, preferred_thickness, maximum_thickness);
         }
-    }
+        _grid_layout.commit_constraints();
 
-    [[nodiscard]] float margin() const noexcept override
-    {
-        return 0.0f;
-    }
+        tt_axiom(index == ssize(_children));
 
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override
-    {
-        tt_axiom(is_gui_thread());
-
-        if (super::constrain(display_time_point, need_reconstrain)) {
-            _layout.clear();
-            _layout.reserve(std::ssize(_children));
-
-            ssize_t index = 0;
-
-            auto minimum_thickness = 0.0f;
-            auto preferred_thickness = 0.0f;
-            auto maximum_thickness = 0.0f;
-            for (ttlet &child : _children) {
-                update_constraints_for_child(*child, index++, minimum_thickness, preferred_thickness, maximum_thickness);
-            }
-
-            tt_axiom(index == std::ssize(_children));
-
-            if constexpr (axis == axis::row) {
-                _minimum_size = {_layout.minimum_size(), minimum_thickness};
-                _preferred_size = {_layout.preferred_size(), preferred_thickness};
-                _maximum_size = {_layout.maximum_size(), maximum_thickness};
-            } else {
-                _minimum_size = {minimum_thickness, _layout.minimum_size()};
-                _preferred_size = {preferred_thickness, _layout.preferred_size()};
-                _maximum_size = {maximum_thickness, _layout.maximum_size()};
-            }
-            tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
-            return true;
+        if constexpr (axis == axis::row) {
+            return _constraints = {
+                       {_grid_layout.minimum(), minimum_thickness},
+                       {_grid_layout.preferred(), preferred_thickness},
+                       {_grid_layout.maximum(), maximum_thickness}};
         } else {
-            return false;
+            return _constraints = {
+                       {minimum_thickness, _grid_layout.minimum()},
+                       {preferred_thickness, _grid_layout.preferred()},
+                       {maximum_thickness, _grid_layout.maximum()}};
         }
     }
 
-    [[nodiscard]] void layout(utc_nanoseconds display_time_point, bool need_layout) noexcept override
+    void set_layout(widget_layout const &layout) noexcept override
+    {
+        if (compare_store(_layout, layout)) {
+            _grid_layout.layout(axis == axis::row ? layout.width() : layout.height());
+        }
+
+        ssize_t index = 0;
+        for (ttlet &child : _children) {
+            update_layout_for_child(*child, index++, layout);
+        }
+
+        tt_axiom(index == ssize(_children));
+    }
+
+    void draw(draw_context const &context) noexcept override
+    {
+        if (visible) {
+            for (ttlet &child : _children) {
+                child->draw(context);
+            }
+        }
+    }
+
+    hitbox hitbox_test(point3 position) const noexcept override
     {
         tt_axiom(is_gui_thread());
 
-        need_layout |= _request_layout.exchange(false);
-        if (need_layout) {
-            _layout.set_size(axis == axis::row ? rectangle().width() : rectangle().height());
-
-            ssize_t index = 0;
+        if (visible and enabled) {
+            auto r = hitbox{};
             for (ttlet &child : _children) {
-                update_layout_for_child(*child, index++);
+                r = child->hitbox_test_from_parent(position, r);
             }
-
-            tt_axiom(index == std::ssize(_children));
+            return r;
+        } else {
+            return {};
         }
-        super::layout(display_time_point, need_layout);
     }
     /// @endprivatesection
 private:
+    std::vector<std::unique_ptr<widget>> _children;
     std::weak_ptr<delegate_type> _delegate;
-    flow_layout _layout;
+    grid_layout _grid_layout;
 
     void update_constraints_for_child(
-        widget const &child,
+        widget &child,
         ssize_t index,
         float &minimum_thickness,
         float &preferred_thickness,
@@ -164,47 +190,52 @@ private:
     {
         tt_axiom(is_gui_thread());
 
+        ttlet &child_constraints = child.set_constraints();
         if (axis == axis::row) {
-            ttlet minimum_length = child.minimum_size().width();
-            ttlet preferred_length = child.preferred_size().width();
-            ttlet maximum_length = child.maximum_size().width();
-            _layout.update(index, minimum_length, preferred_length, maximum_length, child.margin());
+            _grid_layout.add_constraint(
+                index,
+                child_constraints.minimum.width(),
+                child_constraints.preferred.width(),
+                child_constraints.maximum.width(),
+                child_constraints.margin);
 
-            minimum_thickness = std::max(minimum_thickness, child.minimum_size().height() + child.margin() * 2.0f);
-            preferred_thickness = std::max(preferred_thickness, child.preferred_size().height() + child.margin() * 2.0f);
-            maximum_thickness = std::max(maximum_thickness, child.maximum_size().height() + child.margin() * 2.0f);
+            minimum_thickness = std::max(minimum_thickness, child_constraints.minimum.height() + child_constraints.margin * 2.0f);
+            preferred_thickness =
+                std::max(preferred_thickness, child_constraints.preferred.height() + child_constraints.margin * 2.0f);
+            maximum_thickness = std::max(maximum_thickness, child_constraints.maximum.height() + child_constraints.margin * 2.0f);
 
         } else {
-            ttlet minimum_length = child.minimum_size().height();
-            ttlet preferred_length = child.preferred_size().height();
-            ttlet maximum_length = child.maximum_size().height();
-            _layout.update(index, minimum_length, preferred_length, maximum_length, child.margin());
+            _grid_layout.add_constraint(
+                index,
+                child_constraints.minimum.height(),
+                child_constraints.preferred.height(),
+                child_constraints.maximum.height(),
+                child_constraints.margin);
 
-            minimum_thickness = std::max(minimum_thickness, child.minimum_size().width() + child.margin() * 2.0f);
-            preferred_thickness = std::max(preferred_thickness, child.preferred_size().width() + child.margin() * 2.0f);
-            maximum_thickness = std::max(maximum_thickness, child.maximum_size().width() + child.margin() * 2.0f);
+            minimum_thickness = std::max(minimum_thickness, child_constraints.minimum.width() + child_constraints.margin * 2.0f);
+            preferred_thickness =
+                std::max(preferred_thickness, child_constraints.preferred.width() + child_constraints.margin * 2.0f);
+            maximum_thickness = std::max(maximum_thickness, child_constraints.maximum.width() + child_constraints.margin * 2.0f);
         }
     }
 
-    void update_layout_for_child(widget &child, ssize_t index) const noexcept
+    void update_layout_for_child(widget &child, ssize_t index, widget_layout const &context) const noexcept
     {
         tt_axiom(is_gui_thread());
 
-        ttlet[child_offset, child_length] = _layout.get_offset_and_size(index++);
+        ttlet[child_position, child_length] = _grid_layout.get_position_and_size(index);
 
+        ttlet &child_constraints = child.set_constraints();
         ttlet child_rectangle = axis == axis::row ?
             aarectangle{
-                rectangle().left() + child_offset,
-                rectangle().bottom() + child.margin(),
-                child_length,
-                rectangle().height() - child.margin() * 2.0f} :
+                child_position, child_constraints.margin, child_length, layout().height() - child_constraints.margin * 2.0f} :
             aarectangle{
-                rectangle().left() + child.margin(),
-                rectangle().top() - child_offset - child_length,
-                rectangle().width() - child.margin() * 2.0f,
+                child_constraints.margin,
+                layout().height() - child_position - child_length,
+                layout().width() - child_constraints.margin * 2.0f,
                 child_length};
 
-        child.set_layout_parameters_from_parent(child_rectangle);
+        child.set_layout(context.transform(child_rectangle, 0.0f));
     }
 };
 
@@ -216,4 +247,4 @@ using row_widget = row_column_widget<axis::row>;
  */
 using column_widget = row_column_widget<axis::column>;
 
-} // namespace tt
+} // namespace tt::inline v1

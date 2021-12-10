@@ -13,7 +13,7 @@
 #include <string_view>
 #include <tuple>
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 class l10n_args_base {
 public:
@@ -100,7 +100,7 @@ public:
         return std::apply(format_locale_wrapper<Values const &...>, std::tuple_cat(std::tuple{loc, fmt}, _values));
     }
 
-    template<size_t I>
+    template<std::size_t I>
     [[nodiscard]] long long n_recurse() const noexcept
     {
         if constexpr (I < sizeof...(Values)) {
@@ -164,11 +164,16 @@ public:
         return *this;
     }
 
+    [[nodiscard]] constexpr bool empty() const noexcept
+    {
+        return _msg_id.empty();
+    }
+
     /** Check if the message is in use.
      */
-    [[nodiscard]] explicit operator bool() const noexcept
+    [[nodiscard]] constexpr explicit operator bool() const noexcept
     {
-        return not _msg_id.empty();
+        return not empty();
     }
 
     /** Construct a localizable message.
@@ -247,4 +252,4 @@ private:
     std::unique_ptr<detail::l10n_args_base> _args;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

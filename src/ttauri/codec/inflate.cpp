@@ -8,26 +8,23 @@
 #include "../huffman.hpp"
 #include <array>
 
-namespace tt {
+namespace tt::inline v1 {
 
-static void inflate_copy_block(std::span<std::byte const> bytes, ssize_t &bit_offset, ssize_t max_size, bstring &r)
+static void inflate_copy_block(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t max_size, bstring &r)
 {
     auto offset = (bit_offset + 7) / 8;
 
     auto LEN = make_placement_ptr<little_uint16_buf_t>(bytes, offset);
     [[maybe_unused]] auto NLEN = make_placement_ptr<little_uint16_buf_t>(bytes, offset);
 
-    tt_parse_check((offset + LEN->value()) <= std::ssize(bytes), "input buffer overrun");
-    tt_parse_check((std::ssize(r) + LEN->value()) <= max_size, "output buffer overrun");
+    tt_parse_check((offset + LEN->value()) <= bytes.size(), "input buffer overrun");
+    tt_parse_check((r.size() + LEN->value()) <= max_size, "output buffer overrun");
     r.append(&bytes[offset], LEN->value());
 
     bit_offset = offset * 8;
 }
 
-[[nodiscard]] static int inflate_decode_length(
-    std::span<std::byte const> bytes,
-    ssize_t &bit_offset,
-    int symbol)
+[[nodiscard]] static std::size_t inflate_decode_length(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t symbol)
 {
     switch (symbol) {
     case 257: return 3;
@@ -59,15 +56,11 @@ static void inflate_copy_block(std::span<std::byte const> bytes, ssize_t &bit_of
     case 283: return get_bits(bytes, bit_offset, 5) + 195;
     case 284: return get_bits(bytes, bit_offset, 5) + 227;
     case 285: return 258;
-    default:
-        throw parse_error("Literal/Length symbol out of range {}", symbol);
+    default: throw parse_error("Literal/Length symbol out of range {}", symbol);
     }
 }
 
-[[nodiscard]] static int inflate_decode_distance(
-    std::span<std::byte const> bytes,
-    ssize_t &bit_offset,
-    int symbol)
+[[nodiscard]] static std::size_t inflate_decode_distance(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t symbol)
 {
     switch (symbol) {
     case 0: return 1;
@@ -100,15 +93,14 @@ static void inflate_copy_block(std::span<std::byte const> bytes, ssize_t &bit_of
     case 27: return get_bits(bytes, bit_offset, 12) + 12289;
     case 28: return get_bits(bytes, bit_offset, 13) + 16385;
     case 29: return get_bits(bytes, bit_offset, 13) + 24577;
-    default:
-        throw parse_error("Distance symbol out of range {}", symbol);
+    default: throw parse_error("Distance symbol out of range {}", symbol);
     }
 }
 
 static void inflate_block(
     std::span<std::byte const> bytes,
-    ssize_t &bit_offset,
-    ssize_t max_size,
+    std::size_t &bit_offset,
+    std::size_t max_size,
     huffman_tree<int16_t> const &literal_tree,
     huffman_tree<int16_t> const &distance_tree,
     bstring &r)
@@ -118,12 +110,12 @@ static void inflate_block(
         // - 15 bits maximum huffman code.
         // -  5 bits extra length.
         // -  7 bits rounding up to byte.
-        tt_parse_check(((bit_offset + 27) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+        tt_parse_check(((bit_offset + 27) >> 3) <= bytes.size(), "Input buffer overrun");
 
         auto literal_symbol = literal_tree.get_symbol(bytes, bit_offset);
 
         if (literal_symbol <= 255) {
-            tt_parse_check(std::ssize(r) < max_size, "Output buffer overrun");
+            tt_parse_check(r.size() < max_size, "Output buffer overrun");
             r.push_back(static_cast<std::byte>(literal_symbol));
 
         } else if (literal_symbol == 256) {
@@ -132,22 +124,22 @@ static void inflate_block(
 
         } else {
             auto length = inflate_decode_length(bytes, bit_offset, literal_symbol);
-            tt_parse_check(std::ssize(r) + length <= max_size, "Output buffer overrun");
+            tt_parse_check(r.size() + length <= max_size, "Output buffer overrun");
 
             // Test only every get_symbol, the trailer is at least 32 bits (Checksum)
             // - 15 bits maximum huffman code.
             // -  7 bits rounding up to byte.
-            tt_parse_check(((bit_offset + 22) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+            tt_parse_check(((bit_offset + 22) >> 3) <= bytes.size(), "Input buffer overrun");
             auto distance_symbol = distance_tree.get_symbol(bytes, bit_offset);
 
             // Test only every inflate_decode_distance, the trailer is at least 32 bits (Checksum)
             // - 13 bits extra length.
             // -  7 bits rounding up to byte.
-            tt_parse_check(((bit_offset + 20) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+            tt_parse_check(((bit_offset + 20) >> 3) <= bytes.size(), "Input buffer overrun");
             auto distance = inflate_decode_distance(bytes, bit_offset, distance_symbol);
 
-            tt_parse_check(distance <= std::ssize(r), "Distance beyond start of decompressed data");
-            auto src_i = std::ssize(r) - distance;
+            tt_parse_check(distance <= r.size(), "Distance beyond start of decompressed data");
+            auto src_i = r.size() - distance;
             for (auto i = 0; i != length; ++i) {
                 r.push_back(r[src_i++]);
             }
@@ -156,7 +148,7 @@ static void inflate_block(
 }
 
 huffman_tree<int16_t> deflate_fixed_literal_tree = []() {
-    std::vector<int> lengths;
+    std::vector<uint8_t> lengths;
 
     for (int i = 0; i <= 143; ++i) {
         lengths.push_back(8);
@@ -175,7 +167,7 @@ huffman_tree<int16_t> deflate_fixed_literal_tree = []() {
 }();
 
 huffman_tree<int16_t> deflate_fixed_distance_tree = []() {
-    std::vector<int> lengths;
+    std::vector<uint8_t> lengths;
 
     for (int i = 0; i <= 31; ++i) {
         lengths.push_back(5);
@@ -184,81 +176,77 @@ huffman_tree<int16_t> deflate_fixed_distance_tree = []() {
     return huffman_tree<int16_t>::from_lengths(lengths);
 }();
 
-
-
-static void inflate_fixed_block(std::span<std::byte const> bytes, ssize_t &bit_offset, ssize_t max_size, bstring &r)
+static void inflate_fixed_block(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t max_size, bstring &r)
 {
     inflate_block(bytes, bit_offset, max_size, deflate_fixed_literal_tree, deflate_fixed_distance_tree, r);
 }
 
-[[nodiscard]] static huffman_tree<int16_t> inflate_code_lengths(std::span<std::byte const> bytes, ssize_t &bit_offset, int nr_symbols)
+[[nodiscard]] static huffman_tree<int16_t>
+inflate_code_lengths(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t nr_symbols)
 {
     // The symbols are in different order in the table.
-    constexpr auto symbols = std::array{
-        16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
-    };
+    constexpr auto symbols = std::array<int16_t,19>{16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    tt_parse_check(((bit_offset + (3 * static_cast<ssize_t>(nr_symbols)) + 7) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+    tt_parse_check(((bit_offset + (3 * static_cast<std::size_t>(nr_symbols)) + 7) >> 3) <= bytes.size(), "Input buffer overrun");
 
-    auto lengths = std::vector<int>(std::ssize(symbols), 0);
-    for (int i = 0; i != nr_symbols; ++i) {
+    auto lengths = std::vector<uint8_t>(symbols.size(), 0);
+    for (auto i = 0_uz; i != nr_symbols; ++i) {
         ttlet symbol = symbols[i];
-        lengths[symbol] = get_bits(bytes, bit_offset, 3);
+        lengths[symbol] = static_cast<uint8_t>(get_bits(bytes, bit_offset, 3));
     }
     return huffman_tree<int16_t>::from_lengths(std::move(lengths));
 }
 
-std::vector<int> inflate_lengths(
+std::vector<uint8_t> inflate_lengths(
     std::span<std::byte const> bytes,
-    ssize_t &bit_offset,
-    int nr_symbols,
+    std::size_t &bit_offset,
+    std::size_t nr_symbols,
     huffman_tree<int16_t> const &code_length_tree)
 {
-    auto r = std::vector<int>{};
+    auto r = std::vector<uint8_t>{};
     r.reserve(nr_symbols);
 
-    auto prev_length = 0;
-    while (std::ssize(r) < nr_symbols) {
+    auto prev_length = 0_uz;
+    while (r.size() < nr_symbols) {
         // Test only every get_symbol, the trailer is at least 32 bits (Checksum)
         // -  7 bits maximum huffman code.
         // -  7 bits extra length.
         // -  7 bits rounding up to byte.
-        tt_parse_check(((bit_offset + 21) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+        tt_parse_check(((bit_offset + 21) >> 3) <= bytes.size(), "Input buffer overrun");
         auto symbol = code_length_tree.get_symbol(bytes, bit_offset);
 
         switch (symbol) {
         case 16: {
-                auto copy_length = get_bits(bytes, bit_offset, 2) + 3;
-                while (copy_length--) {
-                    r.push_back(prev_length);
-                }
-            } break;
+            auto copy_length = get_bits(bytes, bit_offset, 2) + 3;
+            while (copy_length--) {
+                r.push_back(static_cast<uint8_t>(prev_length));
+            }
+        } break;
         case 17: {
-                auto copy_length = get_bits(bytes, bit_offset, 3) + 3;
-                while (copy_length--) {
-                    r.push_back(0);
-                }
-            } break;
+            auto copy_length = get_bits(bytes, bit_offset, 3) + 3;
+            while (copy_length--) {
+                r.push_back(0);
+            }
+        } break;
         case 18: {
-                auto copy_length = get_bits(bytes, bit_offset, 7) + 11;
-                while (copy_length--) {
-                    r.push_back(0);
-                }
-            } break;
-        default:
-            r.push_back(prev_length = symbol);
+            auto copy_length = get_bits(bytes, bit_offset, 7) + 11;
+            while (copy_length--) {
+                r.push_back(0);
+            }
+        } break;
+        default: r.push_back(static_cast<uint8_t>(prev_length = symbol));
         }
     }
 
     return r;
 }
 
-void inflate_dynamic_block(std::span<std::byte const> bytes, ssize_t &bit_offset, ssize_t max_size, bstring &r)
+void inflate_dynamic_block(std::span<std::byte const> bytes, std::size_t &bit_offset, std::size_t max_size, bstring &r)
 {
     // Test all lengths, the trailer is at least 32 bits (Checksum)
     // - 14 bits lengths
     // -  7 bits rounding up to byte.
-    tt_parse_check(((bit_offset + 21) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+    tt_parse_check(((bit_offset + 21) >> 3) <= bytes.size(), "Input buffer overrun");
     ttlet HLIT = get_bits(bytes, bit_offset, 5);
     ttlet HDIST = get_bits(bytes, bit_offset, 5);
     ttlet HCLEN = get_bits(bytes, bit_offset, 4);
@@ -275,9 +263,9 @@ void inflate_dynamic_block(std::span<std::byte const> bytes, ssize_t &bit_offset
     inflate_block(bytes, bit_offset, max_size, literal_tree, distance_tree, r);
 }
 
-bstring inflate(std::span<std::byte const> bytes, ssize_t &offset, ssize_t max_size)
+bstring inflate(std::span<std::byte const> bytes, std::size_t &offset, std::size_t max_size)
 {
-    ssize_t bit_offset = offset * 8;
+    std::size_t bit_offset = offset * 8;
 
     auto r = bstring{};
 
@@ -286,23 +274,16 @@ bstring inflate(std::span<std::byte const> bytes, ssize_t &offset, ssize_t max_s
         // Test all lengths, the trailer is at least 32 bits (Checksum)
         // - 3 bits header
         // - 7 bits rounding up to byte.
-        tt_parse_check(((bit_offset + 10) >> 3) <= std::ssize(bytes), "Input buffer overrun");
+        tt_parse_check(((bit_offset + 10) >> 3) <= bytes.size(), "Input buffer overrun");
 
-        BFINAL = get_bits(bytes, bit_offset, 1);
+        BFINAL = get_bit(bytes, bit_offset);
         ttlet BTYPE = get_bits(bytes, bit_offset, 2);
 
         switch (BTYPE) {
-        case 0:
-            inflate_copy_block(bytes, bit_offset, max_size - std::ssize(r), r);
-            break;
-        case 1:
-            inflate_fixed_block(bytes, bit_offset, max_size - std::ssize(r), r);
-            break;
-        case 2:
-            inflate_dynamic_block(bytes, bit_offset, max_size - std::ssize(r), r);
-            break;
-        default:
-            throw parse_error("Reserved block type");
+        case 0: inflate_copy_block(bytes, bit_offset, max_size, r); break;
+        case 1: inflate_fixed_block(bytes, bit_offset, max_size, r); break;
+        case 2: inflate_dynamic_block(bytes, bit_offset, max_size, r); break;
+        default: throw parse_error("Reserved block type");
         }
 
     } while (!BFINAL);
@@ -311,4 +292,4 @@ bstring inflate(std::span<std::byte const> bytes, ssize_t &offset, ssize_t max_s
     return r;
 }
 
-}
+} // namespace tt::inline v1

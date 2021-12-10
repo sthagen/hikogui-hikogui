@@ -10,7 +10,7 @@
 #include "../rapid/numeric_array.hpp"
 #include <span>
 
-namespace tt {
+namespace tt::inline v1 {
 
 enum class audio_block_state { normal, silent, corrupt };
 
@@ -37,11 +37,11 @@ public:
 
     /** Number of samples for each channel in samples.
      */
-    size_t num_samples;
+    std::size_t num_samples;
 
     /** Number of channels in samples.
      */
-    size_t num_channels;
+    std::size_t num_channels;
 
     /** The sample rate this block was taken at.
      * This is the word-clock rate, not the sample rate the device was configured as.
@@ -71,4 +71,4 @@ public:
     audio_block_state state;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

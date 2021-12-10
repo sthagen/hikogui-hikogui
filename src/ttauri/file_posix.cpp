@@ -11,19 +11,20 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace tt {
+namespace tt::inline v1 {
 
-File::File(URL const &location, AccessMode accessMode) :
-    accessMode(accessMode), location(location)
+File::File(URL const &location, AccessMode accessMode) : accessMode(accessMode), location(location)
 {
     int openFlags = 0;
 
     if (accessMode >= (AccessMode::Read | AccessMode::Write)) {
         openFlags = O_RDWR;
     } else if (accessMode >= AccessMode::Read) {
-        openFlags = O_RDONLY;;
+        openFlags = O_RDONLY;
+        ;
     } else if (accessMode >= AccessMode::Write) {
-        openFlags = O_WRONLY;;
+        openFlags = O_WRONLY;
+        ;
     } else {
         throw io_error("{}: Invalid AccessMode; expecting Readable and/or Writeable.", location());
     }
@@ -52,8 +53,8 @@ File::File(URL const &location, AccessMode accessMode) :
         throw io_error("{}: Invalid AccessMode; expecting CreateFile and/or OpenFile.", location());
     }
 
-    //int advise = 0;
-    //if (accessMode >= AccessMode::Random) {
+    // int advise = 0;
+    // if (accessMode >= AccessMode::Random) {
     //    advise = POSIX_FADV_RANDOM;
     //} if (accessMode >= AccessMode::Sequential) {
     //    advise = POSIX_FADV_SEQUENTIAL;
@@ -61,7 +62,7 @@ File::File(URL const &location, AccessMode accessMode) :
     //    advise = 0;
     //}
     //
-    //if (accessMode >= AccessMode::NoReuse) {
+    // if (accessMode >= AccessMode::NoReuse) {
     //    advise |= POSIX_FADV_NOREUSE;
     //}
 
@@ -88,7 +89,7 @@ void File::close()
     }
 }
 
-size_t File::fileSize(URL const &url)
+std::size_t File::fileSize(URL const &url)
 {
     ttlet name = url.nativePath();
 
@@ -98,7 +99,7 @@ size_t File::fileSize(URL const &url)
         throw io_error("{}: Could not retrieve file attributes. '{}'", location(), get_last_error_message());
     }
 
-    return narrow_cast<size_t>(statbuf.st_size);
+    return narrow_cast<std::size_t>(statbuf.st_size);
 }
 
-}
+} // namespace tt::inline v1

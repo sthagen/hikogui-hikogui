@@ -12,7 +12,7 @@
 #include "utils.hpp"
 #include <exception>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** Assert if expression is true.
  * Independent of built type this macro will always check and abort on fail.
@@ -20,11 +20,11 @@ namespace tt {
  */
 #define tt_assert(expression, ...) \
     do { \
-        if (!(expression)) { \
-            if constexpr (__VA_OPT__(!) true) { \
-                [[unlikely]] tt_debugger_abort(#expression); \
+        if (not (expression)) { \
+            if constexpr (__VA_OPT__(not) true) { \
+                tt_debug_abort(#expression); \
             } else { \
-                [[unlikely]] tt_debugger_abort(__VA_ARGS__); \
+                tt_debug_abort(__VA_ARGS__); \
             } \
         } \
     } while (false)
@@ -34,12 +34,12 @@ namespace tt {
  * An axiom is checked in debug mode, and is used as an optimization
  * in release mode.
  */
-#define tt_axiom(expression, ...) tt_assert(expression __VA_OPT__(,) __VA_ARGS__)
+#define tt_axiom(expression, ...) tt_assert(expression __VA_OPT__(, ) __VA_ARGS__)
 
 /** This part of the code should not be reachable, unless a programming bug.
  * This function should be used in unreachable else statements or switch-default labels,
  */
-#define tt_no_default() [[unlikely]] tt_debugger_abort("tt_no_default()")
+#define tt_no_default() [[unlikely]] tt_debug_abort("tt_no_default()");
 
 #else
 
@@ -58,18 +58,23 @@ namespace tt {
 /** This part of the code should not be reachable, unless a programming bug.
  * This function should be used in unreachable constexpr else statements.
  */
-#define tt_static_no_default() []<bool Flag = false>(){ static_assert(Flag); }()
+#define tt_static_no_default() \
+    []<bool Flag = false>() \
+    { \
+        static_assert(Flag); \
+    } \
+    ()
 
 /** This part of the code has not been implemented yet.
  * This aborts the program.
  */
-#define tt_not_implemented() [[unlikely]] tt_debugger_abort("tt_not_implemented()")
+#define tt_not_implemented() [[unlikely]] tt_debug_abort("tt_not_implemented()");
 
 /** This part of the code has not been implemented yet.
  * This function should be used in unreachable constexpr else statements.
  */
 #define tt_static_not_implemented() tt_static_no_default()
 
-} // namespace tt
+} // namespace tt::inline v1
 
 #endif

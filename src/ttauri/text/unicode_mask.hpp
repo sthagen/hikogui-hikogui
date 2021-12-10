@@ -9,13 +9,13 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 
 class unicode_mask_entry {
 public:
-    static constexpr size_t size_bit = 11;
-    static constexpr size_t size_mask = (1_uz << size_bit) - 1;
+    static constexpr std::size_t size_bit = 11;
+    static constexpr std::size_t size_mask = (1_uz << size_bit) - 1;
 
     constexpr unicode_mask_entry() noexcept : _value(0) {}
 
@@ -31,14 +31,14 @@ public:
     constexpr unicode_mask_entry &operator=(unicode_mask_entry const &) noexcept = default;
     constexpr unicode_mask_entry &operator=(unicode_mask_entry &&) noexcept = default;
 
-    [[nodiscard]] static constexpr size_t capacity() noexcept
+    [[nodiscard]] static constexpr std::size_t capacity() noexcept
     {
         return size_mask;
     }
 
-    [[nodiscard]] constexpr size_t size() const noexcept
+    [[nodiscard]] constexpr std::size_t size() const noexcept
     {
-        return static_cast<size_t>(_value & size_mask);
+        return static_cast<std::size_t>(_value & size_mask);
     }
 
     [[nodiscard]] constexpr bool empty() const noexcept
@@ -51,7 +51,7 @@ public:
         return size() == capacity();
     }
 
-    [[nodiscard]] constexpr size_t room() const noexcept
+    [[nodiscard]] constexpr std::size_t room() const noexcept
     {
         return capacity() - size();
     }
@@ -66,12 +66,12 @@ public:
         return begin() + static_cast<char32_t>(size());
     }
 
-    constexpr unicode_mask_entry &add_back(size_t num_code_points) noexcept
+    constexpr unicode_mask_entry &add_back(std::size_t num_code_points) noexcept
     {
         return *this = unicode_mask_entry{begin(), static_cast<char32_t>(end() + num_code_points)};
     }
 
-    constexpr unicode_mask_entry &remove_front(size_t num_code_points) noexcept
+    constexpr unicode_mask_entry &remove_front(std::size_t num_code_points) noexcept
     {
         return *this = unicode_mask_entry{static_cast<char32_t>(begin() + num_code_points), end()};
     }
@@ -85,7 +85,7 @@ private:
     uint32_t _value;
 };
 
-}
+} // namespace detail
 
 /** A mask of unicode code-points.
  *
@@ -106,7 +106,7 @@ public:
     constexpr unicode_mask &operator=(unicode_mask const &) noexcept = default;
     constexpr unicode_mask &operator=(unicode_mask &&) noexcept = default;
 
-    [[nodiscard]] constexpr size_t size() const noexcept
+    [[nodiscard]] constexpr std::size_t size() const noexcept
     {
         return _size;
     }
@@ -145,10 +145,10 @@ public:
         auto r = unicode_mask{};
         r._entries.reserve(lhs._entries.size() * 2 + rhs._entries.size() * 2);
 
-        auto lhs_it = std::begin(lhs._entries);
-        auto rhs_it = std::begin(rhs._entries);
-        ttlet lhs_end = std::end(lhs._entries);
-        ttlet rhs_end = std::end(rhs._entries);
+        auto lhs_it = begin(lhs._entries);
+        auto rhs_it = begin(rhs._entries);
+        ttlet lhs_end = end(lhs._entries);
+        ttlet rhs_end = end(rhs._entries);
 
         while (lhs_it != lhs_end or rhs_it != rhs_end) {
             // clang-format off
@@ -189,14 +189,13 @@ public:
     [[nodiscard]] bool holds_invariant() const noexcept;
 
 private:
-    
     using entry_type = detail::unicode_mask_entry;
     using entries_type = std::vector<entry_type>;
     using iterator = typename entries_type::iterator;
     using const_iterator = typename entries_type::const_iterator;
 
-    size_t _size = 0;
+    std::size_t _size = 0;
     entries_type _entries = {};
 };
 
-} // namespace tt
+} // namespace tt::inline v1

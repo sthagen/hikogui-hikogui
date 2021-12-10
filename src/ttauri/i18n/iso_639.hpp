@@ -8,7 +8,7 @@
 #include "../assert.hpp"
 #include "../strings.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** ISO-639 language code.
  * A 2 or 3 lower case language code selected from the following iso standards in this order:
@@ -28,15 +28,15 @@ public:
 
     constexpr iso_639(std::string_view str) noexcept
     {
-        if (std::size(str) == 0) {
+        if (size(str) == 0) {
             _v0 = 0;
             _v1 = 0;
             _v2 = 0;
-        } else if (std::size(str) == 2) {
+        } else if (size(str) == 2) {
             _v0 = to_lower(str[0]);
             _v1 = to_lower(str[1]);
             _v2 = 0;
-        } else if (std::size(str) == 3) {
+        } else if (size(str) == 3) {
             _v0 = to_lower(str[0]);
             _v1 = to_lower(str[1]);
             _v2 = to_lower(str[2]);
@@ -45,7 +45,7 @@ public:
         }
     }
 
-    constexpr explicit operator bool () const noexcept
+    constexpr explicit operator bool() const noexcept
     {
         return _v0 == 0 and _v1 == 0 and _v2 == 0;
     }
@@ -80,5 +80,4 @@ private:
     char _v2;
 };
 
-}
-
+} // namespace tt::inline v1

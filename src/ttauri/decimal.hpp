@@ -13,7 +13,7 @@
 #include <charconv>
 #include <ostream>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class decimal {
 private:
@@ -185,7 +185,7 @@ public:
         return mantissa() != 0;
     }
 
-    size_t hash() const noexcept
+    std::size_t hash() const noexcept
     {
         auto v = this->normalize();
         return std::hash<uint64_t>{}(v.value);
@@ -340,7 +340,7 @@ public:
         auto s = std::to_string(std::abs(m));
 
         auto decimal_position = -e;
-        auto leading_zeros = (decimal_position - std::ssize(s)) + 1;
+        auto leading_zeros = (decimal_position - ssize(s)) + 1;
         if (leading_zeros > 0) {
             s.insert(0, leading_zeros, '0');
         }
@@ -565,13 +565,13 @@ private:
     }
 };
 
-} // namespace tt
+} // namespace tt::inline v1
 
 namespace std {
 
 template<>
 struct hash<tt::decimal> {
-    inline size_t operator()(tt::decimal const &value) const
+    inline std::size_t operator()(tt::decimal const &value) const
     {
         return value.hash();
     }

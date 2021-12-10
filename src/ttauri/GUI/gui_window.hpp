@@ -24,7 +24,7 @@
 #include <memory>
 #include <mutex>
 
-namespace tt {
+namespace tt::inline v1 {
 class gfx_device;
 class gfx_system;
 class gfx_surface;
@@ -64,18 +64,6 @@ public:
      */
     mouse_cursor currentmouse_cursor = mouse_cursor::None;
 
-    /** When set to true the widget will calculate their constraints.
-     */
-    std::atomic<bool> request_constrain = true;
-
-    /** When set to true the window will resize to the preferred size of the contained widget.
-     */
-    std::atomic<bool> request_resize = true;
-
-    /** When set to true the widgets will be laid out.
-     */
-    std::atomic<bool> request_layout = true;
-
     /*! The window is currently being resized by the user.
      * We can disable expensive redraws during rendering until this
      * is false again.
@@ -99,7 +87,12 @@ public:
      */
     float dpi = 72.0;
 
-    //! The widget covering the complete window.
+    /** The size of the widget.
+     */
+    extent2 widget_size;
+
+    /** The widget covering the complete window.
+     */
     std::unique_ptr<window_widget> widget;
 
     gui_window(gui_system &gui, label const &title, std::weak_ptr<delegate_type> delegate = {}) noexcept;
@@ -140,7 +133,7 @@ public:
      */
     void request_redraw(aarectangle rectangle) noexcept
     {
-        _request_redraw_rectangle |= rectangle;
+        _redraw_rectangle |= rectangle;
     }
 
     /** Request a rectangle on the window to be redrawn
@@ -149,6 +142,21 @@ public:
     {
         tt_axiom(is_gui_thread());
         request_redraw(aarectangle{screen_rectangle.size()});
+    }
+
+    void request_relayout() noexcept
+    {
+        _relayout.store(true, std::memory_order::relaxed);
+    }
+
+    void request_reconstrain() noexcept
+    {
+        _reconstrain.store(true, std::memory_order::relaxed);
+    }
+
+    void request_resize() noexcept
+    {
+        _resize.store(true, std::memory_order::relaxed);
     }
 
     /** By how much the font needs to be scaled compared to current windowScale.
@@ -168,7 +176,7 @@ public:
      */
     [[nodiscard]] bool is_closed() const noexcept;
 
-        /** Get a reference to the window's content widget.
+    /** Get a reference to the window's content widget.
      * @see grid_widget
      * @return A reference to a grid_widget.
      */
@@ -211,6 +219,12 @@ public:
     /** Ask the operating system to normalize this window.
      */
     virtual void normalize_window() = 0;
+
+    /** Open the system menu of the window.
+     *
+     * On windows 10 this is activated by pressing Alt followed by Spacebar.
+     */
+    virtual void open_system_menu() = 0;
 
     /** Ask the operating system to set the size of this window.
      */
@@ -273,7 +287,10 @@ public:
 protected:
     std::weak_ptr<delegate_type> _delegate;
 
-    std::atomic<aarectangle> _request_redraw_rectangle = aarectangle{};
+    std::atomic<aarectangle> _redraw_rectangle = aarectangle{};
+    std::atomic<bool> _relayout = true;
+    std::atomic<bool> _reconstrain = true;
+    std::atomic<bool> _resize = true;
 
     /** The time of the last forced redraw.
      * A forced redraw may happen when needing to draw outside
@@ -387,4 +404,4 @@ private:
     friend class widget;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

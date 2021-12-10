@@ -11,7 +11,7 @@
 struct HWND__;
 using HWND = HWND__ *;
 
-namespace tt {
+namespace tt::inline v1 {
 
 class gui_window_win32 final : public gui_window {
 public:
@@ -37,6 +37,8 @@ public:
 
     void normalize_window() override;
 
+    void open_system_menu() override;
+
     void set_window_size(extent2 extent) override;
 
     [[nodiscard]] extent2 virtual_screen_size() const noexcept override;
@@ -46,7 +48,7 @@ public:
     void set_text_on_clipboard(std::string str) noexcept override;
 
 private:
-    void setOSWindowRectangleFromRECT(RECT aarectangle) noexcept;
+    static constexpr UINT_PTR move_and_resize_timer_id = 2;
 
     TRACKMOUSEEVENT trackMouseLeaveEventParameters;
     bool trackingMouseLeaveEvent = false;
@@ -54,7 +56,9 @@ private:
     mouse_event mouseButtonEvent;
     utc_nanoseconds doubleClickTimePoint;
     std::chrono::nanoseconds doubleClickMaximumDuration;
-    UINT_PTR move_and_resize_timer_id;
+
+    void setOSWindowRectangleFromRECT(RECT aarectangle) noexcept;
+
     [[nodiscard]] KeyboardState getKeyboardState() noexcept;
     [[nodiscard]] keyboard_modifiers getkeyboard_modifiers() noexcept;
 
@@ -62,4 +66,4 @@ private:
     [[nodiscard]] mouse_event createmouse_event(unsigned int uMsg, uint64_t wParam, int64_t lParam) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

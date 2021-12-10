@@ -2,19 +2,18 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-
 #pragma once
 
 #include "unicode_bidi_class.hpp"
 #include "unicode_description.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 
 struct unicode_bidi_char_info {
     /** Index from the first character in the original list.
      */
-    size_t index;
+    std::size_t index;
 
     /** The current code point.
      * The value may change during the execution of the bidi algorithm.
@@ -40,7 +39,7 @@ struct unicode_bidi_char_info {
      */
     unicode_description const *description;
 
-    [[nodiscard]] unicode_bidi_char_info(size_t index, char32_t code_point) noexcept :
+    [[nodiscard]] unicode_bidi_char_info(std::size_t index, char32_t code_point) noexcept :
         index(index), code_point(code_point), embedding_level(0)
     {
         description = &unicode_description_find(code_point);
@@ -51,7 +50,7 @@ struct unicode_bidi_char_info {
     /** Constructor for testing to bypass normal initialization.
      * WARNING: DO NOT USE EXCEPT IN UNIT TESTS.
      */
-    [[nodiscard]] unicode_bidi_char_info(size_t index, unicode_bidi_class bidi_class) noexcept :
+    [[nodiscard]] unicode_bidi_char_info(std::size_t index, unicode_bidi_class bidi_class) noexcept :
         index(index),
         code_point(U'\ufffd'),
         direction(bidi_class),
@@ -78,14 +77,16 @@ struct unicode_bidi_paragraph {
     }
 };
 
-template<typename OutputIt, typename SetCodePoint>
+template<typename OutputIt, typename SetCodePoint, typename SetTextDirection>
 static void unicode_bidi_L4(
     unicode_bidi_char_info_iterator first,
     unicode_bidi_char_info_iterator last,
     OutputIt output_it,
-    SetCodePoint set_code_point) noexcept
+    SetCodePoint set_code_point,
+    SetTextDirection set_text_direction) noexcept
 {
     for (auto it = first; it != last; ++it, ++output_it) {
+        set_text_direction(*output_it, it->direction);
         if (it->direction == unicode_bidi_class::R && it->description->bidi_bracket_type() != unicode_bidi_bracket_type::n) {
             set_code_point(*output_it, it->description->bidi_mirrored_glyph());
         }
@@ -96,6 +97,7 @@ struct unicode_bidi_test_parameters {
     unicode_bidi_class force_paragraph_direction = unicode_bidi_class::unknown;
     bool enable_mirrored_brackets = true;
     bool enable_line_separator = true;
+    bool move_lf_and_ps_to_end_of_line = true;
 };
 
 [[nodiscard]] unicode_bidi_char_info_iterator unicode_bidi_P1(
@@ -123,34 +125,42 @@ struct unicode_bidi_test_parameters {
  * @tparam It A Bidirectional read-write iterator.
  * @tparam GetChar function of the form: `(auto &) -> char32_t`.
  * @tparam SetChar function of the form: `(auto &, char32_t) -> void`.
+ * @tparam SetTextDirection function of the form: `(auto &, unicode_bidi_class) -> void`
  * @param first The first iterator
  * @param last The last iterator
  * @param get_char A function to get the character from an item.
  * @param set_char A function to set the character in an item.
+ * @param set_text_direction A function to set the text direction in an item.
  */
-template<typename It, typename GetCodePoint, typename SetCodePoint>
+template<typename It, typename GetCodePoint, typename SetCodePoint, typename SetTextDirection>
 It unicode_bidi(
     It first,
     It last,
     GetCodePoint get_code_point,
     SetCodePoint set_code_point,
+    SetTextDirection set_text_direction,
     detail::unicode_bidi_test_parameters test_parameters = {})
 {
     auto proxy = detail::unicode_bidi_char_info_vector{};
     proxy.reserve(std::distance(first, last));
 
-    size_t index = 0;
+    std::size_t index = 0;
     for (auto it = first; it != last; ++it) {
         proxy.emplace_back(index++, get_code_point(*it));
     }
 
-    auto proxy_last = detail::unicode_bidi_P1(std::begin(proxy), std::end(proxy), test_parameters);
-    last = shuffle_by_index(first, last, std::begin(proxy), proxy_last, [](ttlet &item) {
+    auto proxy_last = detail::unicode_bidi_P1(begin(proxy), end(proxy), test_parameters);
+    last = shuffle_by_index(first, last, begin(proxy), proxy_last, [](ttlet &item) {
         return item.index;
     });
 
-    detail::unicode_bidi_L4(std::begin(proxy), proxy_last, first, set_code_point);
+    detail::unicode_bidi_L4(
+        begin(proxy),
+        proxy_last,
+        first,
+        std::forward<SetCodePoint>(set_code_point),
+        std::forward<SetTextDirection>(set_text_direction));
     return last;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

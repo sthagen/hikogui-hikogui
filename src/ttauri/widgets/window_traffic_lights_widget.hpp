@@ -5,17 +5,12 @@
 #pragma once
 
 #include "widget.hpp"
-#include "../graphic_path.hpp"
 #include "../text/font_glyph_ids.hpp"
 #include <memory>
 #include <string>
 #include <array>
 
-namespace tt {
-struct graphic_path;
-}
-
-namespace tt {
+namespace tt::inline v1 {
 
 class window_traffic_lights_widget final : public widget {
 public:
@@ -24,12 +19,11 @@ public:
     window_traffic_lights_widget(gui_window &window, widget *parent) noexcept;
 
     /// @privatesection
-    [[nodiscard]] float margin() const noexcept override;
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds display_time_point, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     bool handle_event(mouse_event const &event) noexcept override;
-    [[nodiscard]] hitbox hitbox_test(point2 position) const noexcept override;
+    [[nodiscard]] hitbox hitbox_test(point3 position) const noexcept override;
     /// @endprivatesection
 private:
     static constexpr float GLYPH_SIZE = 5.0f;
@@ -37,10 +31,6 @@ private:
     static constexpr float DIAMETER = RADIUS * 2.0f;
     static constexpr float MARGIN = 10.0f;
     static constexpr float SPACING = 8.0f;
-
-    /** Size of the glyphs of each icon.
-     */
-    float _glyph_size;
 
     aarectangle closeRectangle;
     aarectangle minimizeRectangle;
@@ -64,8 +54,8 @@ private:
     bool pressedMinimize = false;
     bool pressedMaximize = false;
 
-    void drawMacOS(draw_context const &context, utc_nanoseconds display_time_point) noexcept;
-    void drawWindows(draw_context const &context, utc_nanoseconds display_time_point) noexcept;
+    void drawMacOS(draw_context const &context) noexcept;
+    void drawWindows(draw_context const &context) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

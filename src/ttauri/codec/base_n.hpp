@@ -17,7 +17,7 @@
 
 #pragma once
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 
 struct base_n_alphabet {
@@ -32,7 +32,7 @@ struct base_n_alphabet {
      * @param case_insensitive The alphabet is case insensitive for decoding.
      * @param padding_char The character used to complete the last block during encoding.
      */
-    template<size_t StringLength>
+    template<std::size_t StringLength>
     constexpr base_n_alphabet(
         char const (&str)[StringLength],
         bool case_insensitive = StringLength <= 33,
@@ -47,27 +47,27 @@ struct base_n_alphabet {
         }
 
         // Mark white-space in the int_from_char_table as white-space.
-        int_from_char_table[narrow_cast<size_t>(' ')] = -1;
-        int_from_char_table[narrow_cast<size_t>('\t')] = -1;
-        int_from_char_table[narrow_cast<size_t>('\r')] = -1;
-        int_from_char_table[narrow_cast<size_t>('\n')] = -1;
-        int_from_char_table[narrow_cast<size_t>('\f')] = -1;
+        int_from_char_table[narrow_cast<std::size_t>(' ')] = -1;
+        int_from_char_table[narrow_cast<std::size_t>('\t')] = -1;
+        int_from_char_table[narrow_cast<std::size_t>('\r')] = -1;
+        int_from_char_table[narrow_cast<std::size_t>('\n')] = -1;
+        int_from_char_table[narrow_cast<std::size_t>('\f')] = -1;
 
         if (padding_char != 0) {
-            int_from_char_table[narrow_cast<size_t>(padding_char)] = -1;
+            int_from_char_table[narrow_cast<std::size_t>(padding_char)] = -1;
         }
 
         for (long long i = 0; i != radix; ++i) {
             auto c = str[i];
             char_from_int_table[i] = c;
 
-            int_from_char_table[narrow_cast<size_t>(c)] = narrow_cast<int8_t>(i);
+            int_from_char_table[narrow_cast<std::size_t>(c)] = narrow_cast<int8_t>(i);
             if constexpr (StringLength <= 33) {
                 // Add an extra entry for case folded form.
                 if (c >= 'a' && c <= 'z') {
-                    int_from_char_table[narrow_cast<size_t>((c - 'a') + 'A')] = narrow_cast<int8_t>(i);
+                    int_from_char_table[narrow_cast<std::size_t>((c - 'a') + 'A')] = narrow_cast<int8_t>(i);
                 } else if (c >= 'A' && c <= 'Z') {
-                    int_from_char_table[narrow_cast<size_t>((c - 'A') + 'a')] = narrow_cast<int8_t>(i);
+                    int_from_char_table[narrow_cast<std::size_t>((c - 'A') + 'a')] = narrow_cast<int8_t>(i);
                 }
             }
         }
@@ -84,7 +84,7 @@ struct base_n_alphabet {
 
     constexpr int8_t int_from_char(char c) const noexcept
     {
-        return int_from_char_table[narrow_cast<size_t>(c)];
+        return int_from_char_table[narrow_cast<std::size_t>(c)];
     }
 };
 
@@ -301,4 +301,4 @@ using base64url = base_n<detail::base64url_rfc4648_alphabet, 4, 3>;
 using base85 = base_n<detail::base85_rfc1924_alphabet, 5, 4>;
 using ascii85 = base_n<detail::base85_btoa_alphabet, 5, 4>;
 
-} // namespace tt
+} // namespace tt::inline v1

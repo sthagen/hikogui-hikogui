@@ -9,11 +9,12 @@
 #include "exception.hpp"
 #include "geometry/axis_aligned_rectangle.hpp"
 #include "geometry/transform.hpp"
+#include "geometry/line_join_style.hpp"
 #include "rapid/sfloat_rgba16.hpp"
 #include "rapid/sdf_r8.hpp"
 #include <vector>
 
-namespace tt {
+namespace tt::inline v1 {
 
 struct bezier_curve;
 template<typename T>
@@ -213,7 +214,7 @@ struct graphic_path {
         graphic_path const &path,
         color strokeColor,
         float strokeWidth,
-        LineJoinStyle lineJoinStyle = LineJoinStyle::Miter,
+        tt::line_join_style line_join_style = line_join_style::miter,
         float tolerance = 0.05f) noexcept;
 
     /** Convert path to stroke-path.
@@ -224,12 +225,12 @@ struct graphic_path {
      * the lines are connected to each other.
      *
      * \param strokeWidth width of the stroke.
-     * \param lineJoinStyle the style of how outside corners of a stroke are drawn.
+     * \param line_join_style the style of how outside corners of a stroke are drawn.
      * \param tolerance Tolerance of how flat the curves in the path need to be.
      */
     [[nodiscard]] graphic_path toStroke(
         float strokeWidth = 1.0f,
-        LineJoinStyle lineJoinStyle = LineJoinStyle::Miter,
+        line_join_style line_join_style = line_join_style::miter,
         float tolerance = 0.05f) const noexcept;
 
     /** Center and scale a path inside the extent with padding.
@@ -274,4 +275,4 @@ void composit(pixel_map<sfloat_rgba16> &dst, graphic_path const &mask) noexcept;
  */
 void fill(pixel_map<sdf_r8> &dst, graphic_path const &path) noexcept;
 
-} // namespace tt
+} // namespace tt::inline v1

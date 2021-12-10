@@ -15,7 +15,7 @@
 #include <ostream>
 #include <mutex>
 
-namespace tt {
+namespace tt::inline v1 {
 struct url_parts;
 class resource_view;
 
@@ -76,7 +76,7 @@ public:
         return value.empty();
     }
 
-    [[nodiscard]] size_t hash() const noexcept;
+    [[nodiscard]] std::size_t hash() const noexcept;
 
     [[nodiscard]] std::string_view scheme() const noexcept;
 
@@ -200,14 +200,14 @@ private:
     static URL _urlOfCurrentWorkingDirectory;
 };
 
-} // namespace tt
+} // namespace tt::inline v1
 
 namespace std {
 
 template<>
 class hash<tt::URL> {
 public:
-    size_t operator()(tt::URL const &url) const noexcept
+    std::size_t operator()(tt::URL const &url) const noexcept
     {
         return url.hash();
     }

@@ -8,16 +8,16 @@
 #include "../geometry/rectangle.hpp"
 #include "../vspan.hpp"
 #include "../color/color.hpp"
-#include <vk_mem_alloc.h>
+#include "../color/quad_color.hpp"
 #include "../geometry/corner_shapes.hpp"
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 #include <mutex>
 
-namespace tt {
+namespace tt::inline v1 {
 class gfx_device_vulkan;
-}
 
-namespace tt::pipeline_box {
+namespace pipeline_box {
 struct Image;
 struct vertex;
 
@@ -37,8 +37,8 @@ struct device_shared final {
     device_shared &operator=(device_shared &&) = delete;
 
     /*! Deallocate vulkan resources.
-    * This is called in the destructor of gfx_device_vulkan, therefor we can not use our `device`.
-    */
+     * This is called in the destructor of gfx_device_vulkan, therefor we can not use our `device`.
+     */
     void destroy(gfx_device_vulkan *vulkanDevice);
 
     void drawInCommandBuffer(vk::CommandBuffer &commandBuffer);
@@ -46,16 +46,16 @@ struct device_shared final {
     static void place_vertices(
         vspan<vertex> &vertices,
         aarectangle clipping_rectangle,
-        rectangle box,
-        color fill_color,
-        color line_color,
+        quad box,
+        quad_color fill_colors,
+        quad_color line_colors,
         float line_width,
-        corner_shapes corner_shapes
-    );
+        corner_shapes corner_shapes);
 
 private:
     void buildShaders();
     void teardownShaders(gfx_device_vulkan *vulkanDevice);
 };
 
-}
+} // namespace pipeline_box
+} // namespace tt::inline v1

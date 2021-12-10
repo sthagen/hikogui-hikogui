@@ -4,13 +4,13 @@
 
 #pragma once
 
-namespace tt {
+namespace tt::inline v1 {
 
-/** Compare then assign if there was a change.
- * @return true when the right hand side is different from the left and side.
+/** Compare then store if there was a change.
+ * @return true if a store was executed.
  */
 template<typename T, typename U>
-[[nodiscard]] bool compare_then_assign(T &lhs, U &&rhs) noexcept
+[[nodiscard]] bool compare_store(T &lhs, U &&rhs) noexcept
 {
     if (lhs != rhs) {
         lhs = std::forward<U>(rhs);
@@ -20,4 +20,4 @@ template<typename T, typename U>
     }
 }
 
-}
+} // namespace tt::inline v1

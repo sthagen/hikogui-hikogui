@@ -3,9 +3,16 @@
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "tab_widget.hpp"
-#include "../GUI/gui_window.hpp"
+#include "../scoped_buffer.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
+
+tab_widget::~tab_widget()
+{
+    if (auto delegate = _delegate.lock()) {
+        delegate->deinit(*this);
+    }
+}
 
 tab_widget::tab_widget(gui_window &window, widget *parent, weak_or_unique_ptr<delegate_type> delegate) noexcept :
     super(window, parent), _delegate(std::move(delegate))
@@ -14,21 +21,22 @@ tab_widget::tab_widget(gui_window &window, widget *parent, weak_or_unique_ptr<de
 
     if (parent) {
         // The tab-widget will not draw itself, only its selected child.
-        draw_layer = parent->draw_layer;
         semantic_layer = parent->semantic_layer;
     }
 
     if (auto d = _delegate.lock()) {
-        _delegate_callback = d->subscribe(*this, [this](auto...) {
-            this->_request_constrain = true;
-        });
+        d->subscribe(*this, _reconstrain_callback);
     }
 
     // Compare and assign would trigger the signaling NaN that widget sets.
-    _minimum_size = {};
-    _preferred_size = {};
-    _maximum_size = {32767.0f, 32767.0f};
-    tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
+    _constraints.minimum = {};
+    _constraints.preferred = {};
+    _constraints.maximum = {32767.0f, 32767.0f};
+    tt_axiom(_constraints.minimum <= _constraints.preferred && _constraints.preferred <= _constraints.maximum);
+
+    if (auto d = _delegate.lock()) {
+        d->init(*this);
+    }
 }
 
 tab_widget::tab_widget(gui_window &window, widget *parent, std::weak_ptr<delegate_type> delegate) noexcept :
@@ -36,64 +44,60 @@ tab_widget::tab_widget(gui_window &window, widget *parent, std::weak_ptr<delegat
 {
 }
 
-void tab_widget::init() noexcept
+widget_constraints const &tab_widget::set_constraints() noexcept
 {
-    super::init();
-    if (auto delegate = _delegate.lock()) {
-        delegate->init(*this);
-    }
-}
+    _layout = {};
 
-void tab_widget::deinit() noexcept
-{
-    if (auto delegate = _delegate.lock()) {
-        delegate->deinit(*this);
-    }
-    super::deinit();
-}
+    ttlet &selected_child_ = selected_child();
+    for (ttlet &child : _children) {
+        ttlet child_contraints = child->set_constraints();
 
-[[nodiscard]] float tab_widget::margin() const noexcept
-{
-    return 0.0f;
-}
+        ttlet child_is_visible = child.get() == &selected_child_;
+        child->visible = child_is_visible;
 
-[[nodiscard]] bool tab_widget::constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept
-{
-    tt_axiom(is_gui_thread());
-
-    auto has_updated_contraints = super::constrain(display_time_point, need_reconstrain);
-    if (has_updated_contraints) {
-        ttlet &selected_child_ = selected_child();
-        for (ttlet &child : _children) {
-            child->visible = child.get() == &selected_child_;
-        }
-
-        auto size_changed = compare_then_assign(_minimum_size, selected_child_.minimum_size());
-        size_changed |= compare_then_assign(_preferred_size, selected_child_.preferred_size());
-        size_changed |= compare_then_assign(_maximum_size, selected_child_.maximum_size());
-        tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
-
-        if (size_changed) {
-            window.request_resize = true;
-        }
-    }
-
-    return has_updated_contraints;
-}
-
-[[nodiscard]] void tab_widget::layout(utc_nanoseconds display_time_point, bool need_layout) noexcept
-{
-    tt_axiom(is_gui_thread());
-
-    need_layout |= _request_layout.exchange(false);
-    if (need_layout) {
-        for (ttlet &child : _children) {
-            if (child->visible) {
-                child->set_layout_parameters_from_parent(rectangle());
+        if (child_is_visible) {
+            if (compare_store(_constraints, child_contraints)) {
+                request_resize();
             }
         }
     }
-    super::layout(display_time_point, need_layout);
+
+    return _constraints;
+}
+
+void tab_widget::set_layout(widget_layout const &layout) noexcept
+{
+    _layout = layout;
+
+    for (ttlet &child : _children) {
+        if (child->visible) {
+            child->set_layout(layout);
+        }
+    }
+}
+
+void tab_widget::draw(draw_context const &context) noexcept
+{
+    if (visible) {
+        for (ttlet &child : _children) {
+            child->draw(context);
+        }
+    }
+}
+
+[[nodiscard]] hitbox tab_widget::hitbox_test(point3 position) const noexcept
+{
+    tt_axiom(is_gui_thread());
+
+    if (visible and enabled) {
+        auto r = hitbox{};
+        for (ttlet &child : _children) {
+            r = child->hitbox_test_from_parent(position, r);
+        }
+        return r;
+    } else {
+        return {};
+    }
 }
 
 [[nodiscard]] widget const *tab_widget::find_next_widget(
@@ -110,7 +114,7 @@ void tab_widget::deinit() noexcept
     tt_axiom(is_gui_thread());
     if (auto delegate = _delegate.lock()) {
         auto index = delegate->index(const_cast<tab_widget &>(*this));
-        if (index >= 0 and index < std::ssize(_children)) {
+        if (index >= 0 and index < ssize(_children)) {
             return _children.begin() + index;
         }
     }
@@ -122,7 +126,7 @@ void tab_widget::deinit() noexcept
     tt_axiom(is_gui_thread());
     if (auto delegate = _delegate.lock()) {
         auto index = delegate->index(*this);
-        if (index >= 0 and index < std::ssize(_children)) {
+        if (index >= 0 and index < ssize(_children)) {
             return _children.begin() + index;
         }
     }
@@ -132,7 +136,7 @@ void tab_widget::deinit() noexcept
 [[nodiscard]] widget const &tab_widget::selected_child() const noexcept
 {
     tt_axiom(is_gui_thread());
-    tt_axiom(std::ssize(_children) != 0);
+    tt_axiom(ssize(_children) != 0);
 
     auto i = find_selected_child();
     if (i != _children.cend()) {
@@ -142,11 +146,4 @@ void tab_widget::deinit() noexcept
     }
 }
 
-void tab_widget::draw_child(draw_context context, utc_nanoseconds displayTimePoint, widget &child) noexcept
-{
-    tt_axiom(is_gui_thread());
-    auto child_context = context.make_child_context(child.parent_to_local(), child.local_to_window(), child.clipping_rectangle());
-    child.draw(child_context, displayTimePoint);
-}
-
-} // namespace tt
+} // namespace tt::inline v1

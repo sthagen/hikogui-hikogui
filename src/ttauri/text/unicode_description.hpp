@@ -11,8 +11,9 @@
 #include "../required.hpp"
 #include "../assert.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
+
 constexpr char32_t unicode_hangul_S_base = U'\uac00';
 constexpr char32_t unicode_hangul_L_base = U'\u1100';
 constexpr char32_t unicode_hangul_V_base = U'\u1161';
@@ -22,26 +23,34 @@ constexpr char32_t unicode_hangul_V_count = 21;
 constexpr char32_t unicode_hangul_T_count = 28;
 constexpr char32_t unicode_hangul_N_count = unicode_hangul_V_count * unicode_hangul_T_count;
 constexpr char32_t unicode_hangul_S_count = unicode_hangul_L_count * unicode_hangul_N_count;
-}
+} // namespace detail
+
+constexpr char32_t replacement_character = U'\ufffd';
+constexpr char32_t line_separator_character = U'\u2028';
+constexpr char32_t paragraph_separator_character = U'\u2029';
 
 [[nodiscard]] constexpr bool is_hangul_L_part(char32_t code_point) noexcept
 {
-    return code_point >= detail::unicode_hangul_L_base && code_point < (detail::unicode_hangul_L_base + detail::unicode_hangul_L_count);
+    return code_point >= detail::unicode_hangul_L_base &&
+        code_point < (detail::unicode_hangul_L_base + detail::unicode_hangul_L_count);
 }
 
 [[nodiscard]] constexpr bool is_hangul_V_part(char32_t code_point) noexcept
 {
-    return code_point >= detail::unicode_hangul_V_base && code_point < (detail::unicode_hangul_V_base + detail::unicode_hangul_V_count);
+    return code_point >= detail::unicode_hangul_V_base &&
+        code_point < (detail::unicode_hangul_V_base + detail::unicode_hangul_V_count);
 }
 
 [[nodiscard]] constexpr bool is_hangul_T_part(char32_t code_point) noexcept
 {
-    return code_point >= detail::unicode_hangul_T_base && code_point < (detail::unicode_hangul_T_base + detail::unicode_hangul_T_count);
+    return code_point >= detail::unicode_hangul_T_base &&
+        code_point < (detail::unicode_hangul_T_base + detail::unicode_hangul_T_count);
 }
 
 [[nodiscard]] constexpr bool is_hangul_syllable(char32_t code_point) noexcept
 {
-    return code_point >= detail::unicode_hangul_S_base && code_point < (detail::unicode_hangul_S_base + detail::unicode_hangul_S_count);
+    return code_point >= detail::unicode_hangul_S_base &&
+        code_point < (detail::unicode_hangul_S_base + detail::unicode_hangul_S_count);
 }
 
 [[nodiscard]] constexpr bool is_hangul_LV_part(char32_t code_point) noexcept
@@ -73,9 +82,10 @@ public:
         bool composition_canonical,
         uint8_t combining_class,
         uint8_t decomposition_length,
-        uint32_t decomposition_index
-    ) noexcept :
-        _general_info((static_cast<uint32_t>(code_point) << 10) | (static_cast<uint32_t>(general_category) << 5) | (static_cast<uint32_t>(grapheme_cluster_break) << 1)),
+        uint32_t decomposition_index) noexcept :
+        _general_info(
+            (static_cast<uint32_t>(code_point) << 10) | (static_cast<uint32_t>(general_category) << 5) |
+            (static_cast<uint32_t>(grapheme_cluster_break) << 1)),
         _bidi_class(static_cast<uint32_t>(bidi_class)),
         _bidi_bracket_type(static_cast<uint32_t>(bidi_bracket_type)),
         _bidi_mirrored_glyph(static_cast<uint32_t>(bidi_mirrored_glyph)),
@@ -197,9 +207,9 @@ public:
      * @return Values 3 and above are the number of code points in the decomposition table
      *          pointed to from the `decomposition_index()`.
      */
-    [[nodiscard]] constexpr size_t decomposition_length() const noexcept
+    [[nodiscard]] constexpr std::size_t decomposition_length() const noexcept
     {
-        return static_cast<size_t>(_decomposition_length);
+        return static_cast<std::size_t>(_decomposition_length);
     }
 
     /** A multi-use value representing the decomposition of this code-point.
@@ -213,9 +223,9 @@ public:
      * @return A code-point value, or a index into the composition table, or an index into the
      *         decomposition table.
      */
-    [[nodiscard]] constexpr size_t decomposition_index() const noexcept
+    [[nodiscard]] constexpr std::size_t decomposition_index() const noexcept
     {
-        return static_cast<size_t>(_decomposition_index);
+        return static_cast<std::size_t>(_decomposition_index);
     }
 
     /** Get the canonical equivalent of this code-point.
@@ -243,8 +253,8 @@ private:
     uint32_t _general_info;
 
     // 2nd dword
-    uint32_t _bidi_class:5;
-    uint32_t _bidi_bracket_type:2;
+    uint32_t _bidi_class : 5;
+    uint32_t _bidi_bracket_type : 2;
     uint32_t _bidi_mirrored_glyph : 21;
     uint32_t _bidi_reserved : 4 = 0;
 
@@ -258,7 +268,6 @@ private:
     // 4th dword
     uint32_t _decomposition_length : 5;
     uint32_t _decomposition_reserved2 : 27 = 0;
-
 
     template<typename It>
     friend constexpr It unicode_description_find(It first, It last, char32_t code_point) noexcept;
@@ -303,4 +312,4 @@ template<typename It>
  */
 [[nodiscard]] unicode_description const &unicode_description_find(char32_t code_point) noexcept;
 
-}
+} // namespace tt::inline v1

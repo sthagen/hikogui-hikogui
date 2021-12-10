@@ -10,7 +10,7 @@
 #include <concepts>
 #include <limits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<typename T>
 concept numeric_limited = std::numeric_limits<T>::is_specialized;
@@ -36,9 +36,6 @@ concept pointer = std::is_pointer_v<T>;
 template<typename T>
 concept reference = std::is_reference_v<T>;
 
-template<typename T, typename O>
-concept same = std::is_same_v<T, O>;
-
 template<typename T>
 concept lvalue_reference = std::is_lvalue_reference_v<T>;
 
@@ -62,6 +59,18 @@ concept strict_base_of = base_of<BaseType, DerivedType> && !std::same_as<BaseTyp
 
 template<typename BaseType, typename DerivedType>
 concept strict_derived_from = derived_from<BaseType, DerivedType> && !std::same_as<BaseType, DerivedType>;
+
+template<typename T>
+concept pre_incrementable = requires(T a)
+{
+    {++a};
+};
+
+template<typename T>
+concept pre_decrementable = requires(T a)
+{
+    {--a};
+};
 
 template<typename T>
 concept to_stringable = requires(T v)
@@ -92,14 +101,14 @@ concept sizeable = requires(T v)
 {
     {
         size(v)
-        } -> std::convertible_to<size_t>;
+        } -> std::convertible_to<std::size_t>;
 };
 
 /** Concept for std::is_scoped_enum_v<T>.
-* 
-* XXX std::is_scoped_enum_v<T> ios a c++23 feature, so right now we use std::is_enum_v<T> instead.
-*/
+ *
+ * XXX std::is_scoped_enum_v<T> ios a c++23 feature, so right now we use std::is_enum_v<T> instead.
+ */
 template<typename T>
 concept scoped_enum = std::is_enum_v<T>;
 
-} // namespace tt
+} // namespace tt::inline v1

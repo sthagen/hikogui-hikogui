@@ -5,6 +5,7 @@
 #pragma once
 
 #include "unfair_mutex.hpp"
+#include "concepts.hpp"
 #include <memory>
 #include <vector>
 #include <atomic>
@@ -12,7 +13,7 @@
 #include <type_traits>
 #include <mutex>
 
-namespace tt {
+namespace tt::inline v1 {
 template<typename T>
 class observable;
 
@@ -52,9 +53,9 @@ struct observable_notifier_type {
     }
 
     /** Add a callback to the list.
-    * 
-    * @pre observable_mutex must be locked.
-    */
+     *
+     * @pre observable_mutex must be locked.
+     */
     void push(callback_ptr_type callback_ptr) noexcept
     {
         tt_axiom(observable_mutex.is_locked());
@@ -62,13 +63,14 @@ struct observable_notifier_type {
     }
 
     /** Notify all callbacks that have been pushed.
-     * 
+     *
      * @pre observable_mutex must be locked.
      * @post obervable_mutex is unlocked
      * @post All registered callbacks have been called.
      * @post List of registered callbacks has been cleared.
      */
-    void notify() noexcept {
+    void notify() noexcept
+    {
         tt_axiom(observable_mutex.is_locked());
 
         if (proxy_count == 0 and not callbacks.empty()) {
@@ -253,6 +255,50 @@ struct observable_proxy {
         return const_cast<value_type const &>(_actual->value)[std::forward<Arg>(arg)];
     }
 
+    auto operator++() noexcept requires(is_variable and is_atomic and not pre_incrementable<decltype(_actual->value)>)
+    {
+        auto expected_value = _actual->value.load();
+        decltype(expected_value) new_value;
+        do {
+            // Make a copy so that expected value does not get incremented.
+            new_value = expected_value;
+            if (++new_value == expected_value) {
+                return new_value;
+            }
+        } while (not _actual->value.compare_exchange_weak(expected_value, new_value));
+
+        prepare(state_type::modified);
+        return new_value;
+    }
+
+    auto operator--() noexcept requires(is_variable and is_atomic and not pre_decrementable<decltype(_actual->value)>)
+    {
+        auto expected_value = _actual->value.load();
+        decltype(expected_value) new_value;
+        do {
+            // Make a copy so that expected value does not get incremented.
+            new_value = expected_value;
+            if (--new_value == expected_value) {
+                return new_value;
+            }
+        } while (not _actual->value.compare_exchange_weak(expected_value, new_value));
+
+        prepare(state_type::modified);
+        return new_value;
+    }
+
+    auto operator++() noexcept requires(is_variable and is_atomic and pre_incrementable<decltype(_actual->value)>)
+    {
+        prepare(state_type::modified);
+        return ++(_actual->value);
+    }
+
+    auto operator--() noexcept requires(is_variable and is_atomic and pre_decrementable<decltype(_actual->value)>)
+    {
+        prepare(state_type::modified);
+        return --(_actual->value);
+    }
+
 #define X(op) \
     [[nodiscard]] friend auto operator op(observable_proxy const &lhs, observable_proxy const &rhs) noexcept \
     { \
@@ -427,7 +473,7 @@ struct observable_impl {
  * When assigning observables to each other, the subscriptions
  * to the observable remain unmodified. However which value is shared is shown in the
  * example below:
- * 
+ *
  * ```
  * auto a = observable<int>{1};
  * auto b = observable<int>{5};
@@ -443,7 +489,7 @@ struct observable_impl {
  * to a callback function. This means that the object that subscribed
  * to the observable needs to own the `std::shared_ptr` that is returned
  * by the `subscribe()` method.
- * 
+ *
  * A proxy object is returned when dereferencing an observable. The
  * callbacks are called when both the value has changed and the
  * lifetime of all non-scalar proxy objects in the system has ended.
@@ -608,7 +654,17 @@ public:
 
     explicit operator bool() const noexcept
     {
-        return static_cast<bool>(cget());
+        return static_cast<bool>(*cget());
+    }
+
+    auto operator++() noexcept
+    {
+        return ++(get());
+    }
+
+    auto operator--() noexcept
+    {
+        return --(get());
     }
 
 #define X(op) \
@@ -628,6 +684,7 @@ public:
     }
 
     X(==)
+    X(+)
     X(-)
 #undef X
 
@@ -725,4 +782,4 @@ struct observable_argument<observable<T>> {
 template<typename T>
 using observable_argument_t = typename observable_argument<T>::type;
 
-} // namespace tt
+} // namespace tt::inline v1

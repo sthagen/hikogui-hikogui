@@ -10,7 +10,7 @@
 #include <bit>
 #include <type_traits>
 
-namespace tt {
+namespace tt::inline v1 {
 namespace detail {
 
 template<typename CharT>
@@ -77,16 +77,16 @@ constexpr void append_code_point(std::basic_string<CharT> &r, uint32_t code_poin
 }
 
 template<typename ToCharT, typename FromCharT>
-[[nodiscard]] constexpr size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
+[[nodiscard]] constexpr std::size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
 {
-    return std::size(rhs);
+    return size(rhs);
 }
 
 template<typename ToCharT, typename FromCharT>
-[[nodiscard]] constexpr size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
+[[nodiscard]] constexpr std::size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
     requires(sizeof(FromCharT) == 1 and sizeof(ToCharT) > 1)
 {
-    size_t r = 0;
+    std::size_t r = 0;
     for (ttlet c : rhs) {
         if ((c & 0xc0) != 0x80) {
             ++r;
@@ -96,10 +96,10 @@ template<typename ToCharT, typename FromCharT>
 }
 
 template<typename ToCharT, typename FromCharT>
-[[nodiscard]] constexpr size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
+[[nodiscard]] constexpr std::size_t guess_num_code_units(std::basic_string_view<FromCharT> const &rhs) noexcept
     requires(sizeof(FromCharT) > 1 and sizeof(ToCharT) == 1)
 {
-    size_t r = 0;
+    std::size_t r = 0;
     for (ttlet c : rhs) {
         if (c < 0x80) {
             ++r;
@@ -122,8 +122,8 @@ template<typename ToCharT, typename FromCharT>
     auto r = std::basic_string<ToCharT>{};
     r.reserve(guess_num_code_units<ToCharT>(rhs));
 
-    auto it = std::begin(rhs);
-    ttlet last = std::end(rhs);
+    auto it = begin(rhs);
+    ttlet last = end(rhs);
 
     uint32_t code_point = 0;
     int todo = 0;
@@ -200,8 +200,8 @@ template<typename ToCharT, typename FromCharT>
     auto r = std::basic_string<ToCharT>{};
     r.reserve(guess_num_code_units<ToCharT>(rhs));
 
-    auto it = std::begin(rhs);
-    ttlet last = std::end(rhs);
+    auto it = begin(rhs);
+    ttlet last = end(rhs);
 
     uint32_t code_point = 0;
     int todo = 0;
@@ -424,4 +424,4 @@ template<typename ToCharT, typename FromCharT>
     return utf32_to_wide(rhs);
 }
 
-} // namespace tt
+} // namespace tt::inline v1

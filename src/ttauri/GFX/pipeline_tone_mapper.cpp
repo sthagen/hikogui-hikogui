@@ -7,10 +7,7 @@
 #include "gfx_surface_vulkan.hpp"
 #include "gfx_device_vulkan.hpp"
 
-namespace tt::pipeline_tone_mapper {
-
-using namespace tt;
-using namespace std;
+namespace tt::inline v1::pipeline_tone_mapper {
 
 pipeline_tone_mapper::pipeline_tone_mapper(gfx_surface const &surface) : pipeline_vulkan(surface) {}
 
@@ -36,37 +33,22 @@ std::vector<vk::DescriptorSetLayoutBinding> pipeline_tone_mapper::createDescript
         {0, // binding
          vk::DescriptorType::eInputAttachment,
          1, // descriptorCount
-         vk::ShaderStageFlagBits::eFragment},
-        {1, // binding
-         vk::DescriptorType::eInputAttachment,
-         1, // descriptorCount
          vk::ShaderStageFlagBits::eFragment}};
 }
 
-vector<vk::WriteDescriptorSet> pipeline_tone_mapper::createWriteDescriptorSet() const
+std::vector<vk::WriteDescriptorSet> pipeline_tone_mapper::createWriteDescriptorSet() const
 {
     ttlet &color_descriptor_image_infos = narrow_cast<gfx_surface_vulkan const &>(surface).colorDescriptorImageInfos;
 
-    return {
-        {
-            descriptorSet,
-            0, // destBinding
-            0, // arrayElement
-            1, // descriptorCount
-            vk::DescriptorType::eInputAttachment,
-            &color_descriptor_image_infos[0],
-            nullptr, // bufferInfo
-            nullptr // texelBufferView
-        },
-        {
-            descriptorSet,
-            1, // destBinding
-            0, // arrayElement
-            1, // descriptorCount
-            vk::DescriptorType::eInputAttachment,
-            &color_descriptor_image_infos[1],
-            nullptr, // bufferInfo
-            nullptr // texelBufferView
+    return {{
+        descriptorSet,
+        0, // destBinding
+        0, // arrayElement
+        1, // descriptorCount
+        vk::DescriptorType::eInputAttachment,
+        &color_descriptor_image_infos[0],
+        nullptr, // bufferInfo
+        nullptr // texelBufferView
         }};
 }
 
@@ -92,4 +74,4 @@ vk::PipelineDepthStencilStateCreateInfo pipeline_tone_mapper::getPipelineDepthSt
     };
 }
 
-} // namespace tt::pipeline_tone_mapper
+} // namespace tt::inline v1::pipeline_tone_mapper

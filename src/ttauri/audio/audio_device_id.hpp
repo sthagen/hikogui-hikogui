@@ -9,7 +9,7 @@
 #include "../check.hpp"
 #include <array>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class audio_device_id {
 public:
@@ -18,9 +18,7 @@ public:
     static constexpr char macos = 2;
     static constexpr char asio = 3;
 
-    audio_device_id() noexcept : _v{}
-    {
-    }
+    audio_device_id() noexcept : _v{} {}
 
     audio_device_id(char type, wchar_t const *id) noexcept;
     constexpr audio_device_id(audio_device_id const &) noexcept = default;
@@ -52,7 +50,7 @@ struct pickle<audio_device_id> {
             return datum{std::move(r)};
         } else if (t == audio_device_id::win32) {
             r += 'w';
-            for (auto i = 1_uz; i != std::size(rhs._v); ++i) {
+            for (auto i = 1_uz; i != size(rhs._v); ++i) {
                 if (auto c = rhs._v[i]) {
                     r += c;
                 } else {
@@ -75,14 +73,14 @@ struct pickle<audio_device_id> {
         } else {
             auto t = rhs[0];
             if (t == 'w') {
-                tt_parse_check(std::size(rhs) <= std::size(r._v), "win32-audio_device_id pickle size to large {}", rhs);
+                tt_parse_check(size(rhs) <= size(r._v), "win32-audio_device_id pickle size to large {}", rhs);
 
                 r._v[0] = audio_device_id::win32;
                 auto i = 1_uz;
-                for (; i != std::size(rhs); ++i) {
+                for (; i != size(rhs); ++i) {
                     r._v[i] = rhs[i];
                 }
-                if (i != std::size(r._v)) {
+                if (i != size(r._v)) {
                     r._v[i] = 0;
                 }
                 return r;
@@ -97,11 +95,11 @@ struct pickle<audio_device_id> {
     {
         if (auto *s = get_if<std::string>(rhs)) {
             return decode(*s);
-            
+
         } else {
             throw parse_error("audio_device_id must be encoded as a string, got {}", rhs);
         }
     }
 };
 
-} // namespace tt
+} // namespace tt::inline v1

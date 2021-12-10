@@ -7,7 +7,7 @@
 #include <coroutine>
 #include "architecture.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 struct cmdline_short_option {
     char32_t option;
@@ -95,8 +95,8 @@ generator<cmdln_option> command_line_parser(It first, It last, std::string_view 
             // List of short-options.
             // Short options are processed as UTF-32 units.
             ttlet token = to_u32string(*it);
-            ttlet first_c = std::next(std::begin(token));
-            ttlet last_c = std::end(token);
+            ttlet first_c = std::next(begin(token));
+            ttlet last_c = end(token);
             negative = it.front() == '+';
 
             for (auto jt = first_c; jt != last_c; ++jt) {
@@ -126,7 +126,7 @@ generator<cmdln_option> command_line_parser(It first, It last, std::string_view 
     }
 
     // All tokens after double hyphen '--' are non-options.
-    for (;it != last; ++it) {
+    for (; it != last; ++it) {
         co_yield cmdln_non_option{*it};
     }
 
@@ -162,13 +162,10 @@ public:
      *         global_foo = filename;
      *     });
      */
-    constexpr command_line_option(std::string_view option_help) {
-        auto it = std::begin(option_help);
-        ttlet last = std::end(option_help);
-
-
-
-
+    constexpr command_line_option(std::string_view option_help)
+    {
+        auto it = begin(option_help);
+        ttlet last = end(option_help);
     }
 
     static char32_t parse_short_option(std::string_view::iterator &it, std::string_view::iterator last)
@@ -199,7 +196,8 @@ public:
 #endif
 
     template<typename... Args>
-    command_line_option &add_option(Args &&... args) noexcept {
+    command_line_option &add_option(Args &&...args) noexcept
+    {
         return _options.emplace(std::forward<Args>(args)...);
     }
 
@@ -207,6 +205,4 @@ private:
     std::vector<command_line_option> _options = {};
 };
 
-
-}
-
+} // namespace tt::inline v1

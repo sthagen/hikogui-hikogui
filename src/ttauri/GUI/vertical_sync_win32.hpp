@@ -9,7 +9,7 @@
 #include <thread>
 #include <array>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class vertical_sync_win32 final : public vertical_sync {
 public:
@@ -25,7 +25,7 @@ private:
 
     utc_nanoseconds _previous_frame_time_point;
     std::array<std::chrono::nanoseconds, 15> _frame_duration_data;
-    size_t _frame_duration_counter = 0;
+    std::size_t _frame_duration_counter = 0;
 
     void open_adapter() noexcept;
     void close_adapter() noexcept;
@@ -35,4 +35,4 @@ private:
     [[nodiscard]] std::chrono::nanoseconds average_frame_duration(utc_nanoseconds frameTimestamp) noexcept;
 };
 
-}
+} // namespace tt::inline v1

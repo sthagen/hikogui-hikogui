@@ -9,7 +9,7 @@
 #include "../assert.hpp"
 #include "../required.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** Detect typographical ligature.
  * A typographical ligatures will have the same meaning in the text
@@ -66,7 +66,7 @@ static void unicode_decompose(char32_t code_point, bool compatible, bool ligatur
             unicode_decompose(static_cast<char32_t>(description.decomposition_index()), compatible, ligature, paragraph, r);
 
         } else if (description.composition_canonical() && description.decomposition_length() == 2) {
-            tt_axiom(description.decomposition_index() < std::size(detail::unicode_db_composition_table));
+            tt_axiom(description.decomposition_index() < size(detail::unicode_db_composition_table));
             ttlet &composition = detail::unicode_db_composition_table[description.decomposition_index()];
 
             unicode_decompose(composition.first(), compatible, ligature, paragraph, r);
@@ -75,11 +75,11 @@ static void unicode_decompose(char32_t code_point, bool compatible, bool ligatur
         } else {
             tt_axiom(
                 description.decomposition_index() + description.decomposition_length() <=
-                std::size(detail::unicode_db_decomposition_table));
+                size(detail::unicode_db_decomposition_table));
 
-            auto it = std::begin(detail::unicode_db_decomposition_table) + description.decomposition_index();
+            auto it = begin(detail::unicode_db_decomposition_table) + description.decomposition_index();
 
-            for (size_t i = 0; i != description.decomposition_length(); ++i) {
+            for (std::size_t i = 0; i != description.decomposition_length(); ++i) {
                 unicode_decompose(*(it++), compatible, ligature, paragraph, r);
             }
         }
@@ -92,7 +92,7 @@ static void unicode_decompose(char32_t code_point, bool compatible, bool ligatur
 static void
 unicode_decompose(std::u32string_view text, bool compatible, bool ligature, bool paragraph, std::u32string &r) noexcept
 {
-    for (ttlet c: text) {
+    for (ttlet c : text) {
         unicode_decompose(c, compatible, ligature, paragraph, r);
     }
 }
@@ -126,8 +126,8 @@ static void unicode_compose(bool paragraph, bool composeCRLF, std::u32string &te
         return;
     }
 
-    size_t i = 0;
-    size_t j = 0;
+    std::size_t i = 0;
+    std::size_t j = 0;
     while (i < text.size()) {
         ttlet code_unit = text[i++];
         ttlet code_point = code_unit & 0x1f'ffff;
@@ -141,7 +141,7 @@ static void unicode_compose(bool paragraph, bool composeCRLF, std::u32string &te
             // Try composing.
             auto first_code_point = code_point;
             char32_t previous_combining_class = 0;
-            for (size_t k = i; k < text.size(); k++) {
+            for (std::size_t k = i; k < text.size(); k++) {
                 ttlet second_code_unit = text[k];
                 ttlet second_code_point = second_code_unit & 0x1f'ffff;
                 ttlet second_combining_class = second_code_unit >> 24;
@@ -211,8 +211,7 @@ std::u32string unicode_NFD(std::u32string_view text, bool ligatures, bool paragr
     return r;
 }
 
-[[nodiscard]] std::u32string
-unicode_NFC(std::u32string_view text, bool ligatures, bool paragraph, bool composeCRLF) noexcept
+[[nodiscard]] std::u32string unicode_NFC(std::u32string_view text, bool ligatures, bool paragraph, bool composeCRLF) noexcept
 {
     auto r = std::u32string{};
     unicode_decompose(text, false, ligatures, paragraph, r);
@@ -241,4 +240,4 @@ std::u32string unicode_NFKC(std::u32string_view text, bool paragraph, bool compo
     return r;
 }
 
-}
+} // namespace tt::inline v1

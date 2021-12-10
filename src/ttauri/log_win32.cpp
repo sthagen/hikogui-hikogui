@@ -17,12 +17,12 @@
 #include <Windows.h>
 #include <debugapi.h>
 
-namespace tt {
+namespace tt::inline v1 {
 
 [[nodiscard]] std::string get_last_error_message() noexcept
 {
     DWORD const errorCode = GetLastError();
-    size_t const messageSize = 32768;
+    std::size_t const messageSize = 32768;
     wchar_t *const c16_message = new wchar_t[messageSize];
 
     FormatMessageW(
@@ -40,5 +40,4 @@ namespace tt {
     return strip(message);
 }
 
-
-} // namespace tt
+} // namespace tt::inline v1

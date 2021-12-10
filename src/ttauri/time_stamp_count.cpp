@@ -6,7 +6,7 @@
 #include <array>
 #include <cstdint>
 
-namespace tt {
+namespace tt::inline v1 {
 
 [[nodiscard]] ssize_t time_stamp_count::cpu_id_fallback() const noexcept
 {
@@ -16,7 +16,7 @@ namespace tt {
     tt_axiom(_aux_values.size() == _cpu_ids.size());
     tt_axiom(num_aux_values < _aux_values.size());
 
-    for (size_t i = 0; i < num_aux_values; i += 4) {
+    for (std::size_t i = 0; i < num_aux_values; i += 4) {
         ttlet row = _mm_loadu_si128(reinterpret_cast<__m128i const *>(_aux_values.data() + i));
         ttlet row_result = _mm_cmpeq_epi32(row, aux_value_);
         ttlet row_result_ = _mm_castsi128_ps(row_result);
@@ -36,7 +36,7 @@ namespace tt {
 
 [[nodiscard]] uint64_t time_stamp_count::measure_frequency(std::chrono::milliseconds sample_duration) noexcept
 {
-    using namespace std::literals::chrono_literals;
+    using namespace std::chrono_literals;
 
     // Only sample the frequency of one of the TSC clocks.
     auto prev_mask = set_thread_affinity(current_cpu_id());
@@ -85,8 +85,8 @@ void time_stamp_count::populate_aux_values() noexcept
     auto prev_mask = set_thread_affinity(current_cpu_id());
 
     // Create a table of cpu_ids.
-    size_t next_cpu = 0;
-    size_t current_cpu = 0;
+    std::size_t next_cpu = 0;
+    std::size_t current_cpu = 0;
     bool aux_is_cpu_id = true;
     do {
         current_cpu = advance_thread_affinity(next_cpu);
@@ -115,7 +115,7 @@ void time_stamp_count::populate_aux_values() noexcept
 
 void time_stamp_count::configure_frequency() noexcept
 {
-    using namespace std::literals::chrono_literals;
+    using namespace std::chrono_literals;
 
     // This function is called from the crt and must therefor be quick as we do not
     // want to keep the user waiting. We are satisfied if the measured frequency is
@@ -140,10 +140,10 @@ void time_stamp_count::configure_frequency() noexcept
     time_stamp_count::set_frequency(frequency);
 }
 
-[[nodiscard]] void time_stamp_count::start_subsystem() noexcept
+void time_stamp_count::start_subsystem() noexcept
 {
     configure_frequency();
     populate_aux_values();
 }
 
-} // namespace tt
+} // namespace tt::inline v1

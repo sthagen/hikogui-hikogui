@@ -9,7 +9,7 @@
 #include "../strings.hpp"
 #include <cstdint>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** Key modification keys pressed at the same time as another key.
  *
@@ -47,12 +47,12 @@ constexpr keyboard_modifiers &operator|=(keyboard_modifiers &lhs, keyboard_modif
  */
 inline keyboard_modifiers to_keyboard_modifiers(std::string_view s)
 {
-    if (std::ssize(s) == 0) {
+    if (ssize(s) == 0) {
         throw parse_error("Empty keyboard modifier");
     }
 
     // Remove the canonical trailing '+'.
-    ttlet s_lower = to_lower((s.back() == '+') ? s.substr(0, std::ssize(s) - 1) : s);
+    ttlet s_lower = to_lower((s.back() == '+') ? s.substr(0, ssize(s) - 1) : s);
 
     if (s_lower == "shift") {
         return keyboard_modifiers::Shift;
@@ -92,13 +92,11 @@ inline std::ostream &operator<<(std::ostream &lhs, keyboard_modifiers const &rhs
     return lhs << to_string(rhs);
 }
 
-} // namespace tt
-
-namespace std {
+} // namespace tt::inline v1
 
 template<>
-struct hash<tt::keyboard_modifiers> {
-    [[nodiscard]] size_t operator()(tt::keyboard_modifiers const &rhs) const noexcept
+struct std::hash<tt::keyboard_modifiers> {
+    [[nodiscard]] std::size_t operator()(tt::keyboard_modifiers const &rhs) const noexcept
     {
         return std::hash<uint8_t>{}(static_cast<uint8_t>(rhs));
     }
@@ -111,5 +109,3 @@ struct std::formatter<tt::keyboard_modifiers, CharT> : std::formatter<std::strin
         return std::formatter<std::string_view, CharT>::format(tt::to_string(t), fc);
     }
 };
-
-} // namespace std

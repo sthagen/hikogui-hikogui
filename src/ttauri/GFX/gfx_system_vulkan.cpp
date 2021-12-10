@@ -9,9 +9,7 @@
 #include <chrono>
 #include <cstring>
 
-namespace tt {
-
-using namespace std;
+namespace tt::inline v1 {
 
 static bool hasFoundationExtensions(const std::vector<const char *> &requiredExtensions)
 {
@@ -37,9 +35,9 @@ static std::vector<const char *> filter_available_layers(std::vector<const char 
     for (ttlet &available_layer : available_layers) {
         ttlet layer_name = std::string{available_layer.layerName.data()};
 
-        ttlet it = std::find(std::begin(requested_layers), std::end(requested_layers), layer_name);
+        ttlet it = std::find(begin(requested_layers), end(requested_layers), layer_name);
 
-        if (it != std::end(requested_layers)) {
+        if (it != end(requested_layers)) {
             // Use the *it, because the lifetime of its `char const *` is still available after the function call.
             r.push_back(*it);
             tt_log_info("  * {}", layer_name);
@@ -178,4 +176,4 @@ VkBool32 gfx_system_vulkan::debugUtilsMessageCallback(
     return VK_FALSE;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

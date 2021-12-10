@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace tt {
+namespace tt::inline v1 {
 
 class corner_shapes {
 public:
@@ -13,11 +13,12 @@ public:
     constexpr corner_shapes &operator=(corner_shapes const &) noexcept = default;
     constexpr corner_shapes &operator=(corner_shapes &&) noexcept = default;
 
-    [[nodiscard]] explicit constexpr corner_shapes() noexcept : _v() {}
-    [[nodiscard]] explicit constexpr corner_shapes(float radius) noexcept : _v(radius, radius, radius, radius) {}
-    [[nodiscard]] explicit constexpr corner_shapes(float lb, float rb, float lt, float rt) noexcept : _v(lb, rb, lt, rt) {}
+    [[nodiscard]] constexpr corner_shapes() noexcept : corner_shapes(-std::numeric_limits<float>::infinity()) {}
+    [[nodiscard]] constexpr corner_shapes(float radius) noexcept : _v(radius, radius, radius, radius) {}
+    [[nodiscard]] constexpr corner_shapes(float lb, float rb, float lt, float rt) noexcept : _v(lb, rb, lt, rt) {}
+    [[nodiscard]] constexpr explicit corner_shapes(f32x4 v) noexcept : _v(v) {}
 
-    [[nodiscard]] explicit constexpr operator f32x4() const noexcept
+    [[nodiscard]] constexpr explicit operator f32x4() const noexcept
     {
         return _v;
     }
@@ -48,34 +49,35 @@ public:
         return get<I>(rhs._v);
     }
 
-    [[nodiscard]] constexpr float operator[](size_t i) const noexcept
+    [[nodiscard]] constexpr float operator[](std::size_t i) const noexcept
     {
         return _v[i];
     }
 
     [[nodiscard]] constexpr friend corner_shapes operator+(corner_shapes const &lhs, float rhs) noexcept
     {
-        auto r = corner_shapes{};
-
-        for (size_t i = 0; i != lhs._v.size(); ++i) {
-            if (lhs._v[i] >= 0) {
-                r._v[i] = std::max(0.0f, lhs._v[i] + rhs);
-            } else {
-                r._v[i] = std::min(0.0f, lhs._v[i] - rhs);
-            }
-        }
-
-        return r;
+        return corner_shapes{f32x4{lhs} + rhs};
+        //auto r = corner_shapes{};
+        //
+        //for (std::size_t i = 0; i != lhs._v.size(); ++i) {
+        //    if (lhs._v[i] >= 0) {
+        //        r._v[i] = std::max(0.0f, lhs._v[i] + rhs);
+        //    } else {
+        //        r._v[i] = std::min(0.0f, lhs._v[i] - rhs);
+        //    }
+        //}
+        //
+        //return r;
     }
 
     [[nodiscard]] constexpr friend corner_shapes operator-(corner_shapes const &lhs, float rhs) noexcept
     {
-        return lhs + -rhs;
+        return corner_shapes{f32x4{lhs} - rhs};
+        //return lhs + -rhs;
     }
 
 private:
     f32x4 _v;
 };
 
-
-}
+} // namespace tt::inline v1

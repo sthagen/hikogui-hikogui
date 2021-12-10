@@ -10,7 +10,7 @@
 #include "required.hpp"
 #include "cast.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A static sized stack.
  * This stack is designed around the functionality of a std::vector, except the
@@ -19,7 +19,7 @@ namespace tt {
  * Because the stack can not grow or shrink, the iterators remain valid over the
  * lifetime of the stack.
  */
-template<typename T, size_t MaxSize>
+template<typename T, std::size_t MaxSize>
 class stack {
 public:
     using value_type = T;
@@ -29,7 +29,7 @@ public:
     using const_reference_type = value_type const &;
     using iterator_type = pointer_type;
     using const_iterator_type = const_pointer_type;
-    using size_type = size_t;
+    using size_type = std::size_t;
     using difference_type = ptrdiff_t;
 
     /** Construct an empty stack.
@@ -39,8 +39,7 @@ public:
     /** Construct a stack with the given data.
      * @param init An initializer_list of items to add to the stack.
      */
-    stack(std::initializer_list<value_type> init) noexcept :
-        _top(begin())
+    stack(std::initializer_list<value_type> init) noexcept : _top(begin())
     {
         for (ttlet &init_item : init) {
             push_back(init_item);
@@ -136,7 +135,7 @@ public:
      * No bounds checking is performed.
      * @return True if the stack is empty, empty if otherwise.
      */
-    [[nodiscard]] reference_type operator[](size_t index) noexcept
+    [[nodiscard]] reference_type operator[](std::size_t index) noexcept
     {
         tt_axiom(index < size());
         return *std::launder(reinterpret_cast<pointer_type>(&_buffer[index]));
@@ -146,7 +145,7 @@ public:
      * No bounds checking is performed.
      * @return True if the stack is empty, empty if otherwise.
      */
-    [[nodiscard]] const_reference_type operator[](size_t index) const noexcept
+    [[nodiscard]] const_reference_type operator[](std::size_t index) const noexcept
     {
         tt_axiom(index < size());
         return *std::launder(reinterpret_cast<pointer_type>(&_buffer[index]));
@@ -156,7 +155,7 @@ public:
      * @throws std::out_of_range when the index points beyond the top of the stack.
      * @return True if the stack is empty, empty if otherwise.
      */
-    [[nodiscard]] reference_type at(size_t index) noexcept
+    [[nodiscard]] reference_type at(std::size_t index) noexcept
     {
         if (index >= size()) {
             throw std::out_of_range("stack::at");
@@ -168,7 +167,7 @@ public:
      * @throws std::out_of_range when the index points beyond the top of the stack.
      * @return True if the stack is empty, empty if otherwise.
      */
-    [[nodiscard]] const_reference_type at(size_t index) const noexcept
+    [[nodiscard]] const_reference_type at(std::size_t index) const noexcept
     {
         if (index >= size()) {
             throw std::out_of_range("stack::at");
@@ -199,7 +198,7 @@ public:
      * @param args The arguments for the constructor of `value_type`.
      */
     template<typename... Args>
-    [[nodiscard]] void emplace_back(Args &&... args) noexcept
+    void emplace_back(Args &&...args) noexcept
     {
         tt_axiom(!full());
         new (end()) value_type(std::forward<Args>(args)...);
@@ -210,8 +209,8 @@ public:
      * @tparam Arg The type of an object that can be converted to `value_type`
      * @param arg The object to be pushed on the stack.
      */
-    template<typename Arg> requires (std::is_convertible_v<Arg,value_type>)
-    [[nodiscard]] void push_back(Arg &&arg) noexcept
+    template<typename Arg>
+    requires(std::is_convertible_v<Arg, value_type>) void push_back(Arg &&arg) noexcept
     {
         emplace_back(std::forward<Arg>(arg));
     }
@@ -250,4 +249,4 @@ private:
     pointer_type _top;
 };
 
-}
+} // namespace tt::inline v1

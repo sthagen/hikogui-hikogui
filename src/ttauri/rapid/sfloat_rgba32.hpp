@@ -10,7 +10,7 @@
 #include "../color/color.hpp"
 #include <algorithm>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class sfloat_rgba32 {
     // Red, Green, Blue, Alpha in binary32 (native endian).
@@ -36,29 +36,18 @@ public:
         return f32x4{v};
     }
 
-    sfloat_rgba32(aarectangle const &rhs) noexcept : sfloat_rgba32(rhs.v) {}
+    sfloat_rgba32(point3 const &rhs) noexcept : sfloat_rgba32(f32x4{rhs}) {}
 
-    sfloat_rgba32(corner_shapes const &rhs) noexcept : sfloat_rgba32(static_cast<f32x4>(rhs)) {}
+    sfloat_rgba32(aarectangle const &rhs) noexcept : sfloat_rgba32(f32x4{rhs}) {}
 
-    sfloat_rgba32 &operator=(aarectangle const &rhs) noexcept
-    {
-        *this = rhs.v;
-        return *this;
-    }
+    sfloat_rgba32(corner_shapes const &rhs) noexcept : sfloat_rgba32(f32x4{rhs}) {}
 
     operator aarectangle() const noexcept
     {
         return aarectangle{f32x4{v}};
     }
 
-    [[nodiscard]] friend bool operator==(sfloat_rgba32 const &lhs, sfloat_rgba32 const &rhs) noexcept
-    {
-        return lhs.v == rhs.v;
-    }
-    [[nodiscard]] friend bool operator!=(sfloat_rgba32 const &lhs, sfloat_rgba32 const &rhs) noexcept
-    {
-        return !(lhs == rhs);
-    }
+    [[nodiscard]] friend bool operator==(sfloat_rgba32 const &lhs, sfloat_rgba32 const &rhs) noexcept = default;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

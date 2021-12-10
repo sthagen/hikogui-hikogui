@@ -11,7 +11,7 @@
 #include <atomic>
 #include <thread>
 
-namespace tt {
+namespace tt::inline v1 {
 class time_stamp_count;
 
 /** Timestamp
@@ -64,9 +64,9 @@ private:
      */
     static void deinit_subsystem() noexcept;
 
-    [[nodiscard]] static size_t find_cpu_id(uint32_t cpu_id) noexcept;
+    [[nodiscard]] static std::size_t find_cpu_id(uint32_t cpu_id) noexcept;
 };
 
 std::string format_engineering(std::chrono::nanoseconds duration);
 
-} // namespace tt
+} // namespace tt::inline v1

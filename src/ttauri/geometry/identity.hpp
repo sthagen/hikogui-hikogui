@@ -1,12 +1,12 @@
 // Copyright Take Vos 2021.
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LidentityCENSE_1_0.txt or copy at https://www.boost.org/LidentityCENSE_1_0.txt)
+// (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #pragma once
 
 #include "matrix.hpp"
 
-namespace tt::geo {
+namespace tt::inline v1::geo {
 
 class identity {
 public:
@@ -45,6 +45,16 @@ public:
         return rhs;
     }
 
+    [[nodiscard]] constexpr axis_aligned_rectangle operator*(axis_aligned_rectangle const &rhs) const noexcept
+    {
+        return rhs;
+    }
+
+    [[nodiscard]] constexpr rectangle operator*(rectangle const &rhs) const noexcept
+    {
+        return rhs;
+    }
+
     template<int E>
     [[nodiscard]] constexpr identity operator*(identity const &) const noexcept
     {
@@ -57,4 +67,4 @@ public:
     }
 };
 
-}
+} // namespace tt::inline v1::geo

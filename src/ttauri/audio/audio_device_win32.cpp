@@ -22,7 +22,7 @@
 #include <audioclient.h>
 #include <bit>
 
-namespace tt {
+namespace tt::inline v1 {
 
 [[nodiscard]] static WAVEFORMATEXTENSIBLE make_wave_format(
     audio_sample_format format,
@@ -30,7 +30,7 @@ namespace tt {
     speaker_mapping speaker_mapping,
     uint32_t sample_rate) noexcept
 {
-    tt_axiom(std::popcount(static_cast<size_t>(speaker_mapping)) <= num_channels);
+    tt_axiom(std::popcount(static_cast<std::size_t>(speaker_mapping)) <= num_channels);
 
     bool extended = false;
 
@@ -296,7 +296,7 @@ noexcept
     constexpr max_num_channels = 128;
 
     auto r = std::vector<audio_stream_format>{};
-    r.reserve(std::size(speaker_mappings) + (max_num_channels / 2) + 2);
+    r.reserve(size(speaker_mappings) + (max_num_channels / 2) + 2);
 
     for (ttlet &info: speaker_mappings) {
         if (auto f = best_format(sample_rate, info.mapping)) {
@@ -392,4 +392,4 @@ std::string audio_device_win32::end_point_name() const noexcept
     return r;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

@@ -8,11 +8,11 @@
 #include <compare>
 #include <iterator>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** An iterator which recursively iterates through nested containers.
  * Currently only recurses through two levels of containers.
- * 
+ *
  */
 template<typename ParentIt>
 class recursive_iterator {
@@ -96,7 +96,7 @@ public:
         return &(*_child_it);
     }
 
-    [[nodiscard]] reference operator[](size_t i) const noexcept
+    [[nodiscard]] reference operator[](std::size_t i) const noexcept
     {
         return *(*this + i);
     }
@@ -198,8 +198,7 @@ public:
         }
     }
 
-    [[nodiscard]] friend std::strong_ordering
-    operator<=>(recursive_iterator const &lhs, recursive_iterator const &rhs) noexcept
+    [[nodiscard]] friend std::strong_ordering operator<=>(recursive_iterator const &lhs, recursive_iterator const &rhs) noexcept
     {
         if (lhs._parent_it != rhs._parent_it) {
             return (lhs._parent_it - rhs._parent_it) <=> 0;
@@ -234,7 +233,7 @@ public:
             while (lhs_._parent_it < rhs._parent_it) {
                 count += std::distance(lhs_.child_it, std::end(*lhs_._parent_it));
                 ++(lhs_._parent_it);
-                lhs_._child_it = std::begin(*lhs_._parent_it);
+                lhs_._child_it = begin(*lhs_._parent_it);
             }
             return count + std::distance(lhs_._child_it, rhs._child_it);
         }
@@ -251,7 +250,7 @@ private:
 template<typename Container>
 [[nodiscard]] auto recursive_iterator_begin(Container &rhs) noexcept
 {
-    return recursive_iterator(std::begin(rhs), std::end(rhs));
+    return recursive_iterator(begin(rhs), end(rhs));
 }
 
 /** Get a recursive iterator from one beyond the end of a recursive container.
@@ -259,7 +258,7 @@ template<typename Container>
 template<typename Container>
 [[nodiscard]] auto recursive_iterator_end(Container &rhs) noexcept
 {
-    return recursive_iterator(std::end(rhs), std::end(rhs));
+    return recursive_iterator(end(rhs), end(rhs));
 }
 
 /** Get a recursive iterator from the begin of a recursive container.
@@ -267,7 +266,7 @@ template<typename Container>
 template<typename Container>
 [[nodiscard]] auto recursive_iterator_begin(Container const &rhs) noexcept
 {
-    return recursive_iterator(std::begin(rhs), std::end(rhs));
+    return recursive_iterator(begin(rhs), end(rhs));
 }
 
 /** Get a recursive iterator from one beyond the end of a recursive container.
@@ -275,7 +274,7 @@ template<typename Container>
 template<typename Container>
 [[nodiscard]] auto recursive_iterator_end(Container const &rhs) noexcept
 {
-    return recursive_iterator(std::end(rhs), std::end(rhs));
+    return recursive_iterator(end(rhs), end(rhs));
 }
 
-} // namespace tt
+} // namespace tt::inline v1

@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <numeric>
 
-namespace tt {
+namespace tt::inline v1 {
 
 class png {
 public:
@@ -26,15 +26,14 @@ public:
 
     [[nodiscard]] png(std::unique_ptr<resource_view> view);
 
-    [[nodiscard]] png(URL const &url) :
-        png(url.loadView()) {}
+    [[nodiscard]] png(URL const &url) : png(url.loadView()) {}
 
-    [[nodiscard]] size_t width() const noexcept
+    [[nodiscard]] std::size_t width() const noexcept
     {
         return _width;
     }
 
-    [[nodiscard]] size_t height() const noexcept
+    [[nodiscard]] std::size_t height() const noexcept
     {
         return _height;
     }
@@ -78,8 +77,8 @@ private:
      */
     std::unique_ptr<resource_view> _view;
 
-    void read_header(std::span<std::byte const> bytes, ssize_t &offset);
-    void read_chunks(std::span<std::byte const> bytes, ssize_t &offset);
+    void read_header(std::span<std::byte const> bytes, std::size_t &offset);
+    void read_chunks(std::span<std::byte const> bytes, std::size_t &offset);
     void read_IHDR(std::span<std::byte const> bytes);
     void read_cHRM(std::span<std::byte const> bytes);
     void read_gAMA(std::span<std::byte const> bytes);
@@ -89,7 +88,7 @@ private:
     void generate_sRGB_transfer_function() noexcept;
     void generate_Rec2100_transfer_function() noexcept;
     void generate_gamma_transfer_function(float gamma) noexcept;
-    [[nodiscard]] bstring decompress_IDATs(ssize_t image_data_size) const;
+    [[nodiscard]] bstring decompress_IDATs(std::size_t image_data_size) const;
     void unfilter_lines(bstring &image_data) const;
     void unfilter_line(std::span<uint8_t> line, std::span<uint8_t const> prev_line) const;
     void unfilter_line_sub(std::span<uint8_t> line, std::span<uint8_t const> prev_line) const noexcept;
@@ -99,7 +98,6 @@ private:
     void data_to_image(bstring bytes, pixel_map<sfloat_rgba16> &image) const noexcept;
     void data_to_image_line(std::span<std::byte const> bytes, pixel_row<sfloat_rgba16> &row) const noexcept;
     u16x4 extract_pixel_from_line(std::span<std::byte const> bytes, int x) const noexcept;
-
 };
 
-}
+} // namespace tt::inline v1

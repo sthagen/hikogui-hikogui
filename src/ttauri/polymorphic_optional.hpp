@@ -11,7 +11,7 @@
 #include <optional>
 #include <type_traits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** Polymorphic optional.
  * This optional container can hold an polymorphic value.
@@ -23,7 +23,7 @@ namespace tt {
  * @tparam Capacity The size in bytes of the internal buffer to store
  *                  the polymorphic value.
  */
-template<typename BaseType, size_t Capacity>
+template<typename BaseType, std::size_t Capacity>
 class polymorphic_optional {
 public:
     using value_type = BaseType;
@@ -32,7 +32,7 @@ public:
     using pointer = value_type *;
     using const_pointer = value_type const *;
 
-    static constexpr size_t capacity = Capacity;
+    static constexpr std::size_t capacity = Capacity;
 
     /** Destroy any contained value.
      */
@@ -271,4 +271,4 @@ private:
     }
 };
 
-} // namespace tt
+} // namespace tt::inline v1

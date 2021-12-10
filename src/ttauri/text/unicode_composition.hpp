@@ -6,7 +6,7 @@
 
 #include "../assert.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 class unicode_composition {
 public:
@@ -33,15 +33,16 @@ public:
         return static_cast<char32_t>(value & 0x1f'ffff);
     }
 
-    [[nodiscard]] constexpr friend bool operator<(unicode_composition const &lhs, unicode_composition const &rhs) noexcept
-    {
-        return lhs.value < rhs.value;
-    }
 
     [[nodiscard]] constexpr friend bool operator==(unicode_composition const &lhs, unicode_composition const &rhs) noexcept
     {
         // Don't check the composed value, when searching through the composition table.
         return (lhs.value >> 21) == (rhs.value >> 21);
+    }
+
+    [[nodiscard]] constexpr friend bool operator<(unicode_composition const &lhs, unicode_composition const &rhs) noexcept
+    {
+        return lhs.value < rhs.value;
     }
 
 private:
@@ -70,4 +71,4 @@ template<typename It>
  */
 [[nodiscard]] char32_t unicode_composition_find(char32_t first, char32_t second) noexcept;
 
-}
+} // namespace tt::inline v1

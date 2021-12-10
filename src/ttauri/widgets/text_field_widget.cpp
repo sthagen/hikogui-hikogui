@@ -7,16 +7,23 @@
 #include "../GUI/gui_window.hpp"
 #include "../GUI/gui_system.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 text_field_widget::text_field_widget(gui_window &window, widget *parent, weak_or_unique_ptr<delegate_type> delegate) noexcept :
-    super(window, parent), _delegate(std::move(delegate)), _field(font_book(), theme().text_style(theme_text_style::label)), _shaped_text()
+    super(window, parent),
+    _delegate(std::move(delegate)),
+    _field(font_book(), theme().text_style(theme_text_style::label)),
+    _shaped_text()
 {
     if (auto d = _delegate.lock()) {
-        _delegate_callback = d->subscribe(*this, [this] {
-            _request_layout = true;
-        });
+        d->subscribe(*this, _relayout_callback);
+        d->init(*this);
     }
+    continues.subscribe(_relayout_callback);
+    text_style.subscribe(_relayout_callback);
+    text_width.subscribe(_reconstrain_callback);
+    _error_label_widget =
+        std::make_unique<label_widget>(window, this, _error_label, alignment::top_left, theme_text_style::error);
 }
 
 text_field_widget::text_field_widget(gui_window &window, widget *parent, std::weak_ptr<delegate_type> delegate) noexcept :
@@ -24,69 +31,55 @@ text_field_widget::text_field_widget(gui_window &window, widget *parent, std::we
 {
 }
 
-void text_field_widget::init() noexcept
-{
-    super::init();
-    if (auto delegate = _delegate.lock()) {
-        delegate->init(*this);
-    }
-}
-
-void text_field_widget::deinit() noexcept
+text_field_widget::~text_field_widget()
 {
     if (auto delegate = _delegate.lock()) {
         delegate->deinit(*this);
     }
-    super::deinit();
 }
 
-[[nodiscard]] bool
-text_field_widget::constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept
+widget_constraints const &text_field_widget::set_constraints() noexcept
 {
-    tt_axiom(is_gui_thread());
+    _layout = {};
 
-    if (super::constrain(display_time_point, need_reconstrain)) {
-        ttlet text_style = theme().text_style(theme_text_style::label);
+    ttlet error_label_constraints = _error_label_widget->set_constraints();
+    ttlet error_size = _error_label ? error_label_constraints.preferred + extent2{0.0f, theme().margin} : extent2{};
 
-        _text_width = 100.0;
-
-        _minimum_size = {_text_width + theme().margin * 2.0f, theme().size + theme().margin * 2.0f};
-        _preferred_size = {_text_width + theme().margin * 2.0f, theme().size + theme().margin * 2.0f};
-        _maximum_size = {_text_width + theme().margin * 2.0f, theme().size + theme().margin * 2.0f};
-        tt_axiom(_minimum_size <= _preferred_size && _preferred_size <= _maximum_size);
-        return true;
-    } else {
-        return false;
-    }
+    auto size = extent2{
+        std::max(text_width + theme().margin * 2.0f, error_size.width()),
+        theme().size + theme().margin * 2.0f + error_size.height()};
+    return _constraints = {size, size, size, theme().margin};
 }
 
-void text_field_widget::layout(utc_nanoseconds display_time_point, bool need_layout) noexcept
+void text_field_widget::set_layout(widget_layout const &layout) noexcept
 {
-    tt_axiom(is_gui_thread());
+    ttlet text_was_modified = std::exchange(_text_was_modified, false);
+    if (compare_store(_layout, layout) or text_was_modified) {
+        ttlet text_field_height = theme().size + theme().margin * 2.0f;
+        ttlet error_label_rectangle = aarectangle{
+            extent2{layout.width(), std::min(layout.height(), _error_label_widget->constraints().preferred.height())}};
+        _error_label_widget->visible = not _error_label->empty();
+        _error_label_widget->set_layout(layout.transform(error_label_rectangle));
 
-    if (_focus && display_time_point >= _next_redraw_time_point) {
-        request_redraw();
-    }
-
-    need_layout |= _request_layout.exchange(false);
-    if (need_layout) {
-        _text_field_rectangle = aarectangle{extent2{_text_width + theme().margin * 2.0f, _size.height()}};
+        // The rectangle is a single line, but at full width. Aligned to the top of the widget.
+        ttlet text_field_size = extent2{layout.width(), text_field_height};
+        _text_field_rectangle = aarectangle{point2{0.0f, layout.height() - text_field_height}, text_field_size};
 
         // Set the clipping rectangle to within the border of the input field.
         // Add another border width, so glyphs do not touch the border.
-        _text_field_clipping_rectangle = intersect(_clipping_rectangle, _text_field_rectangle);
+        _text_field_clipping_rectangle = intersect(layout.clipping_rectangle, _text_field_rectangle);
 
-        _text_rectangle = shrink(_text_field_rectangle, theme().margin);
+        _text_rectangle = _text_field_rectangle - theme().margin;
 
         ttlet field_str = static_cast<std::string>(_field);
 
-        if (_focus) {
+        if (focus) {
             // Update the optional error value from the string conversion when the
             // field has keyboard focus.
             if (auto delegate = _delegate.lock()) {
-                _error = delegate->validate(*this, field_str);
+                _error_label = delegate->validate(*this, field_str);
             } else {
-                _error = {};
+                _error_label = {};
             }
 
         } else {
@@ -96,7 +89,7 @@ void text_field_widget::layout(utc_nanoseconds display_time_point, bool need_lay
             } else {
                 _field = {};
             }
-            _error = {};
+            _error_label = {};
         }
 
         _field.set_style_of_all(theme().text_style(theme_text_style::label));
@@ -104,19 +97,15 @@ void text_field_widget::layout(utc_nanoseconds display_time_point, bool need_lay
         _shaped_text = _field.shaped_text();
 
         // Record the last time the text is modified, so that the caret remains lit.
-        _last_update_time_point = display_time_point;
+        _last_update_time_point = layout.display_time_point;
     }
-
-    super::layout(display_time_point, need_layout);
 }
 
-void text_field_widget::draw(draw_context context, utc_nanoseconds display_time_point) noexcept
+void text_field_widget::draw(draw_context const &context) noexcept
 {
-    tt_axiom(is_gui_thread());
+    _next_redraw_time_point = context.display_time_point + _blink_interval;
 
-    _next_redraw_time_point = display_time_point + _blink_interval;
-
-    if (overlaps(context, this->_clipping_rectangle)) {
+    if (visible and overlaps(context, layout())) {
         scroll_text();
 
         draw_background_box(context);
@@ -124,20 +113,20 @@ void text_field_widget::draw(draw_context context, utc_nanoseconds display_time_
         // After drawing the border around the input field make sure any other
         // drawing remains inside this border. And change the transform to account
         // for how much the text has scrolled.
-        context.set_clipping_rectangle(_text_field_clipping_rectangle);
         draw_selection_rectangles(context);
         draw_partial_grapheme_caret(context);
-        draw_caret(context, display_time_point);
+        draw_caret(context);
         draw_text(context);
     }
 
-    super::draw(std::move(context), display_time_point);
+    _error_label_widget->draw(context);
 }
 
 bool text_field_widget::handle_event(command command) noexcept
 {
     tt_axiom(is_gui_thread());
-    _request_layout = true;
+    _text_was_modified = true;
+    request_relayout();
 
     if (enabled) {
         switch (command) {
@@ -150,7 +139,7 @@ bool text_field_widget::handle_event(command command) noexcept
 
         case command::text_edit_cut: window.set_text_on_clipboard(_field.handle_cut()); return true;
 
-        case command::gui_escape: revert(true); return true;
+        case command::gui_cancel: revert(true); return true;
 
         case command::gui_enter:
             commit(true);
@@ -276,16 +265,17 @@ bool text_field_widget::handle_event(keyboard_event const &event) noexcept
         }
     }
 
-    _request_layout = true;
+    _text_was_modified = true;
+    request_relayout();
     return handled;
 }
 
-hitbox text_field_widget::hitbox_test(point2 position) const noexcept
+hitbox text_field_widget::hitbox_test(point3 position) const noexcept
 {
     tt_axiom(is_gui_thread());
 
-    if (_visible_rectangle.contains(position)) {
-        return hitbox{this, draw_layer, enabled ? hitbox::Type::TextEdit : hitbox::Type::Default};
+    if (visible and enabled and layout().contains(position) and _text_field_rectangle.contains(position)) {
+        return hitbox{this, position, hitbox::Type::TextEdit};
     } else {
         return hitbox{};
     }
@@ -293,13 +283,12 @@ hitbox text_field_widget::hitbox_test(point2 position) const noexcept
 
 [[nodiscard]] bool text_field_widget::accepts_keyboard_focus(keyboard_focus_group group) const noexcept
 {
-    tt_axiom(is_gui_thread());
-    return is_normal(group) and enabled;
+    return visible and enabled and any(group & tt::keyboard_focus_group::normal);
 }
 
 [[nodiscard]] color text_field_widget::focus_color() const noexcept
 {
-    if (enabled and window.active and _error.has_value()) {
+    if (enabled and active() and not _error_label->empty()) {
         return theme().text_style(theme_text_style::error).color;
     } else {
         return super::focus_color();
@@ -313,7 +302,7 @@ void text_field_widget::revert(bool force) noexcept
     } else {
         _field = {};
     }
-    _error = {};
+    _error_label = {};
 }
 
 void text_field_widget::commit(bool force) noexcept
@@ -323,7 +312,7 @@ void text_field_widget::commit(bool force) noexcept
         auto text = static_cast<std::string>(_field);
 
         if (auto delegate = _delegate.lock()) {
-            if (not delegate->validate(*this, text).has_value()) {
+            if (delegate->validate(*this, text).empty()) {
                 // text is valid.
                 delegate->set_text(*this, text);
             }
@@ -333,7 +322,7 @@ void text_field_widget::commit(bool force) noexcept
         } else {
             _field = {};
         }
-        _error = {};
+        _error_label = {};
     }
 }
 
@@ -381,54 +370,76 @@ void text_field_widget::scroll_text() noexcept
 
     // Calculate how much we need to translate the text.
     _text_translate = translate2{-_text_scroll_x, 0.0f} *
-        _shaped_text.translate_base_line(point2{_text_rectangle.left(), rectangle().middle()});
+        _shaped_text.translate_base_line(point2{_text_rectangle.left(), _text_rectangle.middle()});
     _text_inv_translate = ~_text_translate;
 }
 
-void text_field_widget::draw_background_box(draw_context context) const noexcept
+void text_field_widget::draw_background_box(draw_context const &context) const noexcept
 {
     ttlet corner_shapes = tt::corner_shapes{0.0f, 0.0f, theme().rounding_radius, theme().rounding_radius};
-    context.draw_box(_text_field_rectangle, background_color(), corner_shapes);
+    context.draw_box(_layout, _text_field_rectangle, background_color(), corner_shapes);
 
-    ttlet line_rectangle = aarectangle{get<0>(_text_field_rectangle), extent2{_text_field_rectangle.width(), 1.0f}};
-    context.draw_box(translate3{0.0f, 0.0f, 0.1f} * line_rectangle, focus_color());
+    ttlet line = line_segment(get<0>(_text_field_rectangle), get<1>(_text_field_rectangle));
+    context.draw_line(_layout, translate3{0.0f, 0.5f, 0.1f} * line, theme().border_width, focus_color());
 }
 
-void text_field_widget::draw_selection_rectangles(draw_context context) const noexcept
+void text_field_widget::draw_selection_rectangles(draw_context const &context) const noexcept
 {
     ttlet selection_rectangles = _field.selection_rectangles();
     for (ttlet selection_rectangle : selection_rectangles) {
         context.draw_box(
-            _text_translate * translate_z(0.1f) * selection_rectangle, theme().color(theme_color::text_select));
+            _layout, _text_translate * translate_z(0.1f) * selection_rectangle, theme().color(theme_color::text_select));
     }
 }
 
-void text_field_widget::draw_partial_grapheme_caret(draw_context context) const noexcept
+void text_field_widget::draw_partial_grapheme_caret(draw_context const &context)
+    const noexcept
 {
     ttlet partial_grapheme_caret = _field.partial_grapheme_caret();
     if (partial_grapheme_caret) {
         ttlet box = round(_text_translate) * translate_z(0.1f) * round(partial_grapheme_caret);
-        context.draw_box_with_border_inside(box, color::transparent(), theme().color(theme_color::incomplete_glyph));
+        context.draw_box(
+            _layout, box, color::transparent(), theme().color(theme_color::incomplete_glyph), 1.0f, border_side::outside);
     }
 }
 
-void text_field_widget::draw_caret(draw_context context, utc_nanoseconds display_time_point) noexcept
+void text_field_widget::draw_caret(draw_context const &context) noexcept
 {
-    // Display the caret and handle blinking.
-    ttlet duration_since_last_update = display_time_point - _last_update_time_point;
-    ttlet nr_half_blinks = static_cast<int64_t>(duration_since_last_update / _blink_interval);
+    if (focus and active()) {
+        // Keep redrawing while the text-field has focus.
+        request_redraw();
 
-    ttlet blink_is_on = nr_half_blinks % 2 == 0;
-    _left_to_right_caret = _field.left_to_right_caret();
-    if (_left_to_right_caret && blink_is_on && _focus && window.active) {
-        ttlet box = round(_text_translate) * translate_z(0.1f) * round(_left_to_right_caret);
-        context.draw_box_with_border_inside(box, color::transparent(), theme().color(theme_color::cursor));
+        // Display the caret and handle blinking.
+        ttlet duration_since_last_update = context.display_time_point - _last_update_time_point;
+        ttlet nr_half_blinks = static_cast<int64_t>(duration_since_last_update / _blink_interval);
+        ttlet blink_is_on = nr_half_blinks % 2 == 0;
+
+        _left_to_right_caret = _field.left_to_right_caret();
+        if (_left_to_right_caret and blink_is_on) {
+            ttlet box = round(_text_translate) * translate_z(0.1f) * round(_left_to_right_caret);
+            context.draw_box(
+                _layout,
+                _text_field_clipping_rectangle,
+                box,
+                color::transparent(),
+                theme().color(theme_color::cursor),
+                1.0f,
+                border_side::inside);
+        }
+
+        //ttlet right_to_left_caret = _field.right_to_left_caret();
+        //if (right_to_left_caret and blink_is_on) {
+        //    ttlet box = round(_text_translate) * translate_z(0.1f) * round(right_to_left_caret);
+        //    context.draw_box(
+        //        clipped_layout, box, color::transparent(), theme().color(theme_color::red), 1.0f, //border_side::inside);
+        //}
+
     }
 }
 
-void text_field_widget::draw_text(draw_context context) const noexcept
+void text_field_widget::draw_text(draw_context const &context) const noexcept
 {
-    context.draw_text(_shaped_text, label_color(), _text_translate * translate_z(0.2f));
+    context.draw_text(_layout, _text_field_clipping_rectangle, _text_translate * translate_z(0.2f), label_color(), _shaped_text);
 }
 
-}
+} // namespace tt::inline v1

@@ -11,8 +11,7 @@
 #include "scale.hpp"
 #include <type_traits>
 
-namespace tt {
-namespace geo {
+namespace tt::inline v1 { namespace geo {
 
 template<int D>
 [[nodiscard]] constexpr matrix<D> operator*(identity const &lhs, matrix<D> const &rhs) noexcept
@@ -41,7 +40,7 @@ template<int D>
 template<int D, int E>
 [[nodiscard]] constexpr auto operator*(translate<D> const &lhs, scale<E> const &rhs) noexcept
 {
-    tt_axiom(lhs.is_valid() && rhs.is_valid());
+    tt_axiom(lhs.holds_invariant() && rhs.holds_invariant());
     return matrix<std::max(D, E)>{
         static_cast<f32x4>(rhs).x000(),
         static_cast<f32x4>(rhs)._0y00(),
@@ -52,7 +51,7 @@ template<int D, int E>
 template<int D, int E>
 [[nodiscard]] constexpr auto operator*(scale<D> const &lhs, translate<E> const &rhs) noexcept
 {
-    tt_axiom(lhs.is_valid() && rhs.is_valid());
+    tt_axiom(lhs.holds_invariant() && rhs.holds_invariant());
     return matrix<std::max(D, E)>{
         static_cast<f32x4>(lhs).x000(),
         static_cast<f32x4>(lhs)._0y00(),
@@ -82,6 +81,4 @@ constexpr bool transform_v = transform<T>::value;
 template<typename T>
 concept transformer = transform_v<T>;
 
-} // namespace geo
-
-} // namespace tt
+}} // namespace tt::inline v1::geo

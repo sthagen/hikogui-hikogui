@@ -7,9 +7,9 @@
 #include "abstract_button_widget.hpp"
 #include "default_button_delegate.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
-/** A GUI widget that permits the user to make a binary choice. 
+/** A GUI widget that permits the user to make a binary choice.
  *
  * A toggle is very similar to a `checkbox_widget`. The
  * semantic difference between a checkbox and a toggle is:
@@ -79,9 +79,9 @@ public:
     }
 
     /// @privatesection
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     /// @endprivatesection
 private:
     static constexpr std::chrono::nanoseconds _animation_duration = std::chrono::milliseconds(150);
@@ -93,8 +93,8 @@ private:
     float _pip_move_range;
 
     toggle_widget(gui_window &window, widget *parent, weak_or_unique_ptr<delegate_type> delegate) noexcept;
-    void draw_toggle_button(draw_context context) noexcept;
-    void draw_toggle_pip(draw_context draw_context, utc_nanoseconds display_time_point) noexcept;
+    void draw_toggle_button(draw_context const &context) noexcept;
+    void draw_toggle_pip(draw_context const &context) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

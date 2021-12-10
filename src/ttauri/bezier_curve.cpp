@@ -8,7 +8,7 @@
 #include "memory.hpp"
 #include <optional>
 
-namespace tt {
+namespace tt::inline v1 {
 
 static constexpr bezier_curve::Color operator++(bezier_curve::Color &lhs, int) noexcept
 {
@@ -17,7 +17,8 @@ static constexpr bezier_curve::Color operator++(bezier_curve::Color &lhs, int) n
     return tmp;
 }
 
-std::vector<bezier_curve> makeContourFromPoints(std::vector<bezier_point>::const_iterator begin, std::vector<bezier_point>::const_iterator end) noexcept
+std::vector<bezier_curve>
+makeContourFromPoints(std::vector<bezier_point>::const_iterator begin, std::vector<bezier_point>::const_iterator end) noexcept
 {
     ttlet points = bezier_point::normalizePoints(begin, end);
 
@@ -29,7 +30,7 @@ std::vector<bezier_curve> makeContourFromPoints(std::vector<bezier_point>::const
     auto C2 = point2{};
 
     auto color = bezier_curve::Color::Yellow;
-    for (ttlet &point: points) {
+    for (ttlet &point : points) {
         switch (point.type) {
         case bezier_point::Type::Anchor:
             switch (type) {
@@ -52,8 +53,7 @@ std::vector<bezier_curve> makeContourFromPoints(std::vector<bezier_point>::const
                 P1 = point.p;
                 type = bezier_curve::Type::Linear;
                 break;
-            default:
-                tt_no_default();
+            default: tt_no_default();
             }
             break;
         case bezier_point::Type::QuadraticControl:
@@ -68,19 +68,17 @@ std::vector<bezier_curve> makeContourFromPoints(std::vector<bezier_point>::const
             C2 = point.p;
             tt_assert(type == bezier_curve::Type::Cubic);
             break;
-        default:
-            tt_no_default();
+        default: tt_no_default();
         }
     }
 
     // If there is only a single curve, water-drop-shaped, it should be marked white.
-    if (std::ssize(r) == 1) {
+    if (ssize(r) == 1) {
         r.front().color = bezier_curve::Color::White;
     }
 
     return r;
 }
-
 
 std::vector<bezier_curve> makeInverseContour(std::vector<bezier_curve> const &contour) noexcept
 {
@@ -94,12 +92,12 @@ std::vector<bezier_curve> makeInverseContour(std::vector<bezier_curve> const &co
     return r;
 }
 
-
-std::vector<bezier_curve> makeParallelContour(std::vector<bezier_curve> const &contour, float offset, LineJoinStyle lineJoinStyle, float tolerance) noexcept
+std::vector<bezier_curve>
+makeParallelContour(std::vector<bezier_curve> const &contour, float offset, line_join_style line_join_style, float tolerance) noexcept
 {
     auto contourAtOffset = std::vector<bezier_curve>{};
-    for (ttlet &curve: contour) {
-        for (ttlet &flatCurve: curve.subdivideUntilFlat(tolerance)) {
+    for (ttlet &curve : contour) {
+        for (ttlet &flatCurve : curve.subdivideUntilFlat(tolerance)) {
             contourAtOffset.push_back(flatCurve.toParallelLine(offset));
         }
     }
@@ -108,7 +106,7 @@ std::vector<bezier_curve> makeParallelContour(std::vector<bezier_curve> const &c
     // This needs to be repaired.
     std::optional<point2> intersectPoint;
     auto r = std::vector<bezier_curve>{};
-    for (ttlet &curve: contourAtOffset) {
+    for (ttlet &curve : contourAtOffset) {
         if (r.size() == 0) {
             r.push_back(curve);
 
@@ -120,7 +118,9 @@ std::vector<bezier_curve> makeParallelContour(std::vector<bezier_curve> const &c
             r.push_back(curve);
             r.back().P1 = intersectPoint.value();
 
-        } else if (lineJoinStyle == LineJoinStyle::Miter && (intersectPoint = getExtrapolatedIntersectionPoint(r.back().P1, r.back().P2, curve.P1, curve.P2))) {
+        } else if (
+            line_join_style == line_join_style::miter &&
+            (intersectPoint = getExtrapolatedIntersectionPoint(r.back().P1, r.back().P2, curve.P1, curve.P2))) {
             r.back().P2 = intersectPoint.value();
             r.push_back(curve);
             r.back().P1 = intersectPoint.value();
@@ -143,22 +143,21 @@ std::vector<bezier_curve> makeParallelContour(std::vector<bezier_curve> const &c
     return r;
 }
 
-
-static std::vector<float> solveCurvesXByY(std::vector<bezier_curve> const &v, float y) noexcept {
+static std::vector<float> solveCurvesXByY(std::vector<bezier_curve> const &v, float y) noexcept
+{
     std::vector<float> r;
     r.reserve(v.size());
 
-    for (ttlet &curve: v) {
+    for (ttlet &curve : v) {
         ttlet xValues = curve.solveXByY(y);
-        for (ttlet x: xValues) {
+        for (ttlet x : xValues) {
             r.push_back(x);
         }
     }
     return r;
 }
 
-
-static std::optional<std::vector<std::pair<float,float>>> getFillSpansAtY(std::vector<bezier_curve> const &v, float y) noexcept
+static std::optional<std::vector<std::pair<float, float>>> getFillSpansAtY(std::vector<bezier_curve> const &v, float y) noexcept
 {
     auto xValues = solveCurvesXByY(v, y);
 
@@ -169,7 +168,7 @@ static std::optional<std::vector<std::pair<float,float>>> getFillSpansAtY(std::v
     ttlet uniqueEnd = std::unique(xValues.begin(), xValues.end());
 
     // After removing duplicates, we should end up with pairs of x values.
-    size_t const uniqueValueCount = (uniqueEnd - xValues.begin());
+    std::size_t const uniqueValueCount = (uniqueEnd - xValues.begin());
 
     if (uniqueValueCount % 2 != 0) {
         // Something is wrong in solving the curves. Probably numeric instability.
@@ -180,19 +179,17 @@ static std::optional<std::vector<std::pair<float,float>>> getFillSpansAtY(std::v
     // Create pairs of values.
     auto r = std::vector<std::pair<float, float>>{};
     r.reserve(uniqueValueCount / 2);
-    for (size_t i = 0; i < uniqueValueCount; i += 2) {
-        r.emplace_back(xValues[i], xValues[i+1]);
+    for (std::size_t i = 0; i < uniqueValueCount; i += 2) {
+        r.emplace_back(xValues[i], xValues[i + 1]);
     }
     return r;
 }
 
 static void fillPartialPixels(pixel_row<uint8_t> row, ssize_t const i, float const startX, float const endX) noexcept
 {
-    ttlet pixelCoverage =
-        std::clamp(endX, i + 0.0f, i + 1.0f) -
-        std::clamp(startX, i + 0.0f, i + 1.0f);
+    ttlet pixelCoverage = std::clamp(endX, i + 0.0f, i + 1.0f) - std::clamp(startX, i + 0.0f, i + 1.0f);
 
-    auto & pixel = row[i];
+    auto &pixel = row[i];
     pixel = static_cast<uint8_t>(std::min(pixelCoverage * 51.0f + pixel, 255.0f));
 }
 
@@ -214,14 +211,14 @@ static void fillFullPixels(pixel_row<uint8_t> row, ssize_t const start, ssize_t 
         }
 
         // add 51 for each pixel, 8 pixels at a time.
-        auto u64p = reinterpret_cast<uint64_t*>(u8p);
+        auto u64p = reinterpret_cast<uint64_t *>(u8p);
         ttlet u64end = reinterpret_cast<uint64_t *>(tt::floor(u8end, sizeof(uint64_t)));
         while (u64p < u64end) {
             *(u64p++) += 0x3333333333333333ULL;
         }
 
         // Add 51 to the last pixels.
-        u8p = reinterpret_cast<uint8_t*>(u64p);
+        u8p = reinterpret_cast<uint8_t *>(u64p);
         while (u8p < u8end) {
             *(u8p++) += 0x33;
         }
@@ -237,10 +234,10 @@ static void fillRowSpan(pixel_row<uint8_t> row, float const startX, float const 
         return;
     }
 
-    ttlet startX_int = narrow_cast<ssize_t>(startX);
+    ttlet startX_int = narrow_cast<std::size_t>(startX);
     ttlet endXplusOne = endX + 1.0f;
-    ttlet endX_int = narrow_cast<ssize_t>(endXplusOne);
-    ttlet startColumn = std::max(startX_int, ssize_t{0});
+    ttlet endX_int = narrow_cast<std::size_t>(endXplusOne);
+    ttlet startColumn = std::max(startX_int, std::size_t{0});
     ttlet endColumn = std::min(endX_int, row.width());
     ttlet nrColumns = endColumn - startColumn;
 
@@ -253,7 +250,7 @@ static void fillRowSpan(pixel_row<uint8_t> row, float const startX, float const 
     }
 }
 
-static void fillRow(pixel_row<uint8_t> row, int const rowY, std::vector<bezier_curve> const& curves) noexcept
+static void fillRow(pixel_row<uint8_t> row, std::size_t rowY, std::vector<bezier_curve> const &curves) noexcept
 {
     // 5 times super sampling.
     for (float y = rowY + 0.1f; y < (rowY + 1); y += 0.2f) {
@@ -266,7 +263,7 @@ static void fillRow(pixel_row<uint8_t> row, int const rowY, std::vector<bezier_c
         if (optionalSpans) {
             ttlet &spans = optionalSpans.value();
 
-            for (ttlet &span: spans) {
+            for (ttlet &span : spans) {
                 fillRowSpan(row, span.first, span.second);
             }
         }
@@ -275,20 +272,19 @@ static void fillRow(pixel_row<uint8_t> row, int const rowY, std::vector<bezier_c
 
 void fill(pixel_map<uint8_t> &image, std::vector<bezier_curve> const &curves) noexcept
 {
-    for (int rowNr = 0; rowNr < image.height(); rowNr++) {
+    for (std::size_t rowNr = 0; rowNr < image.height(); rowNr++) {
         fillRow(image.at(rowNr), rowNr, curves);
     }
 }
 
-
- [[nodiscard]] static float generate_sdf_r8_pixel(point2 point, std::vector<bezier_curve> const &curves) noexcept
+[[nodiscard]] static float generate_sdf_r8_pixel(point2 point, std::vector<bezier_curve> const &curves) noexcept
 {
-    if (std::ssize(curves) == 0) {
+    if (size(curves) == 0) {
         return -std::numeric_limits<float>::max();
     }
 
     float min_distance = std::numeric_limits<float>::max();
-    for (ttlet &curve: curves) {
+    for (ttlet &curve : curves) {
         ttlet distance = curve.sdf_distance(point);
 
         if (std::abs(distance) < std::abs(min_distance)) {
@@ -303,7 +299,7 @@ static void bad_pixels_edges(pixel_map<sdf_r8> &image) noexcept
 {
     // Bottom edge.
     auto row = image[0];
-    for (ssize_t column_nr = 0; column_nr != image.width(); ++column_nr) {
+    for (std::size_t column_nr = 0; column_nr != image.width(); ++column_nr) {
         auto &pixel = row[column_nr];
         if (static_cast<float>(pixel) > 0.0) {
             pixel.repair();
@@ -312,7 +308,7 @@ static void bad_pixels_edges(pixel_map<sdf_r8> &image) noexcept
 
     // Top edge
     row = image[image.height() - 1];
-    for (ssize_t column_nr = 0; column_nr != image.width(); ++column_nr) {
+    for (std::size_t column_nr = 0; column_nr != image.width(); ++column_nr) {
         auto &pixel = row[column_nr];
         if (static_cast<float>(pixel) > 0.0) {
             pixel.repair();
@@ -320,7 +316,7 @@ static void bad_pixels_edges(pixel_map<sdf_r8> &image) noexcept
     }
 
     // Left and right edge
-    for (ssize_t row_nr = 0; row_nr != image.height(); ++row_nr) {
+    for (std::size_t row_nr = 0; row_nr != image.height(); ++row_nr) {
         row = image[row_nr];
 
         auto &left_pixel = row[0];
@@ -337,11 +333,11 @@ static void bad_pixels_edges(pixel_map<sdf_r8> &image) noexcept
 
 static void bad_pixels_horizontally(pixel_map<sdf_r8> &image) noexcept
 {
-    for (ssize_t row_nr = 0; row_nr != image.height(); ++row_nr) {
+    for (std::size_t row_nr = 0; row_nr != image.height(); ++row_nr) {
         auto row = image[row_nr];
         // The left edge of the signed distance field should be outside of the glyph -float_max
         auto prev_pixel_value = sdf_r8(-std::numeric_limits<float>::max());
-        for (ssize_t column_nr = 0; column_nr != image.width(); ++column_nr) {
+        for (std::size_t column_nr = 0; column_nr != image.width(); ++column_nr) {
             auto &pixel = row[column_nr];
             ttlet pixel_value = static_cast<float>(pixel);
 
@@ -358,11 +354,11 @@ static void bad_pixels_horizontally(pixel_map<sdf_r8> &image) noexcept
     }
 }
 
-[[nodiscard]] std::vector<std::pair<int,int>> bad_pixels_homogenious(pixel_map<sdf_r8> const &image) noexcept
+[[nodiscard]] std::vector<std::pair<int, int>> bad_pixels_homogenious(pixel_map<sdf_r8> const &image) noexcept
 {
     constexpr float threshold = 0.075f;
 
-    auto r = std::vector<std::pair<int,int>>{};
+    auto r = std::vector<std::pair<int, int>>{};
 
     auto row = image.at(0);
     auto next_row = image.at(1);
@@ -383,14 +379,13 @@ static void bad_pixels_horizontally(pixel_map<sdf_r8> &image) noexcept
                 static_cast<float>(row[column_nr + 1]),
                 static_cast<float>(next_row[column_nr - 1]),
                 static_cast<float>(next_row[column_nr]),
-                static_cast<float>(next_row[column_nr + 1])
-            };
+                static_cast<float>(next_row[column_nr + 1])};
 
             ttlet normal_mean = mean(area.cbegin(), area.cend());
             ttlet normal_stddev = stddev(area.cbegin(), area.cend(), normal_mean);
 
-            static_assert(std::ssize(area) % 2 == 1);
-            area[std::ssize(area) / 2] = -area[std::ssize(area) / 2];
+            static_assert(ssize(area) % 2 == 1);
+            area[ssize(area) / 2] = -area[ssize(area) / 2];
 
             ttlet flipped_mean = mean(area.cbegin(), area.cend());
             ttlet flipped_stddev = stddev(area.cbegin(), area.cend(), flipped_mean);
@@ -403,7 +398,6 @@ static void bad_pixels_horizontally(pixel_map<sdf_r8> &image) noexcept
     }
     return r;
 }
-
 
 void fill(pixel_map<sdf_r8> &image, std::vector<bezier_curve> const &curves) noexcept
 {
@@ -419,17 +413,17 @@ void fill(pixel_map<sdf_r8> &image, std::vector<bezier_curve> const &curves) noe
     bad_pixels_horizontally(image);
     bad_pixels_edges(image);
 
-    std::vector<std::pair<int,int>> bad_pixel_list;
+    std::vector<std::pair<int, int>> bad_pixel_list;
     for (int i = 0; i < 10; i++) {
         bad_pixel_list = bad_pixels_homogenious(image);
-        if (std::ssize(bad_pixel_list) == 0) {
+        if (ssize(bad_pixel_list) == 0) {
             break;
         }
 
-        for (ttlet &[x, y]: bad_pixel_list) {
+        for (ttlet & [ x, y ] : bad_pixel_list) {
             image[y][x].repair();
         }
     }
 }
 
-}
+} // namespace tt::inline v1

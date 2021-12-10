@@ -7,7 +7,7 @@
 #include "abstract_button_widget.hpp"
 #include "default_button_delegate.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 class toolbar_button_widget final : public abstract_button_widget {
 public:
@@ -16,11 +16,7 @@ public:
     using callback_ptr_type = typename delegate_type::callback_ptr_type;
 
     template<typename Label>
-    toolbar_button_widget(
-        gui_window &window,
-        widget *parent,
-        Label &&label,
-        std::weak_ptr<delegate_type> delegate) noexcept :
+    toolbar_button_widget(gui_window &window, widget *parent, Label &&label, std::weak_ptr<delegate_type> delegate) noexcept :
         toolbar_button_widget(window, parent, std::forward<Label>(label), weak_or_unique_ptr{std::move(delegate)})
     {
     }
@@ -32,10 +28,9 @@ public:
     }
 
     /// @privatesection
-    [[nodiscard]] float margin() const noexcept override;
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     [[nodiscard]] bool accepts_keyboard_focus(keyboard_focus_group group) const noexcept override;
     [[nodiscard]] bool handle_event(command command) noexcept override;
     // @endprivatesection
@@ -52,4 +47,4 @@ private:
     void draw_toolbar_button(draw_context const &context) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

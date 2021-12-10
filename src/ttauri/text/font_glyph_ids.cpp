@@ -7,14 +7,19 @@
 #include "../graphic_path.hpp"
 #include "../log.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
+
+[[nodiscard]] glyph_atlas_info &font_glyph_ids::atlas_info() const noexcept
+{
+    return _font->atlas_info(_glyphs);
+}
 
 [[nodiscard]] std::pair<graphic_path, aarectangle> font_glyph_ids::get_path_and_bounding_box() const noexcept
 {
     graphic_path path;
     auto boundingBox = aarectangle{};
 
-    for (ssize_t i = 0; i < std::ssize(*this); i++) {
+    for (std::size_t i = 0; i < size(); i++) {
         ttlet glyph_id = (*this)[i];
 
         graphic_path glyph_path;
@@ -51,7 +56,7 @@ namespace tt {
     graphic_path path;
     auto boundingBox = aarectangle{};
 
-    for (ssize_t i = 0; i < std::ssize(*this); i++) {
+    for (std::size_t i = 0; i < size(); i++) {
         ttlet glyph_id = (*this)[i];
 
         glyph_metrics glyph_metrics;
@@ -73,4 +78,4 @@ namespace tt {
     return boundingBox;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

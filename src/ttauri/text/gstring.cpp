@@ -7,7 +7,7 @@
 #include "unicode_normalization.hpp"
 #include "../strings.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 [[nodiscard]] gstring to_gstring(std::u32string_view rhs) noexcept
 {
@@ -27,11 +27,10 @@ namespace tt {
 
         cluster += codePoint;
     }
-    if (std::ssize(cluster) != 0) {
+    if (ssize(cluster) != 0) {
         r += tt::grapheme{cluster};
     }
     return r;
 }
 
-
-}
+} // namespace tt::inline v1

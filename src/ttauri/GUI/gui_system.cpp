@@ -12,7 +12,7 @@
 #include "../log.hpp"
 #include <chrono>
 
-namespace tt {
+namespace tt::inline v1 {
 
 gui_system::gui_system(
     std::shared_ptr<tt::event_queue> event_queue,
@@ -56,10 +56,10 @@ gui_window &gui_system::add_window(std::unique_ptr<gui_window> window)
     return *window_ptr;
 }
 
-void gui_system::request_constrain() noexcept
+void gui_system::request_reconstrain() noexcept
 {
     for (auto &window : _windows) {
-        window->request_constrain = true;
+        window->request_reconstrain();
     }
 }
 
@@ -81,4 +81,4 @@ void gui_system::set_theme_mode(tt::theme_mode mode) noexcept
     }
 }
 
-} // namespace tt
+} // namespace tt::inline v1

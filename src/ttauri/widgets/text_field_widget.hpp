@@ -7,6 +7,7 @@
 #include "text_field_delegate.hpp"
 #include "default_text_field_delegate.hpp"
 #include "widget.hpp"
+#include "label_widget.hpp"
 #include "../text/editable_text.hpp"
 #include "../format.hpp"
 #include "../label.hpp"
@@ -17,7 +18,7 @@
 #include <optional>
 #include <future>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A single line text field.
  *
@@ -62,6 +63,16 @@ public:
      */
     observable<bool> continues = false;
 
+    /** The style of the text.
+     */
+    observable<theme_text_style> text_style = theme_text_style::label;
+
+    /** width of the text inside the text field.
+     */
+    observable<float> text_width = 100.0f;
+
+    virtual ~text_field_widget();
+
     text_field_widget(gui_window &window, widget *parent, std::weak_ptr<delegate_type> delegate) noexcept;
 
     template<typename Value>
@@ -72,29 +83,28 @@ public:
     }
 
     /// @privatesection
-    void init() noexcept override;
-    void deinit() noexcept override;
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    void layout(utc_nanoseconds display_time_point, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     bool handle_event(command command) noexcept override;
     bool handle_event(mouse_event const &event) noexcept override;
     bool handle_event(keyboard_event const &event) noexcept override;
-    hitbox hitbox_test(point2 position) const noexcept override;
+    hitbox hitbox_test(point3 position) const noexcept override;
     [[nodiscard]] bool accepts_keyboard_focus(keyboard_focus_group group) const noexcept override;
     [[nodiscard]] color focus_color() const noexcept override;
     /// @endprivatesection
 private:
     weak_or_unique_ptr<delegate_type> _delegate;
-    typename delegate_type::callback_ptr_type _delegate_callback;
+
+    bool _text_was_modified = false;
 
     bool _continues = false;
 
     /** An error string to show to the user.
      */
-    std::optional<label>(_error);
+    observable<label> _error_label;
+    std::unique_ptr<label_widget> _error_label_widget;
 
-    float _text_width = 0.0f;
     aarectangle _text_rectangle = {};
 
     aarectangle _text_field_rectangle;
@@ -131,11 +141,11 @@ private:
     void commit(bool force) noexcept;
     void drag_select() noexcept;
     void scroll_text() noexcept;
-    void draw_background_box(draw_context context) const noexcept;
-    void draw_selection_rectangles(draw_context context) const noexcept;
-    void draw_partial_grapheme_caret(draw_context context) const noexcept;
-    void draw_caret(draw_context context, utc_nanoseconds display_time_point) noexcept;
-    void draw_text(draw_context context) const noexcept;
+    void draw_background_box(draw_context const &context) const noexcept;
+    void draw_selection_rectangles(draw_context const &context) const noexcept;
+    void draw_partial_grapheme_caret(draw_context const &context) const noexcept;
+    void draw_caret(draw_context const &context) noexcept;
+    void draw_text(draw_context const &context) const noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

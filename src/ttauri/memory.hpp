@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <type_traits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<typename T, typename U>
 void memswap(T &dst, U &src)
@@ -167,14 +167,14 @@ constexpr T ceil(T value, T alignment) noexcept
 }
 
 template<typename T>
-constexpr T *ceil(T *ptr, size_t alignment) noexcept
+constexpr T *ceil(T *ptr, std::size_t alignment) noexcept
 {
     ttlet aligned_byte_offset = ceil(reinterpret_cast<uintptr_t>(ptr), static_cast<uintptr_t>(alignment));
     return reinterpret_cast<T *>(aligned_byte_offset);
 }
 
 template<typename T>
-constexpr T *floor(T *ptr, size_t alignment) noexcept
+constexpr T *floor(T *ptr, std::size_t alignment) noexcept
 {
     ttlet aligned_byte_offset = floor(reinterpret_cast<uintptr_t>(ptr), static_cast<uintptr_t>(alignment));
     return reinterpret_cast<T *>(aligned_byte_offset);
@@ -311,4 +311,4 @@ T *uint48_to_ptr(uint64_t x) noexcept
     }
 }
 
-} // namespace tt
+} // namespace tt::inline v1

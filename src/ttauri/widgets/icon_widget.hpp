@@ -5,8 +5,7 @@
 #pragma once
 
 #include "widget.hpp"
-#include "../GFX/draw_context.hpp"
-#include "../GFX/pipeline_image_image.hpp"
+#include "../GFX/paged_image.hpp"
 #include "../GUI/theme_color.hpp"
 #include "../alignment.hpp"
 #include "../icon.hpp"
@@ -16,7 +15,7 @@
 #include <optional>
 #include <future>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** An simple GUI widget that displays an icon.
  *
@@ -40,9 +39,7 @@ public:
     observable<alignment> alignment = alignment::middle_center;
 
     template<typename Icon, typename Color = tt::theme_color>
-    icon_widget(
-        gui_window &window,
-        widget *parent, Icon &&icon, Color &&color = theme_color::foreground) noexcept :
+    icon_widget(gui_window &window, widget *parent, Icon &&icon, Color &&color = theme_color::foreground) noexcept :
         icon_widget(window, parent)
     {
         this->icon = std::forward<Icon>(icon);
@@ -50,25 +47,23 @@ public:
     }
 
     /// @privatesection
-    void init() noexcept override;
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     /// @endprivatesection
 private:
     enum class icon_type { no, glyph, pixmap };
 
-    decltype(icon)::callback_ptr_type _icon_callback;
-
     icon_type _icon_type;
     font_glyph_ids _glyph;
-    size_t _pixmap_hash;
-    pipeline_image::image _pixmap_backing;
+    paged_image _pixmap_backing;
+    decltype(icon)::callback_ptr_type _icon_callback_ptr;
+    std::atomic<bool> _icon_has_modified = true;
 
-    aarectangle _icon_bounding_box;
-    matrix2 _icon_transform;
+    extent2 _icon_size;
+    aarectangle _icon_rectangle;
 
     icon_widget(gui_window &window, widget *parent) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

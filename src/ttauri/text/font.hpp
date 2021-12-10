@@ -5,6 +5,7 @@
 #pragma once
 
 #include "glyph_metrics.hpp"
+#include "glyph_atlas_info.hpp"
 #include "font_glyph_ids.hpp"
 #include "gstring.hpp"
 #include "unicode_mask.hpp"
@@ -15,11 +16,13 @@
 #include "../exception.hpp"
 #include "../required.hpp"
 #include "../URL.hpp"
+#include "../hash_map.hpp"
 #include <span>
 #include <vector>
 #include <map>
+#include <string>
 
-namespace tt {
+namespace tt::inline v1 {
 
 /*! A font.
  * This class has information on how to shape text and
@@ -94,6 +97,20 @@ public:
         glyph_metrics &metrics,
         tt::glyph_id lookahead_glyph_id = tt::glyph_id{}) const noexcept = 0;
 
+    glyph_atlas_info &atlas_info(glyph_ids const &glyphs) const noexcept
+    {
+        if (glyphs.is_single()) [[likely]] {
+            ttlet index = static_cast<std::size_t>(glyphs.get_single());
+            if (index >= _single_glyph_atlas_table.size()) [[unlikely]] {
+                _single_glyph_atlas_table.resize(index + 1);
+            }
+            return _single_glyph_atlas_table[index];
+
+        } else {
+            return _multi_glyph_atlas_table[glyphs];
+        }
+    }
+
     [[nodiscard]] font_variant font_variant() const noexcept
     {
         return {weight, italic};
@@ -113,18 +130,18 @@ public:
             rhs.optical_size,
             rhs.unicode_mask.size());
     }
+
+private:
+    mutable std::vector<glyph_atlas_info> _single_glyph_atlas_table;
+    mutable hash_map<glyph_ids, glyph_atlas_info> _multi_glyph_atlas_table;
 };
 
-} // namespace tt
-
-namespace std {
+} // namespace tt::inline v1
 
 template<typename CharT>
-struct formatter<tt::font, CharT> : formatter<std::string_view, CharT> {
+struct std::formatter<tt::font, CharT> : formatter<std::string_view, CharT> {
     auto format(tt::font const &t, auto &fc)
     {
         return formatter<string_view, CharT>::format(to_string(t), fc);
     }
 };
-
-} // namespace std

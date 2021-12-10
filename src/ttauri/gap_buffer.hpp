@@ -13,7 +13,7 @@
 #include <string>
 #include <type_traits>
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<typename T, typename Allocator>
 class gap_buffer;
@@ -50,7 +50,7 @@ public:
         "Type of a managing container can not be const, volatile nor a reference");
     using value_type = T;
     using allocator_type = Allocator;
-    using size_type = size_t;
+    using size_type = std::size_t;
     using difference_type = ptrdiff_t;
     using reference = T &;
     using const_reference = T const &;
@@ -76,7 +76,7 @@ public:
         _gap_size(_grow_size),
         _allocator(allocator)
     {
-        placement_copy(std::begin(init), std::end(init), _begin);
+        placement_copy(init.begin(), init.end(), _begin);
         tt_axiom(holds_invariant());
     }
 
@@ -84,11 +84,7 @@ public:
      * Allocates memory and copies all items from other into this.
      */
     gap_buffer(gap_buffer const &other) noexcept :
-        _begin(nullptr),
-        _it_end(nullptr),
-        _gap_begin(nullptr),
-        _gap_size(0),
-        _allocator(other._allocator)
+        _begin(nullptr), _it_end(nullptr), _gap_begin(nullptr), _gap_size(0), _allocator(other._allocator)
     {
         tt_axiom(&other != this);
 
@@ -97,7 +93,7 @@ public:
             _it_end = _begin + other.size();
             _gap_begin = _begin + other.left_size();
             _gap_size = other._gap_size;
-            
+
             placement_copy(other.left_begin_ptr(), other.left_end_ptr(), left_begin_ptr());
             placement_copy(other.right_begin_ptr(), other.right_end_ptr(), right_begin_ptr());
         }
@@ -356,9 +352,9 @@ public:
         tt_axiom(holds_invariant());
     }
 
-    [[nodiscard]] size_t size() const noexcept
+    [[nodiscard]] std::size_t size() const noexcept
     {
-        return static_cast<size_t>(_it_end - _begin);
+        return static_cast<std::size_t>(_it_end - _begin);
     }
 
     [[nodiscard]] bool empty() const noexcept
@@ -366,12 +362,12 @@ public:
         return size() == 0;
     }
 
-    [[nodiscard]] size_t capacity() const noexcept
+    [[nodiscard]] std::size_t capacity() const noexcept
     {
         return size() + _gap_size;
     }
 
-    void reserve(size_t new_capacity) noexcept
+    void reserve(std::size_t new_capacity) noexcept
     {
         ttlet extra_capacity = static_cast<ssize_t>(new_capacity) - capacity();
         if (extra_capacity <= 0) {
@@ -427,6 +423,36 @@ public:
     [[nodiscard]] const_iterator cend() const noexcept
     {
         return const_iterator{this, _it_end};
+    }
+
+    [[nodiscard]] friend iterator begin(gap_buffer &rhs) noexcept
+    {
+        return rhs.begin();
+    }
+
+    [[nodiscard]] friend const_iterator begin(gap_buffer const &rhs) noexcept
+    {
+        return rhs.begin();
+    }
+
+    [[nodiscard]] friend const_iterator cbegin(gap_buffer const &rhs) noexcept
+    {
+        return rhs.begin();
+    }
+
+    [[nodiscard]] friend iterator end(gap_buffer &rhs) noexcept
+    {
+        return rhs.end();
+    }
+
+    [[nodiscard]] friend const_iterator end(gap_buffer const &rhs) noexcept
+    {
+        return rhs.end();
+    }
+
+    [[nodiscard]] friend const_iterator cend(gap_buffer const &rhs) noexcept
+    {
+        return rhs.end();
     }
 
     template<typename... Args>
@@ -633,28 +659,27 @@ public:
         if (lhs.size() != rhs.size()) {
             return false;
         } else {
-            return std::equal(std::begin(lhs), std::end(lhs), std::begin(rhs));
+            return std::equal(lhs.begin(), lhs.end(), rhs.begin());
         }
     }
 
     template<typename Container>
     [[nodiscard]] friend bool operator==(gap_buffer const &lhs, Container const &rhs) noexcept
     {
-        if (lhs.size() != rhs.size()) {
+        using std::size;
+        using std::begin;
+
+        if (lhs.size() != size(rhs)) {
             return false;
         } else {
-            return std::equal(std::begin(lhs), std::end(lhs), std::begin(rhs));
+            return std::equal(lhs.begin(), lhs.end(), begin(rhs));
         }
     }
 
     template<typename Container>
     [[nodiscard]] friend bool operator==(Container const &lhs, gap_buffer const &rhs) noexcept
     {
-        if (lhs.size() != rhs.size()) {
-            return false;
-        } else {
-            return std::equal(std::begin(lhs), std::end(lhs), std::begin(rhs));
-        }
+        return rhs == lhs;
     }
 
 private:
@@ -679,7 +704,7 @@ private:
     size_type _gap_size;
 
 #if TT_BUILT_TYPE == TT_BT_DEBUG
-    size_t _version = 0;
+    std::size_t _version = 0;
 #endif
 
     [[no_unique_address]] allocator_type _allocator;
@@ -819,7 +844,6 @@ private:
         return _it_end - _gap_begin;
     }
 
-
     /** Move the start of the gap to a new location.
      */
     void set_gap_offset(value_type *new_gap_begin) noexcept
@@ -857,7 +881,7 @@ public:
     static constexpr bool is_const = std::is_const_v<T>;
 
     using value_type = std::remove_cv_t<T>;
-    using size_type = size_t;
+    using size_type = std::size_t;
     using difference_type = ptrdiff_t;
     using pointer = value_type *;
     using const_pointer = value_type const *;
@@ -878,7 +902,8 @@ public:
     gap_buffer_iterator &operator=(gap_buffer_iterator const &) noexcept = default;
     gap_buffer_iterator &operator=(gap_buffer_iterator &&) noexcept = default;
 
-    gap_buffer_iterator(gap_buffer_iterator<value_type> const &other) noexcept requires(is_const) : _buffer(other._buffer), _it_ptr(other._it_ptr)
+    gap_buffer_iterator(gap_buffer_iterator<value_type> const &other) noexcept requires(is_const) :
+        _buffer(other._buffer), _it_ptr(other._it_ptr)
     {
 #if TT_BUILT_TYPE == TT_BT_DEBUG
         _version = other._version;
@@ -890,13 +915,15 @@ public:
         gap_buffer_type *buffer,
         T *it_ptr
 #if TT_BUILT_TYPE == TT_BT_DEBUG
-        , size_t version
+        ,
+        std::size_t version
 #endif
-    ) noexcept :
+        ) noexcept :
         _buffer(buffer),
         _it_ptr(it_ptr)
 #if TT_BUILT_TYPE == TT_BT_DEBUG
-        , _version(version)
+        ,
+        _version(version)
 #endif
     {
         tt_axiom(holds_invariant());
@@ -1017,7 +1044,7 @@ private:
     gap_buffer_type *_buffer;
     T *_it_ptr;
 #if TT_BUILT_TYPE == TT_BT_DEBUG
-    size_t _version;
+    std::size_t _version;
 #endif
 
     [[nodiscard]] gap_buffer_iterator(gap_buffer_iterator<value_type const> const &other) noexcept requires(!is_const) :
@@ -1041,22 +1068,19 @@ private:
 
     [[nodiscard]] bool holds_invariant() const noexcept
     {
-        return
-            _buffer
-            and _it_ptr >= _buffer->_begin
-            and _it_ptr <= _buffer->_it_end
+        return _buffer and _it_ptr >= _buffer->_begin and _it_ptr <= _buffer->_it_end
 #if TT_BUILT_TYPE == TT_BT_DEBUG
             and _version == _buffer->_version
 #endif
-        ;
+            ;
     }
 
     template<typename O>
     requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<O>>)
-    [[nodiscard]] bool holds_invariant(gap_buffer_iterator<O> const &other) const noexcept
+        [[nodiscard]] bool holds_invariant(gap_buffer_iterator<O> const &other) const noexcept
     {
         return holds_invariant() and other.holds_invariant() and _buffer == other._buffer;
     }
 };
 
-} // namespace tt
+} // namespace tt::inline v1

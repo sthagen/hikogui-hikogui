@@ -9,15 +9,12 @@
 #include "pipeline_image.hpp"
 #include "pipeline_SDF.hpp"
 #include "pipeline_tone_mapper.hpp"
-#include "draw_context.hpp"
 #include "../widgets/window_widget.hpp"
 #include "../trace.hpp"
 #include "../cast.hpp"
 #include <vector>
 
-namespace tt {
-
-using namespace std;
+namespace tt::inline v1 {
 
 gfx_surface_vulkan::gfx_surface_vulkan(gfx_system &system, vk::SurfaceKHR surface) : gfx_surface(system), intrinsic(surface) {}
 
@@ -284,7 +281,7 @@ void gfx_surface_vulkan::teardown()
     state = nextState;
 }
 
-[[nodiscard]] void gfx_surface_vulkan::update(extent2 new_size) noexcept
+void gfx_surface_vulkan::update(extent2 new_size) noexcept
 {
     ttlet lock = std::scoped_lock(gfx_system_mutex);
 
@@ -298,12 +295,12 @@ void gfx_surface_vulkan::teardown()
     build(new_size);
 }
 
-std::optional<draw_context> gfx_surface_vulkan::render_start(aarectangle redraw_rectangle)
+std::optional<draw_context> gfx_surface_vulkan::render_start(aarectangle redraw_rectangle, utc_nanoseconds display_time_point)
 {
     ttlet lock = std::scoped_lock(gfx_system_mutex);
 
     // Bail out when the window is not yet ready to be rendered, or if there is nothing to render.
-    if (state != gfx_surface_state::ready_to_render || !redraw_rectangle) {
+    if (state != gfx_surface_state::ready_to_render or not redraw_rectangle) {
         return {};
     }
 
@@ -316,6 +313,11 @@ std::optional<draw_context> gfx_surface_vulkan::render_start(aarectangle redraw_
 
     ttlet frame_buffer_index = *optional_frame_buffer_index;
     auto &current_image = swapchain_image_infos.at(frame_buffer_index);
+
+    // Extent the redraw_rectangle to the render-area-granularity to improve performance on tile based GPUs.
+    redraw_rectangle = ceil(
+        redraw_rectangle,
+        extent2{narrow_cast<float>(_render_area_granularity.width), narrow_cast<float>(_render_area_granularity.height)});
 
     // Record which part of the image will be redrawn on the current swapchain image.
     current_image.redraw_rectangle = redraw_rectangle;
@@ -337,28 +339,28 @@ std::optional<draw_context> gfx_surface_vulkan::render_start(aarectangle redraw_
     // We unset modified before, so that modification requests are captured.
     return draw_context{
         *narrow_cast<gfx_device_vulkan *>(_device),
-        narrow_cast<size_t>(frame_buffer_index),
-        size(),
+        narrow_cast<std::size_t>(frame_buffer_index),
         scissor_rectangle,
         boxPipeline->vertexBufferData,
         imagePipeline->vertexBufferData,
-        SDFPipeline->vertexBufferData};
+        SDFPipeline->vertexBufferData,
+        display_time_point};
 }
 
 void gfx_surface_vulkan::render_finish(draw_context const &context, color background_color)
 {
     ttlet lock = std::scoped_lock(gfx_system_mutex);
 
-    auto &current_image = swapchain_image_infos.at(context.frame_buffer_index());
+    auto &current_image = swapchain_image_infos.at(context.frame_buffer_index);
 
-    fill_command_buffer(current_image, context.scissor_rectangle(), background_color);
+    fill_command_buffer(current_image, context.scissor_rectangle, background_color);
     submitCommandBuffer();
 
     // Signal the fence when all rendering has finished on the graphics queue.
     // When the fence is signaled we can modify/destroy the command buffers.
     [[maybe_unused]] ttlet submit_result = _graphics_queue->queue.submit(0, nullptr, renderFinishedFence);
 
-    presentImageToQueue(narrow_cast<uint32_t>(context.frame_buffer_index()), renderFinishedSemaphore);
+    presentImageToQueue(narrow_cast<uint32_t>(context.frame_buffer_index), renderFinishedSemaphore);
 
     // Do an early tear down of invalid vulkan objects.
     teardown();
@@ -403,7 +405,7 @@ void gfx_surface_vulkan::fill_command_buffer(
     // The scissor and render area makes sure that the frame buffer is not modified where we are not drawing the widgets.
     commandBuffer.setScissor(0, scissors);
 
-    ttlet renderArea = scissors.at(0);
+    ttlet render_area = scissors.at(0);
 
     // Because we use a scissor the image from the swapchain around the scissor-area is reused.
     // Because of reuse the swapchain image must already be in the "ePresentSrcKHR" layout.
@@ -420,7 +422,7 @@ void gfx_surface_vulkan::fill_command_buffer(
     }
 
     commandBuffer.beginRenderPass(
-        {renderPass, current_image.frame_buffer, renderArea, narrow_cast<uint32_t>(clearValues.size()), clearValues.data()},
+        {renderPass, current_image.frame_buffer, render_area, narrow_cast<uint32_t>(clearValues.size()), clearValues.data()},
         vk::SubpassContents::eInline);
 
     boxPipeline->drawInCommandBuffer(commandBuffer);
@@ -460,14 +462,14 @@ void gfx_surface_vulkan::submitCommandBuffer()
     _graphics_queue->queue.submit(submitInfo, vk::Fence());
 }
 
-std::tuple<size_t, extent2> gfx_surface_vulkan::get_image_count_and_size(size_t new_count, extent2 new_size)
+std::tuple<std::size_t, extent2> gfx_surface_vulkan::get_image_count_and_size(std::size_t new_count, extent2 new_size)
 {
     tt_axiom(gfx_system_mutex.recurse_lock_count());
 
     ttlet surfaceCapabilities = vulkan_device().getSurfaceCapabilitiesKHR(intrinsic);
 
-    ttlet min_count = narrow_cast<size_t>(surfaceCapabilities.minImageCount);
-    ttlet max_count = narrow_cast<size_t>(surfaceCapabilities.maxImageCount ? surfaceCapabilities.maxImageCount : 3);
+    ttlet min_count = narrow_cast<std::size_t>(surfaceCapabilities.minImageCount);
+    ttlet max_count = narrow_cast<std::size_t>(surfaceCapabilities.maxImageCount ? surfaceCapabilities.maxImageCount : 3);
     ttlet clamped_count = std::clamp(new_count, min_count, max_count);
     tt_log_info(
         "gfx_surface min_count={}, max_count={}, requested_count={}, count={}", min_count, max_count, new_count, clamped_count);
@@ -497,7 +499,7 @@ bool gfx_surface_vulkan::buildSurface()
     return vulkan_device().score(*this) > 0;
 }
 
-gfx_surface_state gfx_surface_vulkan::buildSwapchain(size_t new_count, extent2 new_size)
+gfx_surface_state gfx_surface_vulkan::buildSwapchain(std::size_t new_count, extent2 new_size)
 {
     tt_axiom(gfx_system_mutex.recurse_lock_count());
 
@@ -588,8 +590,6 @@ gfx_surface_state gfx_surface_vulkan::buildSwapchain(size_t new_count, extent2 n
     colorAllocationCreateInfo.usage = vulkan_device().lazyMemoryUsage;
     std::tie(colorImages[0], colorImageAllocations[0]) =
         vulkan_device().createImage(colorImageCreateInfo, colorAllocationCreateInfo);
-    std::tie(colorImages[1], colorImageAllocations[1]) =
-        vulkan_device().createImage(colorImageCreateInfo, colorAllocationCreateInfo);
 
     return gfx_surface_state::ready_to_render;
 }
@@ -601,7 +601,7 @@ void gfx_surface_vulkan::teardownSwapchain()
     vulkan_device().destroy(swapchain);
     vulkan_device().destroyImage(depthImage, depthImageAllocation);
 
-    for (size_t i = 0; i != std::size(colorImages); ++i) {
+    for (std::size_t i = 0; i != colorImages.size(); ++i) {
         vulkan_device().destroyImage(colorImages[i], colorImageAllocations[i]);
     }
 }
@@ -618,7 +618,7 @@ void gfx_surface_vulkan::buildFramebuffers()
          vk::ComponentMapping(),
          {vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1}});
 
-    for (size_t i = 0; i != std::size(colorImageViews); ++i) {
+    for (std::size_t i = 0; i != colorImageViews.size(); ++i) {
         colorImageViews[i] = vulkan_device().createImageView(
             {vk::ImageViewCreateFlags(),
              colorImages[i],
@@ -640,7 +640,7 @@ void gfx_surface_vulkan::buildFramebuffers()
              vk::ComponentMapping(),
              {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}});
 
-        ttlet attachments = std::array{depthImageView, colorImageViews[0], colorImageViews[1], image_view};
+        ttlet attachments = std::array{depthImageView, colorImageViews[0], image_view};
 
         ttlet frame_buffer = vulkan_device().createFramebuffer({
             vk::FramebufferCreateFlags(),
@@ -670,16 +670,27 @@ void gfx_surface_vulkan::teardownFramebuffers()
     swapchain_image_infos.clear();
 
     vulkan_device().destroy(depthImageView);
-    for (size_t i = 0; i != std::size(colorImageViews); ++i) {
+    for (std::size_t i = 0; i != colorImageViews.size(); ++i) {
         vulkan_device().destroy(colorImageViews[i]);
     }
 }
 
+/** Build render passes.
+ *
+ * One pass, with 4 subpasses:
+ *  1. box shader: to color-attachment+depth 
+ *  2. image shader: to color-attachmen+depth
+ *  3. sdf shader: to color-attachmne+depth
+ *  4. tone-mapper: color-input-attachment to swapchain-attachment.
+ *
+ * Rendering is done on a float-16 RGBA color-attachment.
+ * In the last subpass the color-attachment is translated to the swap-chain attachment.
+ */
 void gfx_surface_vulkan::buildRenderPasses()
 {
     tt_axiom(gfx_system_mutex.recurse_lock_count());
 
-    ttlet attachmentDescriptions = std::array{
+    ttlet attachment_descriptions = std::array{
         vk::AttachmentDescription{
             // Depth attachment
             vk::AttachmentDescriptionFlags(),
@@ -693,19 +704,7 @@ void gfx_surface_vulkan::buildRenderPasses()
             vk::ImageLayout::eDepthStencilAttachmentOptimal // finalLayout
         },
         vk::AttachmentDescription{
-            // Color1 attachment
-            vk::AttachmentDescriptionFlags(),
-            colorImageFormat,
-            vk::SampleCountFlagBits::e1,
-            vk::AttachmentLoadOp::eClear,
-            vk::AttachmentStoreOp::eDontCare,
-            vk::AttachmentLoadOp::eDontCare, // stencilLoadOp
-            vk::AttachmentStoreOp::eDontCare, // stencilStoreOp
-            vk::ImageLayout::eUndefined, // initialLayout
-            vk::ImageLayout::eColorAttachmentOptimal // finalLayout
-        },
-        vk::AttachmentDescription{
-            // Color2 attachment
+            // Color attachment
             vk::AttachmentDescriptionFlags(),
             colorImageFormat,
             vk::SampleCountFlagBits::e1,
@@ -729,29 +728,21 @@ void gfx_surface_vulkan::buildRenderPasses()
             vk::ImageLayout::ePresentSrcKHR // finalLayout
         }};
 
-    ttlet depthAttachmentReference = vk::AttachmentReference{0, vk::ImageLayout::eDepthStencilAttachmentOptimal};
+    ttlet depth_attachment_reference = vk::AttachmentReference{0, vk::ImageLayout::eDepthStencilAttachmentOptimal};
+    ttlet color_attachment_references = std::array{vk::AttachmentReference{1, vk::ImageLayout::eColorAttachmentOptimal}};
+    ttlet color_input_attachment_references = std::array{vk::AttachmentReference{1, vk::ImageLayout::eShaderReadOnlyOptimal}};
+    ttlet swapchain_attachment_references = std::array{vk::AttachmentReference{2, vk::ImageLayout::eColorAttachmentOptimal}};
 
-    ttlet color1AttachmentReferences = std::array{vk::AttachmentReference{1, vk::ImageLayout::eColorAttachmentOptimal}};
-    ttlet color2AttachmentReferences = std::array{vk::AttachmentReference{2, vk::ImageLayout::eColorAttachmentOptimal}};
-
-    ttlet color1InputAttachmentReferences = std::array{vk::AttachmentReference{1, vk::ImageLayout::eShaderReadOnlyOptimal}};
-    ttlet color2InputAttachmentReferences = std::array{vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
-    ttlet color12InputAttachmentReferences = std::array{
-        vk::AttachmentReference{1, vk::ImageLayout::eShaderReadOnlyOptimal},
-        vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
-
-    ttlet swapchainAttachmentReferences = std::array{vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal}};
-
-    ttlet subpassDescriptions = std::array{
+    ttlet subpass_descriptions = std::array{
         vk::SubpassDescription{// Subpass 0 Box
                                vk::SubpassDescriptionFlags(),
                                vk::PipelineBindPoint::eGraphics,
                                0, // inputAttchmentReferencesCount
                                nullptr, // inputAttachmentReferences
-                               narrow_cast<uint32_t>(color1AttachmentReferences.size()),
-                               color1AttachmentReferences.data(),
+                               narrow_cast<uint32_t>(color_attachment_references.size()),
+                               color_attachment_references.data(),
                                nullptr, // resolveAttachments
-                               &depthAttachmentReference
+                               &depth_attachment_reference
 
         },
         vk::SubpassDescription{// Subpass 1 Image
@@ -759,34 +750,34 @@ void gfx_surface_vulkan::buildRenderPasses()
                                vk::PipelineBindPoint::eGraphics,
                                0, // inputAttchmentReferencesCount
                                nullptr, // inputAttachmentReferences
-                               narrow_cast<uint32_t>(color1AttachmentReferences.size()),
-                               color1AttachmentReferences.data(),
+                               narrow_cast<uint32_t>(color_attachment_references.size()),
+                               color_attachment_references.data(),
                                nullptr, // resolveAttachments
-                               &depthAttachmentReference
+                               &depth_attachment_reference
 
         },
         vk::SubpassDescription{// Subpass 2 SDF
                                vk::SubpassDescriptionFlags(),
                                vk::PipelineBindPoint::eGraphics,
-                               narrow_cast<uint32_t>(color1InputAttachmentReferences.size()),
-                               color1InputAttachmentReferences.data(),
-                               narrow_cast<uint32_t>(color2AttachmentReferences.size()),
-                               color2AttachmentReferences.data(),
+                               0,
+                               nullptr,
+                               narrow_cast<uint32_t>(color_attachment_references.size()),
+                               color_attachment_references.data(),
                                nullptr, // resolveAttachments
-                               &depthAttachmentReference
+                               &depth_attachment_reference
 
         },
         vk::SubpassDescription{// Subpass 3 tone-mapper
                                vk::SubpassDescriptionFlags(),
                                vk::PipelineBindPoint::eGraphics,
-                               narrow_cast<uint32_t>(color12InputAttachmentReferences.size()),
-                               color12InputAttachmentReferences.data(),
-                               narrow_cast<uint32_t>(swapchainAttachmentReferences.size()),
-                               swapchainAttachmentReferences.data(),
+                               narrow_cast<uint32_t>(color_input_attachment_references.size()),
+                               color_input_attachment_references.data(),
+                               narrow_cast<uint32_t>(swapchain_attachment_references.size()),
+                               swapchain_attachment_references.data(),
                                nullptr,
                                nullptr}};
 
-    ttlet subpassDependency = std::array{
+    ttlet subpass_dependency = std::array{
         vk::SubpassDependency{
             VK_SUBPASS_EXTERNAL,
             0,
@@ -809,9 +800,9 @@ void gfx_surface_vulkan::buildRenderPasses()
             1,
             2,
             vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
             vk::AccessFlagBits::eColorAttachmentWrite,
-            vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eInputAttachmentRead,
+            vk::AccessFlagBits::eColorAttachmentRead,
             vk::DependencyFlagBits::eByRegion},
         // Subpass 2: Render SDF-texture mapped polygons to color+depth with fixed function alpha compositing
         vk::SubpassDependency{
@@ -832,17 +823,18 @@ void gfx_surface_vulkan::buildRenderPasses()
             vk::AccessFlagBits::eMemoryRead,
             vk::DependencyFlagBits::eByRegion}};
 
-    vk::RenderPassCreateInfo const renderPassCreateInfo = {
+    vk::RenderPassCreateInfo const render_pass_create_info = {
         vk::RenderPassCreateFlags(),
-        narrow_cast<uint32_t>(attachmentDescriptions.size()), // attachmentCount
-        attachmentDescriptions.data(), // attachments
-        narrow_cast<uint32_t>(subpassDescriptions.size()), // subpassCount
-        subpassDescriptions.data(), // subpasses
-        narrow_cast<uint32_t>(subpassDependency.size()), // dependencyCount
-        subpassDependency.data() // dependencies
+        narrow_cast<uint32_t>(attachment_descriptions.size()), // attachmentCount
+        attachment_descriptions.data(), // attachments
+        narrow_cast<uint32_t>(subpass_descriptions.size()), // subpassCount
+        subpass_descriptions.data(), // subpasses
+        narrow_cast<uint32_t>(subpass_dependency.size()), // dependencyCount
+        subpass_dependency.data() // dependencies
     };
 
-    renderPass = vulkan_device().createRenderPass(renderPassCreateInfo);
+    renderPass = vulkan_device().createRenderPass(render_pass_create_info);
+    _render_area_granularity = vulkan_device().getRenderAreaGranularity(renderPass);
 }
 
 void gfx_surface_vulkan::teardownRenderPasses()
@@ -906,4 +898,4 @@ void gfx_surface_vulkan::teardownDevice()
     _device = nullptr;
 }
 
-} // namespace tt
+} // namespace tt::inline v1

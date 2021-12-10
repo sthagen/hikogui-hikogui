@@ -11,7 +11,7 @@
 #include "../resource_view.hpp"
 #include <span>
 
-namespace tt {
+namespace tt::inline v1 {
 
 #define QUEUE_CAPABILITY_GRAPHICS 1
 #define QUEUE_CAPABILITY_COMPUTE 2
@@ -258,8 +258,7 @@ gfx_device_vulkan::~gfx_device_vulkan()
     return *present_queue;
 }
 
-[[nodiscard]] vk::SurfaceFormatKHR
-gfx_device_vulkan::get_surface_format(gfx_surface const &surface, int *score) const noexcept
+[[nodiscard]] vk::SurfaceFormatKHR gfx_device_vulkan::get_surface_format(gfx_surface const &surface, int *score) const noexcept
 {
     ttlet &surface_ = narrow_cast<gfx_surface_vulkan const &>(surface).intrinsic;
 
@@ -279,7 +278,8 @@ gfx_device_vulkan::get_surface_format(gfx_surface const &surface, int *score) co
         case vk::Format::eR16G16B16Sfloat: surface_format_score += 11; break;
         case vk::Format::eA2B10G10R10UnormPack32:
             // This is a wire format for HDR, the GPU will not automatically convert linear shader-space to this wire format.
-            surface_format_score -= 100; break;
+            surface_format_score -= 100;
+            break;
         case vk::Format::eR8G8B8A8Srgb: surface_format_score += 4; break;
         case vk::Format::eB8G8R8A8Srgb: surface_format_score += 4; break;
         case vk::Format::eR8G8B8Srgb: surface_format_score += 3; break;
@@ -311,8 +311,7 @@ gfx_device_vulkan::get_surface_format(gfx_surface const &surface, int *score) co
     return best_surface_format;
 }
 
-[[nodiscard]] vk::PresentModeKHR
-gfx_device_vulkan::get_present_mode(gfx_surface const &surface, int *score) const noexcept
+[[nodiscard]] vk::PresentModeKHR gfx_device_vulkan::get_present_mode(gfx_surface const &surface, int *score) const noexcept
 {
     ttlet &surface_ = narrow_cast<gfx_surface_vulkan const &>(surface).intrinsic;
 
@@ -367,16 +366,16 @@ int gfx_device_vulkan::score(gfx_surface const &surface) const
         tt_log_info(" - Does not have the required extensions.");
         return -1;
     }
-    
+
     bool device_has_graphics = false;
     bool device_has_present = false;
     bool device_has_compute = false;
     bool device_shares_graphics_and_present = false;
-    for (ttlet &queue: _queues) {
+    for (ttlet &queue : _queues) {
         ttlet has_present = static_cast<bool>(physicalIntrinsic.getSurfaceSupportKHR(queue.family_queue_index, surface_));
         ttlet has_graphics = static_cast<bool>(queue.flags & vk::QueueFlagBits::eGraphics);
         ttlet has_compute = static_cast<bool>(queue.flags & vk::QueueFlagBits::eCompute);
-        
+
         device_has_graphics |= has_graphics;
         device_has_present |= has_present;
         device_has_compute |= has_compute;
@@ -448,7 +447,7 @@ std::vector<vk::DeviceQueueCreateInfo> gfx_device_vulkan::make_device_queue_crea
     auto r = std::vector<vk::DeviceQueueCreateInfo>{};
     for (auto queue_family_properties : physicalIntrinsic.getQueueFamilyProperties()) {
         ttlet num_queues = 1;
-        tt_axiom(std::size(default_queue_priority) >= num_queues);
+        tt_axiom(size(default_queue_priority) >= num_queues);
         r.emplace_back(vk::DeviceQueueCreateFlags(), queue_family_index++, num_queues, default_queue_priority.data());
     }
     return r;
@@ -478,6 +477,12 @@ void gfx_device_vulkan::initialize_device()
 {
     ttlet device_queue_create_infos = make_device_queue_create_infos();
 
+    ttlet available_device_features = physicalIntrinsic.getFeatures();
+
+    // Enable optional features.
+    device_features = narrow_cast<gfx_system_vulkan &>(system).requiredFeatures;
+    device_features.setDualSrcBlend(available_device_features.dualSrcBlend);
+
     intrinsic = physicalIntrinsic.createDevice(
         {vk::DeviceCreateFlags(),
          narrow_cast<uint32_t>(device_queue_create_infos.size()),
@@ -486,7 +491,7 @@ void gfx_device_vulkan::initialize_device()
          nullptr,
          narrow_cast<uint32_t>(requiredExtensions.size()),
          requiredExtensions.data(),
-         &(narrow_cast<gfx_system_vulkan &>(system).requiredFeatures)});
+         &device_features});
 
     VmaAllocatorCreateInfo allocatorCreateInfo = {};
     allocatorCreateInfo.physicalDevice = physicalIntrinsic;
@@ -551,7 +556,7 @@ void gfx_device_vulkan::initialize_quad_index_buffer()
 
         // Initialize indices.
         ttlet stagingvertexIndexBufferData = mapMemory<vertex_index_type>(stagingvertexIndexBufferAllocation);
-        for (size_t i = 0; i < maximum_number_of_indices; i++) {
+        for (std::size_t i = 0; i < maximum_number_of_indices; i++) {
             ttlet vertexInRectangle = i % 6;
             ttlet rectangleNr = i / 6;
             ttlet rectangleBase = rectangleNr * 4;
@@ -808,7 +813,7 @@ void gfx_device_vulkan::clearColorImage(
     endSingleTimeCommands(commandBuffer);
 }
 
-vk::ShaderModule gfx_device_vulkan::loadShader(uint32_t const *data, size_t size) const
+vk::ShaderModule gfx_device_vulkan::loadShader(uint32_t const *data, std::size_t size) const
 {
     tt_axiom(gfx_system_mutex.recurse_lock_count());
 
@@ -839,4 +844,4 @@ vk::ShaderModule gfx_device_vulkan::loadShader(URL const &shaderObjectLocation) 
     return loadShader(*shaderObjectLocation.loadView());
 }
 
-} // namespace tt
+} // namespace tt::inline v1

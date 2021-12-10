@@ -10,6 +10,5 @@ TEST(fixed_string, from_string_literal)
 {
     constexpr auto s = tt::basic_fixed_string{"Hello World"};
     ASSERT_EQ(s.c_str(), std::string("Hello World"));
-    ASSERT_EQ(std::size(s), 11);
+    ASSERT_EQ(size(s), 11);
 }
-

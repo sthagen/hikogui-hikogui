@@ -10,9 +10,8 @@
 #include <vk_mem_alloc.h>
 #include <optional>
 
-namespace tt {
+namespace tt::inline v1 {
 class gfx_device_vulkan;
-
 namespace pipeline_image {
 class pipeline_image;
 }
@@ -49,16 +48,17 @@ public:
     vk::SurfaceFormatKHR swapchainImageFormat;
     std::vector<swapchain_image_info> swapchain_image_infos;
 
-    static const vk::Format depthImageFormat = vk::Format::eD32Sfloat;
+    //static const vk::Format depthImageFormat = vk::Format::eD32Sfloat;
+    static const vk::Format depthImageFormat = vk::Format::eD16Unorm;
     VmaAllocation depthImageAllocation;
     vk::Image depthImage;
     vk::ImageView depthImageView;
 
     static const vk::Format colorImageFormat = vk::Format::eR16G16B16A16Sfloat;
-    std::array<VmaAllocation,2> colorImageAllocations;
-    std::array<vk::Image,2> colorImages;
-    std::array<vk::ImageView,2> colorImageViews;
-    std::array<vk::DescriptorImageInfo, 2> colorDescriptorImageInfos;
+    std::array<VmaAllocation, 1> colorImageAllocations;
+    std::array<vk::Image, 1> colorImages;
+    std::array<vk::ImageView, 1> colorImageViews;
+    std::array<vk::DescriptorImageInfo, 1> colorDescriptorImageInfos;
 
     vk::RenderPass renderPass;
 
@@ -88,9 +88,10 @@ public:
     gfx_device_vulkan &vulkan_device() const noexcept;
     [[nodiscard]] extent2 size() const noexcept override;
 
-    [[nodiscard]] void update(extent2 new_size) noexcept override;
+    void update(extent2 new_size) noexcept override;
 
-    [[nodiscard]] std::optional<draw_context> render_start(aarectangle redraw_rectangle) override;
+    [[nodiscard]] std::optional<draw_context>
+    render_start(aarectangle redraw_rectangle, utc_nanoseconds display_time_point) override;
     void render_finish(draw_context const &context, color background_color) override;
 
 protected:
@@ -99,6 +100,7 @@ protected:
 private:
     gfx_queue_vulkan const *_graphics_queue;
     gfx_queue_vulkan const *_present_queue;
+    vk::Extent2D _render_area_granularity;
 
     void build(extent2 new_size);
 
@@ -114,7 +116,7 @@ private:
     void buildDevice();
     void buildSemaphores();
     void teardownSemaphores();
-    gfx_surface_state buildSwapchain(size_t new_count, extent2 new_size);
+    gfx_surface_state buildSwapchain(std::size_t new_count, extent2 new_size);
     void teardownSwapchain();
     void buildCommandBuffers();
     void teardownCommandBuffers();
@@ -131,14 +133,14 @@ private:
     void waitIdle();
 
     /** Get the image size and image count from the Vulkan surface.
-    * 
-    * This function will return an appropriate 
-    * 
-    * @param new_count Request the number of images in the swapchain.
-    * @param new_size Request the image size in the swapchain.
-    * @return A valid swapchain image count, swapchain image size.
+     *
+     * This function will return an appropriate
+     *
+     * @param new_count Request the number of images in the swapchain.
+     * @param new_size Request the image size in the swapchain.
+     * @return A valid swapchain image count, swapchain image size.
      */
-    std::tuple<size_t, extent2> get_image_count_and_size(size_t new_count, extent2 new_size);
+    std::tuple<std::size_t, extent2> get_image_count_and_size(std::size_t new_count, extent2 new_size);
 };
 
-}
+} // namespace tt::inline v1

@@ -5,7 +5,7 @@
 
 #include "pixel_map.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 template<int KERNEL_SIZE, typename KERNEL>
 inline void horizontalFilterRow(pixel_row<uint8_t> row, KERNEL kernel) noexcept
@@ -109,33 +109,6 @@ inline void rotate270(pixel_map<T> &dst, pixel_map<T> const &src) noexcept
             dst[dstRowNr--][dstColumnNr] = row[columnNr];
         }
     }
-}
-
-template<typename T>
-inline void makeTransparentBorder(pixel_map<T> & pixel_map) noexcept
-{
-    auto topBorder = pixel_map.at(0);
-    ttlet topRow = pixel_map.at(1);
-    ttlet bottomRow = pixel_map.at(pixel_map.height() - 2);
-    auto bottomBorder = pixel_map.at(pixel_map.height() - 1);
-    for (auto x = 1; x < pixel_map.width() - 1; x++) {
-        topBorder[x] = makeTransparent(topRow[x]);
-        bottomBorder[x] = makeTransparent(bottomRow[x]);
-    }
-
-    ttlet rightBorderY = pixel_map.width() - 1;
-    ttlet rightY = pixel_map.width() - 2;
-    for (auto y = 1; y < pixel_map.height() - 1; y++) {
-        auto row = pixel_map[y];
-        row[0] = makeTransparent(row[1]);
-        row[rightBorderY] = makeTransparent(row[rightY]);
-    }
-
-    pixel_map[0][0] = makeTransparent(pixel_map[1][1]);
-    pixel_map[0][pixel_map.width() - 1] = makeTransparent(pixel_map[1][pixel_map.width() - 2]);
-    pixel_map[pixel_map.height() - 1][0] = makeTransparent(pixel_map[pixel_map.height() - 2][1]);
-    pixel_map[pixel_map.height() - 1][pixel_map.width() - 1] =
-        makeTransparent(pixel_map[pixel_map.height() - 2][pixel_map.width() - 2]);
 }
 
 }

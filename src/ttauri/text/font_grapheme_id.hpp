@@ -7,7 +7,7 @@
 #include "grapheme.hpp"
 #include "../hash.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** Combined font_id + grapheme for use as a key in a std::unordered_map.
  */
@@ -17,7 +17,7 @@ struct font_grapheme_id {
 
     font_grapheme_id(tt::font const &font, grapheme g) noexcept : font(&font), g(std::move(g)) {}
 
-    [[nodiscard]] size_t hash() const noexcept
+    [[nodiscard]] std::size_t hash() const noexcept
     {
         tt_axiom(font);
         return hash_mix(reinterpret_cast<ptrdiff_t>(font), g);
@@ -30,16 +30,12 @@ struct font_grapheme_id {
     }
 };
 
-} // namespace tt
-
-namespace std {
+} // namespace tt::inline v1
 
 template<>
-struct hash<tt::font_grapheme_id> {
-    [[nodiscard]] size_t operator()(tt::font_grapheme_id const &rhs) const noexcept
+struct std::hash<tt::font_grapheme_id> {
+    [[nodiscard]] std::size_t operator()(tt::font_grapheme_id const &rhs) const noexcept
     {
         return rhs.hash();
     }
 };
-
-} // namespace std

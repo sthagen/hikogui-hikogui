@@ -14,20 +14,20 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 
-namespace tt {
+namespace tt::inline v1 {
 class URL;
-}
-
-namespace tt {
 
 class gfx_device_vulkan final : public gfx_device {
 public:
-    
     vk::PhysicalDeviceType deviceType = vk::PhysicalDeviceType::eOther;
     vk::PhysicalDeviceProperties physicalProperties;
 
     std::vector<gfx_queue_vulkan> _queues;
-    
+
+    /** The device features that have been turned on for this device.
+     */
+    vk::PhysicalDeviceFeatures device_features;
+
     /** Get a graphics queue.
      * Always returns the first queue that can handle graphics.
      */
@@ -47,9 +47,9 @@ public:
 
     /** Get the surface format.
      * Always returns the best suitable surface format.
-     * 
+     *
      * Prioritizes HDR, followed by sRGB.
-     * 
+     *
      * @param surface The surface to determine the surface format for.
      * @param [out]score Optional return parameter for the quality of the surface format.
      */
@@ -57,7 +57,7 @@ public:
 
     /** Get the present mode.
      * Always returns the best suitable present mode.
-     * 
+     *
      * Prioritized a double buffering mode.
      *
      * @param surface The surface to determine the present mode for.
@@ -90,7 +90,6 @@ public:
     bool supportsLazyTransientImages = false;
     vk::ImageUsageFlags transientImageUsageFlags = vk::ImageUsageFlags{};
     VmaMemoryUsage lazyMemoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
-
 
     gfx_device_vulkan(gfx_system &system, vk::PhysicalDevice physicalDevice);
     ~gfx_device_vulkan();
@@ -178,7 +177,7 @@ public:
         vmaFlushAllocation(allocator, allocation, alignedOffset, alignedSize);
     }
 
-    vk::ShaderModule loadShader(uint32_t const *data, size_t size) const;
+    vk::ShaderModule loadShader(uint32_t const *data, std::size_t size) const;
 
     vk::ShaderModule loadShader(std::span<std::byte const> shaderObjectBytes) const;
 
@@ -244,6 +243,14 @@ public:
     {
         tt_axiom(gfx_system_mutex.recurse_lock_count());
         return intrinsic.createRenderPass(createInfo);
+    }
+
+    vk::Extent2D getRenderAreaGranularity(const vk::RenderPass &render_pass) const noexcept
+    {
+        tt_axiom(gfx_system_mutex.recurse_lock_count());
+        vk::Extent2D r;
+        intrinsic.getRenderAreaGranularity(render_pass, &r);
+        return r;
     }
 
     vk::Semaphore createSemaphore(const vk::SemaphoreCreateInfo &createInfo) const
@@ -340,4 +347,4 @@ private:
     void destroy_quad_index_buffer();
 };
 
-} // namespace tt
+} // namespace tt::inline v1

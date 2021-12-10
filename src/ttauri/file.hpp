@@ -12,13 +12,9 @@
 #include <map>
 #include <span>
 
-namespace tt {
+namespace tt::inline v1 {
 
-enum class seek_whence {
-    begin,
-    current,
-    end
-};
+enum class seek_whence { begin, current, end };
 
 enum class access_mode {
     read = 0x1, ///< Allow read access to a file.
@@ -34,7 +30,7 @@ enum class access_mode {
     no_reuse = 0x4000, ///< Hint that the data should not be cached.
     write_through = 0x8000, ///< Hint that writes should be send directly to disk.
     create_directories = 0x10000, ///< Create directory hierarchy, if the file could not be created.
-    
+
     open_for_read = open | read, ///< Default open a file for reading.
     open_for_read_and_write = open | read | write, ///< Default open a file for reading and writing.
     truncate_or_create_for_write = create_directories | open | create | truncate | write
@@ -59,13 +55,13 @@ enum class access_mode {
 
 /** A File object.
  */
-class file { 
+class file {
 public:
     /** Open a file at location.
      * \param location The file: URL locating the file.
      * \param accessMode access-mode to open the file.
      */
-    file(URL const& location, access_mode accessMode);
+    file(URL const &location, access_mode accessMode);
 
     ~file() noexcept;
 
@@ -86,61 +82,64 @@ public:
 
     /** Rename an open file.
      * This function will rename an open file atomically.
-     * 
+     *
      * @param destination The destination file name.
      * @param overwrite_existing Overwrite an existing file.
      * @throw io_error When failing to rename.
      */
-    void rename(URL const &destination, bool overwrite_existing=true);
+    void rename(URL const &destination, bool overwrite_existing = true);
 
     /** Return the size of the file.
      */
-    size_t size() const;
+    std::size_t size() const;
 
     /** Set the seek location.
      * @param offset To move the file pointer.
      * @param whence Where to seek from: begin, current or end
      * @return The new seek position relative to the beginning of the file.
      */
-    ssize_t seek(ssize_t offset, seek_whence whence = seek_whence::begin);
+    std::size_t seek(ssize_t offset, seek_whence whence = seek_whence::begin);
 
     /** Get the current seek location.
      */
-    ssize_t get_seek() {
+    std::size_t get_seek()
+    {
         return seek(0, seek_whence::current);
     }
 
     /** Write data to a file.
-    * 
-    * @param data Pointer to data to be written.
-    * @param size The number of bytes to write.
-    * @param offset The offset in the file to write, or -1 when writing in the current seek location.
-    * @return The number of bytes written.
-    * @throw io_error
-    */
-    ssize_t write(std::byte const *data, ssize_t size, ssize_t offset=-1);
+     *
+     * @param data Pointer to data to be written.
+     * @param size The number of bytes to write.
+     * @param offset The offset in the file to write, or -1 when writing in the current seek location.
+     * @return The number of bytes written.
+     * @throw io_error
+     */
+    std::size_t write(std::byte const *data, std::size_t size, ssize_t offset = -1);
 
     /** Write data to a file.
-    * 
-    * @param data Pointer to data to be written.
-    * @param size The number of bytes to write.
-    * @param offset The offset in the file to write, or -1 when writing in the current seek location.
-    * @return The number of bytes written.
-    * @throw io_error
-    */
-    ssize_t write(void const *data, ssize_t size, ssize_t offset=-1) {
+     *
+     * @param data Pointer to data to be written.
+     * @param size The number of bytes to write.
+     * @param offset The offset in the file to write, or -1 when writing in the current seek location.
+     * @return The number of bytes written.
+     * @throw io_error
+     */
+    std::size_t write(void const *data, std::size_t size, ssize_t offset = -1)
+    {
         return write(reinterpret_cast<std::byte const *>(data), size, offset);
     }
 
     /** Write data to a file.
-    * 
-    * @param data Pointer to data to be written.
-    * @param size The number of bytes to write.
-    * @param offset The offset in the file to write, or -1 when writing in the current seek location.
-    * @return The number of bytes written.
-    * @throw io_error
-    */
-    ssize_t write(char const *data, ssize_t size, ssize_t offset=-1) {
+     *
+     * @param data Pointer to data to be written.
+     * @param size The number of bytes to write.
+     * @param offset The offset in the file to write, or -1 when writing in the current seek location.
+     * @return The number of bytes written.
+     * @throw io_error
+     */
+    ssize_t write(char const *data, std::size_t size, ssize_t offset = -1)
+    {
         return write(reinterpret_cast<std::byte const *>(data), size, offset);
     }
 
@@ -151,9 +150,9 @@ public:
      * @return The number of bytes written.
      * @throw io_error
      */
-    ssize_t write(std::span<std::byte const> bytes, ssize_t offset = -1)
+    ssize_t write(std::span<std::byte const> bytes, std::size_t offset = -1)
     {
-        return write(bytes.data(), std::ssize(bytes), offset);
+        return write(bytes.data(), ssize(bytes), offset);
     }
 
     /** Write data to a file.
@@ -165,7 +164,7 @@ public:
      */
     ssize_t write(bstring_view text, ssize_t offset = -1)
     {
-        return write(text.data(), std::ssize(text), offset);
+        return write(text.data(), ssize(text), offset);
     }
 
     /** Write data to a file.
@@ -177,7 +176,7 @@ public:
      */
     ssize_t write(bstring const &text, ssize_t offset = -1)
     {
-        return write(text.data(), std::ssize(text), offset);
+        return write(text.data(), ssize(text), offset);
     }
 
     /** Write data to a file.
@@ -188,7 +187,7 @@ public:
      */
     ssize_t write(std::string_view text)
     {
-        return write(text.data(), std::ssize(text));
+        return write(text.data(), ssize(text));
     }
 
     /** Read data from a file.
@@ -199,9 +198,9 @@ public:
      * @return The number of bytes read.
      * @throw io_error
      */
-    ssize_t read(std::byte *data, ssize_t size, ssize_t offset = -1);
+    ssize_t read(std::byte *data, std::size_t size, ssize_t offset = -1);
 
-    ssize_t read(void *data, ssize_t size, ssize_t offset = -1)
+    ssize_t read(void *data, std::size_t size, ssize_t offset = -1)
     {
         return read(reinterpret_cast<std::byte *>(data), size, offset);
     }
@@ -213,42 +212,42 @@ public:
      * @return Data as a byte string, may return less then the requested size.
      * @throws io_error On IO error.
      */
-    bstring read_bstring(ssize_t size = 10'000'000, ssize_t offset = -1);
+    bstring read_bstring(std::size_t size = 10'000'000, ssize_t offset = -1);
 
     /** Read the whole file as a UTF-8 string.
      * This will ignore the value from `seek()`, and read the whole
      * file due to UTF-8 character sequences to be complete.
-     * 
+     *
      * If there is more data in the file than the maximum amount to read
      * this function throws an io_error.
-     * 
+     *
      * @param max_size The maximum size to read.
      * @return Data as a UTF-8 string.
      * @throws io_error On IO error.
      * @throws parse_error On invalid UTF-8 string.
      */
-    std::string read_string(ssize_t max_size = 10'000'000);
+    std::string read_string(std::size_t max_size = 10'000'000);
 
     /** Read the whole file as a UTF-8 string.
      * This will ignore the value from `seek()`, and read the whole
      * file due to UTF-8 character sequences to be complete.
-     * 
+     *
      * If there is more data in the file than the maximum amount to read
      * this function throws an io_error.
-     * 
+     *
      * @param max_size The maximum size to read.
      * @return Data as a UTF-8 string.
      * @throws io_error On IO error
      * @throws parse_error On invalid UTF-8 string.
      */
-    std::u8string read_u8string(ssize_t max_size = 10'000'000);
+    std::u8string read_u8string(std::size_t max_size = 10'000'000);
 
     /** Get the size of a file on the file system.
      * \return The size of the file in bytes.
      */
-    [[nodiscard]] static size_t file_size(URL const &url);
+    [[nodiscard]] static std::size_t file_size(URL const &url);
 
-    static void create_directory(URL const &url, bool hierarchy=false);
+    static void create_directory(URL const &url, bool hierarchy = false);
 
     static void create_directory_hierarchy(URL const &url);
 
@@ -269,5 +268,4 @@ private:
     friend class file_view;
 };
 
-
-}
+} // namespace tt::inline v1

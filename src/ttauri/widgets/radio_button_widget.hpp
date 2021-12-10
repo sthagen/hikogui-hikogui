@@ -7,7 +7,7 @@
 #include "abstract_button_widget.hpp"
 #include "default_button_delegate.hpp"
 
-namespace tt {
+namespace tt::inline v1 {
 
 /** A graphical control element that allows the user to choose only one of a
  * predefined set of mutually exclusive options.
@@ -30,7 +30,7 @@ namespace tt {
  * of the radio buttons is selected when the application is started.
  *
  * @snippet widgets/radio_button_example.cpp Create three radio buttons
- * 
+ *
  * @note Unlike some other GUI toolkits a radio button is a singular widget.
  *       Multiple radio buttons may share a delegate or an observable which
  *       allows radio buttons to act as a set.
@@ -49,9 +49,10 @@ public:
      * @param delegate The delegate to use to manage the state of the radio button.
      */
     template<typename Label>
-    radio_button_widget(gui_window &window, widget *parent, Label &&label, std::weak_ptr<delegate_type> delegate) noexcept
-        :
-        radio_button_widget(window, parent, std::forward<Label>(label), weak_or_unique_ptr{std::move(delegate)}) {}
+    radio_button_widget(gui_window &window, widget *parent, Label &&label, std::weak_ptr<delegate_type> delegate) noexcept :
+        radio_button_widget(window, parent, std::forward<Label>(label), weak_or_unique_ptr{std::move(delegate)})
+    {
+    }
 
     /** Construct a radio button widget with a default button delegate.
      *
@@ -76,9 +77,9 @@ public:
     }
 
     /// @privatesection
-    [[nodiscard]] bool constrain(utc_nanoseconds display_time_point, bool need_reconstrain) noexcept override;
-    [[nodiscard]] void layout(utc_nanoseconds displayTimePoint, bool need_layout) noexcept override;
-    void draw(draw_context context, utc_nanoseconds display_time_point) noexcept override;
+    widget_constraints const &set_constraints() noexcept override;
+    void set_layout(widget_layout const &layout) noexcept override;
+    void draw(draw_context const &context) noexcept override;
     /// @endprivatesection
 private:
     static constexpr std::chrono::nanoseconds _animation_duration = std::chrono::milliseconds(150);
@@ -97,7 +98,7 @@ private:
     }
 
     void draw_radio_button(draw_context const &context) noexcept;
-    void draw_radio_pip(draw_context const &context, utc_nanoseconds display_time_point) noexcept;
+    void draw_radio_pip(draw_context const &context) noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

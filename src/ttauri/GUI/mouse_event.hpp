@@ -10,7 +10,7 @@
 #include "../geometry/transform.hpp"
 #include <chrono>
 
-namespace tt {
+namespace tt::inline v1 {
 
 struct mouse_event {
     enum class Type { None, Entered, Exited, Move, Drag, ButtonDown, ButtonUp, Wheel };
@@ -37,23 +37,18 @@ struct mouse_event {
     //! Number of clicks from the last button clicked.
     int clickCount;
 
-    mouse_event() noexcept :
-        type(Type::None),
-        position(),
-        cause(),
-        down(),
-        clickCount(0)
-    {
-    }
+    mouse_event() noexcept : type(Type::None), position(), cause(), down(), clickCount(0) {}
 
-    static mouse_event entered(point2 position={}) noexcept {
+    static mouse_event entered(point2 position = {}) noexcept
+    {
         mouse_event event;
         event.position = position;
         event.type = mouse_event::Type::Entered;
         return event;
     }
 
-    static mouse_event exited() noexcept {
+    static mouse_event exited() noexcept
+    {
         // Position far away from the left/bottom corner, but where even
         // after translations will not cause the position to be infinite.
         constexpr float far_ = std::numeric_limits<float>::max() * -0.5f;
@@ -62,6 +57,13 @@ struct mouse_event {
         event.position = point2{far_, far_};
         event.type = mouse_event::Type::Exited;
         return event;
+    }
+
+    /** Check if this event is for a left-button-up event while the mouse pointer is in the given area.
+     */
+    [[nodiscard]] bool is_left_button_up(aarectangle active_area) const noexcept
+    {
+        return type == Type::ButtonUp and cause.leftButton and active_area.contains(position);
     }
 
     /** Get the location of the mouse relative to the start of a drag.
@@ -80,10 +82,11 @@ struct mouse_event {
         return r;
     }
 
-    friend std::string to_string(mouse_event const &rhs) noexcept {
+    friend std::string to_string(mouse_event const &rhs) noexcept
+    {
         char const *type_s;
         switch (rhs.type) {
-        using enum mouse_event::Type;
+            using enum mouse_event::Type;
         case None: type_s = "none"; break;
         case Entered: type_s = "entered"; break;
         case Exited: type_s = "exited"; break;
@@ -98,11 +101,10 @@ struct mouse_event {
         return std::format("<mouse {} {}>", type_s, rhs.position);
     }
 
-    friend std::ostream &operator<<(std::ostream &lhs, mouse_event const &rhs) {
+    friend std::ostream &operator<<(std::ostream &lhs, mouse_event const &rhs)
+    {
         return lhs << to_string(rhs);
     }
 };
 
-
-
-}
+} // namespace tt::inline v1

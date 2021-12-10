@@ -18,7 +18,7 @@
 #include <x86intrin.h>
 #endif
 
-namespace tt {
+namespace tt::inline v1 {
 
 /**
  * Since Window's 10 QueryPerformanceCounter() counts at only 10MHz which
@@ -28,9 +28,12 @@ namespace tt {
  */
 class time_stamp_count {
 public:
-    struct inplace {};
-    struct inplace_with_cpu_id {};
-    struct inplace_with_thread_id {};
+    struct inplace {
+    };
+    struct inplace_with_cpu_id {
+    };
+    struct inplace_with_thread_id {
+    };
 
     constexpr time_stamp_count() noexcept : _count(0), _aux(0), _thread_id(0) {}
 
@@ -38,7 +41,7 @@ public:
 
     /** Use a constructor to in-place create the timestamp.
      */
-    explicit time_stamp_count(time_stamp_count::inplace) noexcept : _aux(0), _thread_id(0)  
+    explicit time_stamp_count(time_stamp_count::inplace) noexcept : _aux(0), _thread_id(0)
     {
         if constexpr (processor::current == processor::x64) {
             uint32_t tmp;
@@ -121,9 +124,9 @@ public:
      */
     [[nodiscard]] static std::chrono::nanoseconds duration_from_count(uint64_t count) noexcept
     {
-        using namespace std::literals::chrono_literals;
+        using namespace std::chrono_literals;
 
-        ttlet [lo, hi] = mul_carry(count, _period.load(std::memory_order::relaxed));
+        ttlet[lo, hi] = mul_carry(count, _period.load(std::memory_order::relaxed));
         return 1ns * static_cast<int64_t>((hi << 32) | (lo >> 32));
     }
 
@@ -188,7 +191,7 @@ private:
 
     /** The number of CPU ids we know of.
      */
-    inline static std::atomic<size_t> _num_aux_values = 0;
+    inline static std::atomic<std::size_t> _num_aux_values = 0;
 
     /** A list of known CPU ids.
      */
@@ -196,7 +199,7 @@ private:
 
     /** A list of CPU ids that match the _aux_values list.
      */
-    inline static std::array<size_t, maximum_num_cpus> _cpu_ids;
+    inline static std::array<std::size_t, maximum_num_cpus> _cpu_ids;
 
     /** Get the CPU id.
      * This is logical CPU id that the operating system uses.
@@ -211,4 +214,4 @@ private:
     static void configure_frequency() noexcept;
 };
 
-} // namespace tt
+} // namespace tt::inline v1

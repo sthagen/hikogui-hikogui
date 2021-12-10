@@ -11,7 +11,7 @@
 #include <string_view>
 #include <ostream>
 
-namespace tt {
+namespace tt::inline v1 {
 
 enum class glob_token_type_t {
     String,
@@ -24,7 +24,8 @@ enum class glob_token_type_t {
     AnyDirectory
 };
 
-inline std::ostream &operator<<(std::ostream &lhs, glob_token_type_t const &rhs) {
+inline std::ostream &operator<<(std::ostream &lhs, glob_token_type_t const &rhs)
+{
     switch (rhs) {
     case glob_token_type_t::String: lhs << "String"; break;
     case glob_token_type_t::StringList: lhs << "StringList"; break;
@@ -53,18 +54,19 @@ using glob_token_list_t = std::vector<glob_token_t>;
 using glob_token_iterator = glob_token_list_t::iterator;
 using glob_token_const_iterator = glob_token_list_t::const_iterator;
 
-
-inline bool operator==(glob_token_t const &lhs, glob_token_t const &rhs) noexcept {
+inline bool operator==(glob_token_t const &lhs, glob_token_t const &rhs) noexcept
+{
     return lhs.type == rhs.type && lhs.value == rhs.value && lhs.values == rhs.values;
 }
 
-inline std::ostream &operator<<(std::ostream &lhs, glob_token_t const &rhs) {
+inline std::ostream &operator<<(std::ostream &lhs, glob_token_t const &rhs)
+{
     lhs << rhs.type;
     if (rhs.value.size() > 0) {
         lhs << ":" << rhs.value;
     } else if (rhs.values.size() > 0) {
         lhs << ":{";
-        for (size_t i = 0; i < rhs.values.size(); i++) {
+        for (std::size_t i = 0; i < rhs.values.size(); i++) {
             if (i != 0) {
                 lhs << ",";
             }
@@ -285,52 +287,39 @@ inline glob_token_list_t parseGlob(std::string_view glob)
                 r.emplace_back(glob_token_type_t::StringList, tmpStringList);
                 state = state_t::Idle;
                 continue; // Don't increment the iterator.
-            default:
-                tmpString += c;
-                break;
+            default: tmpString += c; break;
             }
             break;
 
-        default:
-            tt_no_default();
+        default: tt_no_default();
         }
 
         i++;
     }
 }
 
-enum class glob_match_result_t {
-    No,
-    Partial,
-    Match
-};
+enum class glob_match_result_t { No, Partial, Match };
 
 inline glob_match_result_t matchGlob(glob_token_const_iterator index, glob_token_const_iterator end, std::string_view str)
 {
     if (index == end) {
-        return (str.size() == 0) ?
-            glob_match_result_t::Match :
-            glob_match_result_t::No;
+        return (str.size() == 0) ? glob_match_result_t::Match : glob_match_result_t::No;
 
     } else if (str.size() == 0) {
         switch (index->type) {
-        case glob_token_type_t::Separator:
-            return glob_match_result_t::Partial;
-        case glob_token_type_t::AnyDirectory:
-            return glob_match_result_t::Partial;
-        case glob_token_type_t::AnyString:
-            return matchGlob(index + 1, end, str);
-        default:
-            return glob_match_result_t::No;
+        case glob_token_type_t::Separator: return glob_match_result_t::Partial;
+        case glob_token_type_t::AnyDirectory: return glob_match_result_t::Partial;
+        case glob_token_type_t::AnyString: return matchGlob(index + 1, end, str);
+        default: return glob_match_result_t::No;
         }
     }
 
-#define MATCH_GLOB_RECURSE(out, next, end, str)\
-    switch (ttlet tmp = matchGlob(next, end, str)) {\
-    case glob_match_result_t::No: break;\
-    case glob_match_result_t::Match: return tmp;\
-    case glob_match_result_t::Partial: out = tmp; break;\
-    default: tt_no_default();\
+#define MATCH_GLOB_RECURSE(out, next, end, str) \
+    switch (ttlet tmp = matchGlob(next, end, str)) { \
+    case glob_match_result_t::No: break; \
+    case glob_match_result_t::Match: return tmp; \
+    case glob_match_result_t::Partial: out = tmp; break; \
+    default: tt_no_default(); \
     }
 
     // result may be assigned Partial by MATCH_GLOB_RECURSE.
@@ -346,7 +335,7 @@ inline glob_match_result_t matchGlob(glob_token_const_iterator index, glob_token
         return result;
 
     case glob_token_type_t::StringList:
-        for (ttlet &value: index->values) {
+        for (ttlet &value : index->values) {
             if (str.starts_with(value)) {
                 MATCH_GLOB_RECURSE(result, next_index, end, str.substr(value.size()));
             }
@@ -381,7 +370,7 @@ inline glob_match_result_t matchGlob(glob_token_const_iterator index, glob_token
 
     case glob_token_type_t::AnyString:
         // Loop through each character in the string, including the end.
-        for (size_t i = 0; i <= str.size(); i++) {
+        for (std::size_t i = 0; i <= str.size(); i++) {
             MATCH_GLOB_RECURSE(result, next_index, end, str.substr(i));
 
             // Don't continue beyond a slash.
@@ -394,15 +383,14 @@ inline glob_match_result_t matchGlob(glob_token_const_iterator index, glob_token
     case glob_token_type_t::AnyDirectory:
         // Recurse after each slash.
         found_slash = false;
-        for (size_t i = 0; i <= str.size(); i++) {
+        for (std::size_t i = 0; i <= str.size(); i++) {
             if (i == str.size() || str[i] == '/') {
                 MATCH_GLOB_RECURSE(result, next_index, end, str.substr(i));
             }
         }
         return result;
 
-    default:
-        tt_no_default();
+    default: tt_no_default();
     }
 #undef MATCH_GLOB_RECURSE
 }
@@ -417,7 +405,8 @@ inline glob_match_result_t matchGlob(std::string_view glob, std::string_view str
     return matchGlob(parseGlob(glob), str);
 }
 
-inline std::string basePathOfGlob(glob_token_const_iterator first, glob_token_const_iterator last) {
+inline std::string basePathOfGlob(glob_token_const_iterator first, glob_token_const_iterator last)
+{
     if (first == last) {
         return "";
     }
@@ -444,14 +433,9 @@ inline std::string basePathOfGlob(glob_token_const_iterator first, glob_token_co
     std::string r;
     for (auto index = first; index != endOfBase; index++) {
         switch (index->type) {
-        case glob_token_type_t::String:
-            r += index->value;
-            break;
-        case glob_token_type_t::Separator:
-            r += '/';
-            break;
-        default:
-            tt_no_default();
+        case glob_token_type_t::String: r += index->value; break;
+        case glob_token_type_t::Separator: r += '/'; break;
+        default: tt_no_default();
         }
     }
     return r;
@@ -467,4 +451,4 @@ inline std::string basePathOfGlob(std::string_view glob)
     return basePathOfGlob(parseGlob(glob));
 }
 
-}
+} // namespace tt::inline v1
