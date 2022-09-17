@@ -1,8 +1,8 @@
-// Copyright Take Vos 2019-2021.
+// Copyright Take Vos 2021-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-/** @file required.hpp
+/** @file utility.hpp Utilities used by the HikoGUI library itself.
  *
  * This file includes required definitions.
  */
@@ -155,7 +155,7 @@ hi_warning_push();
 // We do not have access to narrow_cast in this file.
 hi_warning_ignore_msvc(26472);
 
-namespace hi::inline v1 {
+namespace hi { inline namespace v1 {
 
 /** Signed size/index into an array.
  */
@@ -178,6 +178,6 @@ constexpr std::ptrdiff_t operator"" _z(unsigned long long lhs) noexcept
     return static_cast<std::ptrdiff_t>(lhs);
 }
 
-} // namespace hi::inline v1
+}} // namespace hi::v1
 
 hi_warning_pop();

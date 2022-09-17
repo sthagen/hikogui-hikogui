@@ -1,4 +1,4 @@
-// Copyright Take Vos 2020.
+// Copyright Take Vos 2020-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -112,7 +112,7 @@ public:
     /** translate a key press in the empty-context to a command.
      *
      * @param event The event to look up in the bindings.
-     * @param [in,out]events The event list to append the bindings to when found.
+     * @param[in,out] events The event list to append the bindings to when found.
      */
     [[nodiscard]] void translate(gui_event event, std::vector<gui_event>& events) const noexcept
     {

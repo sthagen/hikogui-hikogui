@@ -1,4 +1,4 @@
-// Copyright Take Vos 2019-2020.
+// Copyright Take Vos 2019-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -56,7 +56,7 @@ public:
      * Prioritizes HDR, followed by sRGB.
      *
      * @param surface The surface to determine the surface format for.
-     * @param [out]score Optional return parameter for the quality of the surface format.
+     * @param[out] score Optional return parameter for the quality of the surface format.
      */
     [[nodiscard]] vk::SurfaceFormatKHR get_surface_format(gfx_surface const &surface, int *score = nullptr) const noexcept;
 
@@ -66,7 +66,7 @@ public:
      * Prioritized a double buffering mode.
      *
      * @param surface The surface to determine the present mode for.
-     * @param [out]score Optional return parameter for the quality of the present mode.
+     * @param[out] score Optional return parameter for the quality of the present mode.
      */
     [[nodiscard]] vk::PresentModeKHR get_present_mode(gfx_surface const &surface, int *score = nullptr) const noexcept;
 

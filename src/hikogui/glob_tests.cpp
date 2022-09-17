@@ -1,9 +1,9 @@
-// Copyright Take Vos 2019.
+// Copyright Take Vos 2019, 2021.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "glob.hpp"
-#include "required.hpp"
+#include "utility.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -12,19 +12,19 @@ using namespace hi;
 
 #define ASSERT_TOKEN_EQ2(token, name) \
     do { \
-        hilet expected = glob_token_t{glob_token_type_t::name}; \
+        hilet expected = glob_token_t{glob_callback_token_t::name}; \
         ASSERT_EQ(token, expected); \
     } while (false)
 
 #define ASSERT_TOKEN_EQ3(token, name, value) \
     do { \
-        hilet expected = glob_token_t{glob_token_type_t::name, value}; \
+        hilet expected = glob_token_t{glob_callback_token_t::name, value}; \
         ASSERT_EQ(token, expected); \
     } while (false)
 
 #define ASSERT_TOKEN_EQ5(token, name, value1, value2, value3) \
     do { \
-        hilet expected = glob_token_t{glob_token_type_t::name, std::vector<std::string>{value1, value2, value3}}; \
+        hilet expected = glob_token_t{glob_callback_token_t::name, std::vector<std::string>{value1, value2, value3}}; \
         ASSERT_EQ(token, expected); \
     } while (false)
 

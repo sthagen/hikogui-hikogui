@@ -1,4 +1,5 @@
-// Copyright Take Vos 2019-2021.
+// Copyright Jhalak Patel 2021.
+// Copyright Take Vos 2019, 2021-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -9,7 +10,7 @@
 #include "log.hpp"
 #include "memory.hpp"
 #include "URL.hpp"
-#include "required.hpp"
+#include "utility.hpp"
 #include <mutex>
 
 namespace hi::inline v1 {

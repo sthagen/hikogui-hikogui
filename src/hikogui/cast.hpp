@@ -1,10 +1,10 @@
-// Copyright Take Vos 2020.
+// Copyright Take Vos 2020-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #pragma once
 
-#include "required.hpp"
+#include "utility.hpp"
 #include "concepts.hpp"
 #include "assert.hpp"
 #include <type_traits>
@@ -75,8 +75,6 @@ template<typename Out, base_of<std::remove_pointer_t<Out>> In>
 /** Cast a pointer to a class to its derived class or itself.
  *
  * @note It is undefined behavior if the argument is not of type Out.
- * @param rhs A pointer to an object that is of type `Out`. Or a nullptr which will be
- *        passed through.
  * @return A pointer to the same object with a new type.
  */
 template<typename Out>
@@ -203,6 +201,12 @@ template<std::integral Out, std::integral In>
     auto in_unsigned = static_cast<in_unsigned_type>(rhs);
     auto out_unsigned = narrow_cast<out_unsigned_type>(in_unsigned);
     return static_cast<Out>(out_unsigned);
+}
+
+template<std::integral Out>
+[[nodiscard]] constexpr Out char_cast(std::byte rhs) noexcept
+{
+    return char_cast<Out>(static_cast<uint8_t>(rhs));
 }
 
 /** Return the low half of the input value.

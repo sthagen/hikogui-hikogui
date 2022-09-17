@@ -1,4 +1,4 @@
-// Copyright Take Vos 2020-2021.
+// Copyright Take Vos 2020-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -103,7 +103,7 @@ public:
      * This function will find a glyph matching the grapheme in the selected font, or
      * find the glyph in the fallback font.
      *
-     * @param font_id The font to use to find the grapheme in.
+     * @param font The font to use to find the grapheme in.
      * @param grapheme The Unicode grapheme to find in the font.
      * @return A list of glyphs which matched the grapheme.
      */

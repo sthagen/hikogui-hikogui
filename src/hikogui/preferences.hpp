@@ -1,4 +1,4 @@
-// Copyright Take Vos 2020.
+// Copyright Take Vos 2020-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -6,7 +6,7 @@
 #include "datum.hpp"
 #include "log.hpp"
 #include "jsonpath.hpp"
-#include "observable.hpp"
+#include "observer.hpp"
 #include "pickle.hpp"
 #include <typeinfo>
 
@@ -19,12 +19,12 @@ namespace detail {
 
 class preference_item_base {
 public:
-    preference_item_base(preferences &parent, std::string_view path) noexcept;
+    preference_item_base(preferences& parent, std::string_view path) noexcept;
 
-    preference_item_base(preference_item_base const &) = delete;
-    preference_item_base(preference_item_base &&) = delete;
-    preference_item_base &operator=(preference_item_base const &) = delete;
-    preference_item_base &operator=(preference_item_base &&) = delete;
+    preference_item_base(preference_item_base const&) = delete;
+    preference_item_base(preference_item_base&&) = delete;
+    preference_item_base& operator=(preference_item_base const&) = delete;
+    preference_item_base& operator=(preference_item_base&&) = delete;
     virtual ~preference_item_base() = default;
 
     /** Reset the value.
@@ -36,7 +36,7 @@ public:
     void load() noexcept;
 
 protected:
-    preferences &_parent;
+    preferences& _parent;
     jsonpath _path;
 
     /** Encode the value into a datum.
@@ -45,22 +45,24 @@ protected:
      */
     [[nodiscard]] virtual datum encode() const noexcept = 0;
 
-    virtual void decode(datum const &data) = 0;
+    virtual void decode(datum const& data) = 0;
 };
 
 template<typename T>
 class preference_item : public preference_item_base {
 public:
-    preference_item(preferences &parent, std::string_view path, observable<T> const &value, T init) noexcept :
+    preference_item(preferences& parent, std::string_view path, observer<T> const& value, T init) noexcept :
         preference_item_base(parent, path), _value(value), _init(std::move(init))
     {
-        _value_cbt = _value.subscribe([this](auto...) {
-            if (auto tmp = this->encode(); not holds_alternative<std::monostate>(tmp)) {
-                this->_parent.write(_path, this->encode());
-            } else {
-                this->_parent.remove(_path);
-            }
-        });
+        _value_cbt = _value.subscribe(
+            [this](auto...) {
+                if (auto tmp = this->encode(); not holds_alternative<std::monostate>(tmp)) {
+                    this->_parent.write(_path, this->encode());
+                } else {
+                    this->_parent.remove(_path);
+                }
+            },
+            callback_flags::local);
     }
 
     void reset() noexcept override
@@ -78,26 +80,26 @@ protected:
         }
     }
 
-    void decode(datum const &data) override
+    void decode(datum const& data) override
     {
         _value = hi::pickle<T>{}.decode(data);
     }
 
 private:
     T _init;
-    observable<T> _value;
-    typename decltype(_value)::token_type _value_cbt;
+    observer<T> _value;
+    typename decltype(_value)::callback_token _value_cbt;
 };
 
 } // namespace detail
 
 /** user preferences.
  *
- * A preferences objects maintains a link between observables in the application and
+ * A preferences objects maintains a link between observer in the application and
  * a preferences file.
  *
- * When loading preferences the observables are set to the value
- * in the preferences file. When an observable changes a value the preferences file is
+ * When loading preferences the observer are set to the value
+ * in the preferences file. When an observer changes a value the preferences file is
  * updated to reflect this change. For performance reasons multiple modifications are
  * combined into a single save.
  *
@@ -134,10 +136,10 @@ public:
     preferences(URL location) noexcept;
 
     ~preferences();
-    preferences(preferences const &) = delete;
-    preferences(preferences &&) = delete;
-    preferences &operator=(preferences const &) = delete;
-    preferences &operator=(preferences &&) = delete;
+    preferences(preferences const&) = delete;
+    preferences(preferences&&) = delete;
+    preferences& operator=(preferences const&) = delete;
+    preferences& operator=(preferences&&) = delete;
 
     /** Save the preferences.
      *
@@ -171,14 +173,14 @@ public:
      */
     void reset() noexcept;
 
-    /** Register an observable to a preferences file.
+    /** Register an observer to a preferences file.
      *
      * @param path The json-path inside the preference file.
-     * @param item The observable to monitor.
-     * @param init The value of the observable when it is not present in the preferences file.
+     * @param item The observer to monitor.
+     * @param init The value of the observer when it is not present in the preferences file.
      */
     template<typename T>
-    void add(std::string_view path, observable<T> const &item, T init = T{}) noexcept
+    void add(std::string_view path, observer<T> const& item, T init = T{}) noexcept
     {
         auto item_ = std::make_unique<detail::preference_item<T>>(*this, path, item, std::move(init));
         item_->load();
@@ -199,7 +201,7 @@ private:
      */
     mutable bool _modified = false;
 
-    loop::timer_token_type _check_modified_cbt;
+    loop::timer_callback_token _check_modified_cbt;
 
     /** List of registered items.
      */
@@ -214,15 +216,15 @@ private:
 
     /** Write a value to the data.
      */
-    void write(jsonpath const &path, datum const value) noexcept;
+    void write(jsonpath const& path, datum const value) noexcept;
 
     /** Read a value from the data.
      */
-    datum read(jsonpath const &path) noexcept;
+    datum read(jsonpath const& path) noexcept;
 
     /** Remove a value from the data.
      */
-    void remove(jsonpath const &path) noexcept;
+    void remove(jsonpath const& path) noexcept;
 
     friend class detail::preference_item_base;
     template<typename T>

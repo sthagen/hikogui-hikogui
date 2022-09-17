@@ -1,4 +1,5 @@
-# Copyright Take Vos 2020-2021.
+# Copyright Jens A. Koch 2021.
+# Copyright Take Vos 2020-2022.
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -45,7 +46,6 @@ target_sources(hikogui PRIVATE
     concepts.hpp
     console.hpp
     $<${HI_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/console_win32.cpp>
-    CommandLineParser.hpp
     counters.cpp
     counters.hpp
     CP1252.hpp
@@ -92,8 +92,6 @@ target_sources(hikogui PRIVATE
     hash.hpp
     hash_map.hpp
     huffman.hpp
-    icon.cpp
-    icon.hpp
     int_carry.hpp
     int_overflow.hpp
     interval.hpp
@@ -110,6 +108,7 @@ target_sources(hikogui PRIVATE
     $<${HI_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/loop_win32.cpp>
     math.hpp
     memory.hpp
+    group_ptr.hpp
     meta.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/metadata.cpp
     metadata.hpp
@@ -117,6 +116,8 @@ target_sources(hikogui PRIVATE
     notifier.hpp
     cast.hpp
     observable.hpp
+    observable_value.hpp
+    observer.hpp
     operator.hpp
     os_settings.cpp
     os_settings.hpp
@@ -140,13 +141,14 @@ target_sources(hikogui PRIVATE
     recursive_iterator.hpp
     $<${HI_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/registry_win32.cpp>
     $<${HI_WIN32}:${CMAKE_CURRENT_SOURCE_DIR}/registry_win32.hpp>
-    required.hpp
+    utility.hpp
     range_map.hpp
     resource_view.hpp
     safe_int.hpp
     semantic_version.hpp
     scoped_buffer.hpp
     scoped_task.hpp
+    shared_state.hpp
     sip_hash.hpp
     source_location.hpp
     small_map.hpp
@@ -173,6 +175,7 @@ target_sources(hikogui PRIVATE
     tokenizer.hpp
     trace.cpp
     trace.hpp
+    tree.hpp
     type_traits.hpp
     undo_stack.hpp
     unfair_mutex.hpp
@@ -187,7 +190,6 @@ target_sources(hikogui PRIVATE
     utils.hpp
     vector_span.hpp
     void_span.hpp
-    weak_or_unique_ptr.hpp
     when_any.hpp
     wfree_fifo.hpp
     wfree_idle_count.hpp
@@ -204,7 +206,7 @@ if(HI_BUILD_PCH AND NOT HI_ENABLE_ANALYSIS)
         exception.hpp
         log.hpp
         architecture.hpp
-        required.hpp
+        utility.hpp
         strings.hpp
         trace.hpp
         URL.hpp
@@ -238,19 +240,21 @@ if(HI_BUILD_TESTS)
         int_overflow_tests.cpp
         jsonpath_tests.cpp
         math_tests.cpp
+        group_ptr_tests.cpp
         notifier_tests.cpp
         graphic_path_tests.cpp
-        observable_tests.cpp
         pixel_map_tests.cpp
         polymorphic_optional_tests.cpp
         polynomial_tests.cpp
         ranges_tests.cpp
         rcu_tests.cpp
         safe_int_tests.cpp
+        shared_state_tests.cpp
         sip_hash_tests.cpp
         small_map_tests.cpp
         strings_tests.cpp
         tokenizer_tests.cpp
+        tree_tests.cpp
         type_traits_tests.cpp
         url_parser_tests.cpp
         URL_tests.cpp
@@ -267,7 +271,7 @@ if(HI_BUILD_TESTS AND HI_BUILD_PCH AND NOT HI_ENABLE_ANALYSIS)
         exception.hpp
         log.hpp
         architecture.hpp
-        required.hpp
+        utility.hpp
         strings.hpp
         trace.hpp
         URL.hpp

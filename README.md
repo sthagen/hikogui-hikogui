@@ -58,12 +58,12 @@ Features
 Example
 -------
 Here is some example code for an application with three radio buttons,
-who form a set by sharing a single `value` observable.
+who form a set by sharing a single `value` observer.
 
 ```
 int hi_main(int argc, char *argv[])
 {
-    observable<int> value = 0;
+    observer<int> value = 0;
 
     auto gui = hi::gui_system::make_unique();
     auto &window = gui.make_window(tr("Radio button example"));

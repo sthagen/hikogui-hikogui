@@ -1,4 +1,4 @@
-// Copyright Take Vos 2021.
+// Copyright Take Vos 2019-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -7,7 +7,7 @@
 #include "exception.hpp"
 #include "assert.hpp"
 #include "concepts.hpp"
-#include "required.hpp"
+#include "utility.hpp"
 #include "decimal.hpp"
 #include "URL.hpp"
 #include "byte_string.hpp"
@@ -27,13 +27,13 @@
 hi_warning_push();
 // C26476: Expression/symbol '...' uses a naked union '...' with multiple type pointers: Use variant instead (type.7.).
 // This implements `datum` which is simular to a std::variant.
-hi_warning_ignore_msvc(26476)
+hi_warning_ignore_msvc(26476);
 // C26409: Avoid calling new and delete explicitly, use std::make_unique<T> instead (r.11).
 // This implements `datum` which implements RAII for large objects.
-hi_warning_ignore_msvc(26409)
+hi_warning_ignore_msvc(26409);
 // C26492: Don't use const_cast to cast away const or volatile (type.3).
 // Needed until c++23 deducing this.
-hi_warning_ignore_msvc(26492)
+hi_warning_ignore_msvc(26492);
 
 namespace hi::inline v1 {
 class datum;
@@ -1984,7 +1984,7 @@ private:
         vector = -2,
         map = -3,
         url = -4,
-        bstring = -5,
+        bstring = -5
     };
 
     tag_type _tag = tag_type::monostate;

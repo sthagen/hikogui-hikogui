@@ -1,4 +1,4 @@
-// Copyright Take Vos 2019-2021.
+// Copyright Take Vos 2021-2022.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -120,8 +120,7 @@ public:
      * @tparam SourceFile The source file where this function was called.
      * @tparam SourceLine The source line where this function was called.
      * @tparam Fmt The format string.
-     * @param timestamp The timestamp when the message is logged.
-     * @param args Arguments to std::format.
+     * @param args Arguments to `std::format()`.
      */
     template<global_state_type Level, basic_fixed_string SourceFile, int SourceLine, basic_fixed_string Fmt, typename... Args>
     hi_force_inline void add(Args&&...args) noexcept
