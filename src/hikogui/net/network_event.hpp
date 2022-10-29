@@ -42,7 +42,7 @@ constexpr network_event& operator|=(network_event& lhs, network_event const& rhs
     return lhs = lhs | rhs;
 }
 
-[[nodiscard]] constexpr bool any(network_event const& rhs) noexcept
+[[nodiscard]] constexpr bool to_bool(network_event const& rhs) noexcept
 {
     return to_bool(to_underlying(rhs));
 }
@@ -51,7 +51,7 @@ constexpr network_event& operator|=(network_event& lhs, network_event const& rhs
  */
 [[nodiscard]] constexpr size_t bit(network_event const& rhs) noexcept
 {
-    hi_axiom(std::popcount(to_underlying(rhs)) == 1);
+    hi_assert(std::popcount(to_underlying(rhs)) == 1);
     return std::countr_zero(to_underlying(rhs));
 }
 

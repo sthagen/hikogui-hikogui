@@ -113,6 +113,7 @@ target_sources(hikogui PRIVATE
     os_settings.hpp
     $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/os_settings_win32.cpp>
     architecture.hpp
+    packed_int_array.hpp
     parse_location.hpp
     preferences.cpp
     preferences.hpp
@@ -166,7 +167,6 @@ target_sources(hikogui PRIVATE
     undo_stack.hpp
     unfair_mutex.hpp
     unfair_recursive_mutex.hpp
-    utils.hpp
     vector_span.hpp
     void_span.hpp
     when_any.hpp
@@ -176,7 +176,7 @@ target_sources(hikogui PRIVATE
     $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/win32_headers.hpp>
 )
 
-if(HI_BUILD_TESTS)
+if(BUILD_TESTING)
     target_sources(hikogui_tests PRIVATE
         algorithm_tests.cpp
         bezier_curve_tests.cpp
@@ -204,6 +204,7 @@ if(HI_BUILD_TESTS)
         group_ptr_tests.cpp
         notifier_tests.cpp
         graphic_path_tests.cpp
+        packed_int_array_tests.cpp
         pixel_map_tests.cpp
         polymorphic_optional_tests.cpp
         polynomial_tests.cpp

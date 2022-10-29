@@ -74,12 +74,12 @@ public:
     template<typename WidgetType, typename Key, typename... Args>
     WidgetType& make_widget(Key const& key, Args&&...args)
     {
-        hi_axiom(is_gui_thread());
+        hi_axiom(loop::main().on_thread());
 
         auto tmp = std::make_unique<WidgetType>(window, this, std::forward<Args>(args)...);
         auto& ref = *tmp;
 
-        hi_axiom(delegate != nullptr);
+        hi_assert_not_null(delegate);
         delegate->add_tab(*this, static_cast<std::size_t>(key), size(_children));
         _children.push_back(std::move(tmp));
         hi_request_reconstrain("tab_widget::make_widget({})", key);
@@ -94,8 +94,8 @@ public:
         }
     }
 
-    widget_constraints const& set_constraints() noexcept override;
-    void set_layout(widget_layout const& layout) noexcept override;
+    widget_constraints const& set_constraints(set_constraints_context const& context) noexcept override;
+    void set_layout(widget_layout const& context) noexcept override;
     void draw(draw_context const& context) noexcept override;
     [[nodiscard]] hitbox hitbox_test(point3 position) const noexcept override;
     [[nodiscard]] widget const *find_next_widget(

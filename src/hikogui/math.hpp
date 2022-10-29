@@ -2,6 +2,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
+/** @file math.hpp Miscellaneous math functions.
+ */
+
 #pragma once
 
 #include "utility.hpp"
@@ -18,6 +21,7 @@
 #include <bit>
 #include <concepts>
 #include <algorithm>
+#include <numbers>
 
 #if HI_COMPILER == HI_CC_MSVC
 #include <intrin.h>
@@ -111,6 +115,39 @@ template<std::floating_point T>
 {
     auto e = (a + b) * std::numeric_limits<T>::epsilon();
     return std::abs(a - b) <= e;
+}
+
+/** Convert degree to radian.
+ *
+ * @param degree The number of degrees.
+ * @return The number of radians.
+ */
+template<std::floating_point T>
+[[nodiscard]] constexpr T to_radian(T degree) noexcept
+{
+    return degree * (std::numbers::pi_v<T> / T{180.0});
+}
+
+/** The greatest multiple of alignment less than or equal to value.
+ * @param value The unsigned value to round.
+ * @param alignment The alignment.
+ * @return The greatest multiple of alignment less than or equal to value.
+ */
+template<std::unsigned_integral T>
+constexpr T floor(T value, T alignment) noexcept
+{
+    return (value / alignment) * alignment;
+}
+
+/** The smallest multiple of alignment greater than or equal to value.
+ * @param value The unsigned value to round.
+ * @param alignment The alignment.
+ * @return The smallest multiple of alignment greater than or equal to value.
+ */
+template<std::unsigned_integral T>
+constexpr T ceil(T value, T alignment) noexcept
+{
+    return floor(value + (alignment - 1), alignment);
 }
 
 } // namespace hi::inline v1

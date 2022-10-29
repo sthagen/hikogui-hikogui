@@ -106,8 +106,8 @@ public:
         }
     }
 
-    widget_constraints const& set_constraints() noexcept override;
-    void set_layout(widget_layout const& layout) noexcept override;
+    widget_constraints const& set_constraints(set_constraints_context const& context) noexcept override;
+    void set_layout(widget_layout const& context) noexcept override;
     void draw(draw_context const& context) noexcept override;
     [[nodiscard]] hitbox hitbox_test(point3 position) const noexcept override;
     /// @endprivatesection
@@ -134,12 +134,17 @@ private:
         }
 
         [[nodiscard]] aarectangle
-        rectangle(grid_layout const& columns, grid_layout const& rows, float container_height) const noexcept
+        rectangle(grid_layout const& columns, grid_layout const& rows, extent2 container_size, bool ltor) const noexcept
         {
-            hilet[x0, x3] = columns.get_positions(column_first, column_last);
-            hilet[y0, y3] = rows.get_positions(row_first, row_last);
+            hilet[x_min, x_max] = columns.get_positions(column_first, column_last);
+            hilet[y_min, y_max] = rows.get_positions(row_first, row_last);
 
-            return {point2{x0, container_height - y3}, point2{x3, container_height - y0}};
+            hilet x0 = ltor ? x_min : container_size.width() - x_max;
+            hilet x3 = ltor ? x_max : container_size.width() - x_min;
+            hilet y0 = container_size.height() - y_max;
+            hilet y3 = container_size.height() - y_min;
+
+            return {point2{x0, y0}, point2{x3, y3}};
         }
 
         [[nodiscard]] widget_baseline baseline(grid_layout const& rows) const noexcept

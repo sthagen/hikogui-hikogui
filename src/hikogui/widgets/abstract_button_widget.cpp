@@ -15,7 +15,7 @@ abstract_button_widget::abstract_button_widget(
     std::shared_ptr<delegate_type> delegate) noexcept :
     super(window, parent), delegate(std::move(delegate))
 {
-    hi_axiom(this->delegate != nullptr);
+    hi_assert_not_null(this->delegate);
 
     _on_label_widget = std::make_unique<label_widget>(window, this, on_label, alignment, text_style);
     _off_label_widget = std::make_unique<label_widget>(window, this, off_label, alignment, text_style);
@@ -28,21 +28,21 @@ abstract_button_widget::abstract_button_widget(
 
 abstract_button_widget::~abstract_button_widget()
 {
-    hi_axiom(delegate != nullptr);
+    hi_assert_not_null(delegate);
     delegate->deinit(*this);
 }
 
 void abstract_button_widget::activate() noexcept
 {
-    hi_axiom(delegate != nullptr);
+    hi_assert_not_null(delegate);
     delegate->activate(*this);
 
     this->pressed();
 }
 
-widget_constraints abstract_button_widget::set_constraints_button() const noexcept
+widget_constraints abstract_button_widget::set_constraints_button(set_constraints_context const &context) const noexcept
 {
-    return max(_on_label_widget->set_constraints(), _off_label_widget->set_constraints(), _other_label_widget->set_constraints());
+    return max(_on_label_widget->set_constraints(context), _off_label_widget->set_constraints(context), _other_label_widget->set_constraints(context));
 }
 
 void abstract_button_widget::draw_button(draw_context const& context) noexcept
@@ -66,9 +66,9 @@ void abstract_button_widget::set_layout_button(widget_layout const& context) noe
 
 [[nodiscard]] color abstract_button_widget::background_color() const noexcept
 {
-    hi_axiom(is_gui_thread());
+    hi_axiom(loop::main().on_thread());
     if (_pressed) {
-        return theme().color(semantic_color::fill, semantic_layer + 2);
+        return _layout.theme->color(semantic_color::fill, semantic_layer + 2);
     } else {
         return super::background_color();
     }
@@ -76,7 +76,7 @@ void abstract_button_widget::set_layout_button(widget_layout const& context) noe
 
 [[nodiscard]] hitbox abstract_button_widget::hitbox_test(point3 position) const noexcept
 {
-    hi_axiom(is_gui_thread());
+    hi_axiom(loop::main().on_thread());
 
     if (*mode >= widget_mode::partial and layout().contains(position)) {
         return {this, position, hitbox::Type::Button};
@@ -87,15 +87,15 @@ void abstract_button_widget::set_layout_button(widget_layout const& context) noe
 
 [[nodiscard]] bool abstract_button_widget::accepts_keyboard_focus(keyboard_focus_group group) const noexcept
 {
-    hi_axiom(is_gui_thread());
-    return *mode >= widget_mode::partial and any(group & hi::keyboard_focus_group::normal);
+    hi_axiom(loop::main().on_thread());
+    return *mode >= widget_mode::partial and to_bool(group & hi::keyboard_focus_group::normal);
 }
 
 void activate() noexcept;
 
 bool abstract_button_widget::handle_event(gui_event const& event) noexcept
 {
-    hi_axiom(is_gui_thread());
+    hi_axiom(loop::main().on_thread());
 
     switch (event.type()) {
     case gui_event_type::gui_activate:

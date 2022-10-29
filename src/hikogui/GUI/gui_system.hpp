@@ -38,18 +38,6 @@ public:
 
     thread_id const thread_id;
 
-    /** The writing direction.
-     *
-     * The writing direction determines the initial writing direction of paragraphs.
-     *
-     * When the value is `R` the user-interface should flip the horizontal layout,
-     * for example a row-layout-widget in flipped-mode should layout children ordered from
-     * right to left.
-     *
-     * @note The only values allowed are `L` and `R`.
-     */
-    unicode_bidi_class writing_direction = unicode_bidi_class::L;
-
     /** The name of the selected theme.
      */
     observer<std::string> selected_theme = "default";
@@ -103,20 +91,13 @@ public:
     template<typename... Args>
     std::shared_ptr<gui_window> make_window(Args &&...args)
     {
-        hi_axiom(is_gui_thread());
+        hi_axiom(loop::main().on_thread());
 
         // XXX abstract away the _win32 part.
         auto window = std::make_shared<gui_window_win32>(*this, std::forward<Args>(args)...);
         window->init();
 
         return add_window(std::move(window));
-    }
-
-    /** Check if this thread is the same as the gui thread.
-     */
-    [[nodiscard]] bool is_gui_thread() const noexcept
-    {
-        return thread_id == current_thread_id();
     }
 
     /** Request all windows to constrain.

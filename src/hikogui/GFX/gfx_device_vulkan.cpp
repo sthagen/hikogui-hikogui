@@ -238,7 +238,7 @@ gfx_device_vulkan::~gfx_device_vulkan()
         }
     }
 
-    hi_axiom(graphics_queue);
+    hi_assert_not_null(graphics_queue);
     return *graphics_queue;
 }
 
@@ -259,7 +259,7 @@ gfx_device_vulkan::~gfx_device_vulkan()
         }
     }
 
-    hi_axiom(present_queue);
+    hi_assert_not_null(present_queue);
     return *present_queue;
 }
 
@@ -505,7 +505,7 @@ std::vector<vk::DeviceQueueCreateInfo> gfx_device_vulkan::make_device_queue_crea
     auto r = std::vector<vk::DeviceQueueCreateInfo>{};
     for (auto queue_family_properties : physicalIntrinsic.getQueueFamilyProperties()) {
         hilet num_queues = 1;
-        hi_axiom(size(default_queue_priority) >= num_queues);
+        hi_assert(size(default_queue_priority) >= num_queues);
         r.emplace_back(vk::DeviceQueueCreateFlags(), queue_family_index++, num_queues, default_queue_priority.data());
     }
     return r;
@@ -521,8 +521,8 @@ void gfx_device_vulkan::initialize_queues(std::vector<vk::DeviceQueueCreateInfo>
         hilet queue_flags = queue_family_property.queueFlags;
 
         for (uint32_t queue_index = 0; queue_index != device_queue_create_info.queueCount; ++queue_index) {
-            hilet queue = intrinsic.getQueue(queue_family_index, queue_index);
-            hilet command_pool = intrinsic.createCommandPool(
+            auto queue = intrinsic.getQueue(queue_family_index, queue_index);
+            auto command_pool = intrinsic.createCommandPool(
                 {vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
                  queue_family_index});
 
@@ -920,7 +920,7 @@ vk::ShaderModule gfx_device_vulkan::loadShader(uint32_t const *data, std::size_t
     hi_log_info("Loading shader");
 
     // Check uint32_t alignment of pointer.
-    hi_axiom((reinterpret_cast<std::uintptr_t>(data) & 3) == 0);
+    hi_assert((reinterpret_cast<std::uintptr_t>(data) & 3) == 0);
 
     return intrinsic.createShaderModule({vk::ShaderModuleCreateFlags(), size, data});
 }

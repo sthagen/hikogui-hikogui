@@ -6,6 +6,8 @@
 
 #include "utility.hpp"
 #include "assert.hpp"
+#include "concepts.hpp"
+#include "math.hpp"
 #include <concepts>
 #include <memory>
 #include <vector>
@@ -49,7 +51,7 @@ void memswap(T& dst, U& src)
 template<typename InputIt, typename T>
 T *placement_copy(InputIt src, T *dst)
 {
-    hi_axiom(dst != nullptr);
+    hi_axiom_not_null(dst);
     return new (dst) T(*src);
 }
 
@@ -86,8 +88,8 @@ void placement_copy(InputIt src_first, InputIt src_last, T *dst_first)
 template<typename T>
 T *placement_move(T *src, T *dst)
 {
-    hi_axiom(src != nullptr);
-    hi_axiom(dst != nullptr);
+    hi_axiom_not_null(src);
+    hi_axiom_not_null(dst);
 
     auto dst_ = new (dst) T(std::move(*src));
     std::destroy_at(src);
@@ -165,27 +167,7 @@ constexpr bool is_aligned(T *p)
     return (reinterpret_cast<ptrdiff_t>(p) % std::alignment_of<T>::value) == 0;
 }
 
-/** The greatest multiple of alignment less than or equal to value.
- * @param value The unsigned value to round.
- * @param alignment The alignment.
- * @return The greatest multiple of alignment less than or equal to value.
- */
-template<std::unsigned_integral T>
-constexpr T floor(T value, T alignment) noexcept
-{
-    return (value / alignment) * alignment;
-}
 
-/** The smallest multiple of alignment greater than or equal to value.
- * @param value The unsigned value to round.
- * @param alignment The alignment.
- * @return The smallest multiple of alignment greater than or equal to value.
- */
-template<std::unsigned_integral T>
-constexpr T ceil(T value, T alignment) noexcept
-{
-    return floor(value + (alignment - 1), alignment);
-}
 
 template<typename T>
 constexpr T *ceil(T *ptr, std::size_t alignment) noexcept
@@ -209,7 +191,7 @@ constexpr T *floor(T *ptr, std::size_t alignment) noexcept
  */
 inline void *advance_bytes(void *ptr, std::ptrdiff_t distance) noexcept
 {
-    hi_axiom(ptr != nullptr);
+    hi_axiom_not_null(ptr);
     return static_cast<char *>(ptr) + distance;
 }
 
@@ -221,7 +203,7 @@ inline void *advance_bytes(void *ptr, std::ptrdiff_t distance) noexcept
  */
 inline void const *advance_bytes(void const *ptr, std::ptrdiff_t distance) noexcept
 {
-    hi_axiom(ptr != nullptr);
+    hi_axiom_not_null(ptr);
     return static_cast<char const *>(ptr) + distance;
 }
 
@@ -278,6 +260,95 @@ inline std::shared_ptr<Value> try_make_shared(Map& map, Key key, Args... args)
         value = i->second;
     }
     return value;
+}
+
+/** Make an unaligned load of an unsigned integer.
+ */
+template<numeric T>
+[[nodiscard]] hi_force_inline constexpr T load(uint8_t const *src) noexcept
+{
+    auto r = T{};
+
+    if (not std::is_constant_evaluated()) {
+        // MSVC, clang and gcc are able to optimize this fully on x86-64.
+        std::memcpy(&r, src, sizeof(T));
+        return r;
+    }
+
+    if constexpr (std::endian::native == std::endian::little) {
+        for (auto i = sizeof(T); i != 0; --i) {
+            r <<= 8;
+            r |= src[i-1];
+        }
+    } else {
+        for (auto i = 0; i != sizeof(T); ++i) {
+            r <<= 8;
+            r |= src[i];
+        }
+    }
+    return r;
+}
+
+template<numeric T>
+[[nodiscard]] hi_force_inline constexpr void store(T src, uint8_t const *dst) noexcept
+{
+    using unsigned_type = std::make_unsigned_t<T>;
+
+    hilet src_ = static_cast<unsigned_type>(src);
+
+    if (not std::is_constant_evaluated()) {
+#if HI_COMPILER == HI_CC_MSVC
+        *reinterpret_cast<__unaligned unsigned_type const *>(dst) = src_;
+        return;
+#else
+        std::memcpy(dst, &src, sizeof(T));
+        return;
+#endif
+    }
+
+    if constexpr (std::endian::native == std::endian::little) {
+        for (auto i = 0; i != sizeof(T); ++i) {
+            dst[i] = static_cast<uint8_t>(src_);
+            src_ >>= 8;
+        }
+    } else {
+        for (auto i = sizeof(T); i != 0; --i) {
+            dst[i] = static_cast<uint8_t>(src_);
+            src_ >>= 8;
+        }
+    }
+}
+
+template<numeric T>
+[[nodiscard]] hi_force_inline constexpr void store_or(T src, uint8_t *dst) noexcept
+{
+    using unsigned_type = std::make_unsigned_t<T>;
+
+    auto src_ = static_cast<unsigned_type>(src);
+
+    if (not std::is_constant_evaluated()) {
+#if HI_COMPILER == HI_CC_MSVC
+        *reinterpret_cast<__unaligned unsigned_type *>(dst) |= src_;
+        return;
+#else
+        decltype(src_) tmp;
+        std::memcpy(&tmp, dst, sizeof(T));
+        tmp |= src_;
+        std::memcpy(dst, &tmp, sizeof(T));
+#endif
+    }
+
+    if constexpr (std::endian::native == std::endian::little) {
+        for (auto i = 0; i != sizeof(T); ++i) {
+            dst[i] |= static_cast<uint8_t>(src_);
+            src_ >>= 8;
+        }
+    } else {
+        for (auto i = sizeof(T); i != 0; --i) {
+            dst[i] |= static_cast<uint8_t>(src_);
+            src_ >>= 8;
+        }
+    }
 }
 
 } // namespace hi::inline v1
