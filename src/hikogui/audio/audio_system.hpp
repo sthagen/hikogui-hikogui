@@ -5,7 +5,7 @@
 #pragma once
 
 #include "audio_device.hpp"
-#include "../unfair_recursive_mutex.hpp"
+#include "../utility/module.hpp"
 #include "../generator.hpp"
 #include <vector>
 #include <memory>
@@ -39,7 +39,7 @@ public:
      *
      * @return A generator-coroutine object that can be iterated over.
      */
-    [[nodiscard]] virtual generator<audio_device *> devices() noexcept = 0;
+    [[nodiscard]] virtual generator<audio_device &> devices() noexcept = 0;
 
     /** Subscribe a function to be called when the device list changes.
      *

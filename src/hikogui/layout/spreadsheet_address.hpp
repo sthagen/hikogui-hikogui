@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-/** @file geometry/spreadsheet_address.hpp Utilities for parsing spreadsheet addresses.
- * @ingroup geometry
+/** @file layout/spreadsheet_address.hpp Utilities for parsing spreadsheet addresses.
+ * @ingroup layout
  *
  * The functions in this file are for handling spreadsheet addresses.
  *
@@ -26,7 +26,7 @@
 #pragma once
 
 #include "../strings.hpp"
-#include "../check.hpp"
+#include "../utility/module.hpp"
 #include <tuple>
 #include <string_view>
 

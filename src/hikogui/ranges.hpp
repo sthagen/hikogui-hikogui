@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "assert.hpp"
+#include "utility/module.hpp"
 #include <ranges>
 #include <algorithm>
 #include <concepts>
@@ -42,8 +42,8 @@ template<typename Range>
 template<typename Value, typename Range>
 [[nodiscard]] constexpr std::vector<Value> make_vector(Range&& range)
 {
-    auto first = std::ranges::begin(range);
-    auto last = std::ranges::end(range);
+    hilet first = std::ranges::begin(range);
+    hilet last = std::ranges::end(range);
 
     if constexpr (requires(std::vector<Value> & x) { std::ranges::copy(first, last, std::back_inserter(x)); }) {
         // This should handle almost everything.

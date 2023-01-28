@@ -6,8 +6,7 @@
 
 #include "observable_value.hpp"
 #include "observable.hpp"
-#include "type_traits.hpp"
-#include "concepts.hpp"
+#include "utility/module.hpp"
 
 namespace hi::inline v1 {
 
@@ -750,7 +749,7 @@ private:
     void update_state_callback() noexcept
     {
         _observed.subscribe([this](observable_msg const& msg) {
-            auto [msg_it, this_it] = std::mismatch(msg.path.cbegin(), msg.path.cend(), _path.cbegin(), _path.cend());
+            hilet [msg_it, this_it] = std::mismatch(msg.path.cbegin(), msg.path.cend(), _path.cbegin(), _path.cend());
             // If the message's path is fully within the this' path, then this is a sub-path.
             // If this' path is fully within the message's path, then this is along the path.
             if (msg_it == msg.path.cend() or this_it == _path.cend()) {

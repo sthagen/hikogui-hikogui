@@ -3,8 +3,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-cmake_minimum_required(VERSION 3.19)
 
+cmake_minimum_required(VERSION 3.25)
 #-------------------------------------------------------------------
 # Configure early CMAKE paths
 #-------------------------------------------------------------------
@@ -19,6 +19,7 @@ include(SetupCompiler)
 option(BUILD_SHARED_LIBS    "Build shared libraries"                             OFF)
 option(HI_ENABLE_ANALYSIS   "Compile using -analyze"                             OFF)
 option(HI_ENABLE_ASAN       "Compile using address sanitizer"                    OFF)
+option(HI_ENABLE_PCH        "Compile with precompiled headers"                   ON)
 option(HI_ARCHITECTURE      "The architecture to build the hikogui library with" "")
 
 #-------------------------------------------------------------------
@@ -45,6 +46,9 @@ string(JSON HI_LIB_DISPLAY_NAME GET ${PACKAGE_JSON_STRING} "display-name")
 string(JSON HI_LIB_VENDOR GET ${PACKAGE_JSON_STRING} "vendor")
 
 project(${HI_LIB_NAME} VERSION ${HI_LIB_VERSION} LANGUAGES ${LANGUAGES})
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 0)
+set(CMAKE_EXPERIMENTAL_CXX_SCANDEP_SOURCE 0)
+set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 
 #-------------------------------------------------------------------
 # Setup CMake Includes
@@ -69,7 +73,7 @@ if(BUILD_TESTING)
     #
     set(INSTALL_GTEST OFF CACHE INTERNAL "Don't install gtest")
     set(BUILD_GMOCK OFF CACHE INTERNAL "Don't build gmock")
-    FetchContent_Declare(googletest GIT_REPOSITORY https://github.com/google/googletest.git GIT_TAG release-1.11.0)
+    FetchContent_Declare(googletest GIT_REPOSITORY https://github.com/google/googletest.git GIT_TAG v1.13.0)
     FetchContent_MakeAvailable(googletest)
 
     include(GoogleTest)
@@ -101,12 +105,17 @@ endif()
 #-------------------------------------------------------------------
 
 add_library(hikogui)
+set(HIKOGUI_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/hikogui")
+include(CMakeLists_includes.cmake)
+include(CMakeLists_implementations.cmake)
+if(HI_ENABLE_PCH)
+    include(CMakeLists_pch.cmake)
+endif()
 set_target_properties(hikogui PROPERTIES DEBUG_POSTFIX "d")
 
 #-------------------------------------------------------------------
 # Setup Sources
 #-------------------------------------------------------------------
-set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/hikogui")
 
 # This needs to be below the build target commands (add_*).
 # We omit adding source files to the `add_*` commands, but add them
@@ -305,7 +314,7 @@ elseif (MSVC)
         message(NOTICE "The following environment variables need to be set for the core guidelines checker to work:")
         message(NOTICE "    esp.extensions=cppcorecheck.dll")
         message(NOTICE "    esp.annotationbuildlevel=ignore")
-        message(NOTICE "    CAExcludePath=C:\\VulkanSDK;C:\\Program Files")
+        message(NOTICE "    CAExcludePath=C:\\VulkanSDK;C:\\Program Files;C:\\Users\\Tjienta\\Projects\\hikogui\\out\\build\\vc17-x64-windows-static-ana\\_deps")
         message(NOTICE "")
         target_compile_options(hikogui PUBLIC -analyze:plugin EspXEngine.dll)
 
@@ -338,6 +347,61 @@ elseif (MSVC)
         # The bug (since 2020) in the compiler seem to have been triggered in unrelated code.
         # https://developercommunity.visualstudio.com/t/c28020-false-positives/923103
         target_compile_options(hikogui PUBLIC -wd28020)
+
+        # C26409: Avoid calling new and delete explicitly, use std::make_unique<T> instead (r.11)
+        # Can't exclude unit-test and google-test uses new and delete in the TEST() macro.
+        target_compile_options(hikogui PUBLIC -wd26409)
+
+        # C26426: Global initializer calls a non-constexpr function (i.22)
+        # Can't exclude unit-test and google-test does this a lot.
+        target_compile_options(hikogui PUBLIC -wd26426)
+
+        # Turn off every warning fix one at a time:
+        #target_compile_options(hikogui PUBLIC -wd26400)
+        #target_compile_options(hikogui PUBLIC -wd26403)
+        #target_compile_options(hikogui PUBLIC -wd26408)
+        #target_compile_options(hikogui PUBLIC -wd26414)
+        #target_compile_options(hikogui PUBLIC -wd26415)
+        #target_compile_options(hikogui PUBLIC -wd26429)
+        target_compile_options(hikogui PUBLIC -wd26432)
+        target_compile_options(hikogui PUBLIC -wd26433)
+        target_compile_options(hikogui PUBLIC -wd26434)
+        target_compile_options(hikogui PUBLIC -wd26435)
+        target_compile_options(hikogui PUBLIC -wd26436)
+        target_compile_options(hikogui PUBLIC -wd26439)
+        target_compile_options(hikogui PUBLIC -wd26451)
+        target_compile_options(hikogui PUBLIC -wd26452)
+        target_compile_options(hikogui PUBLIC -wd26455)
+        target_compile_options(hikogui PUBLIC -wd26459)
+        target_compile_options(hikogui PUBLIC -wd26460)
+        target_compile_options(hikogui PUBLIC -wd26461)
+        target_compile_options(hikogui PUBLIC -wd26462)
+        target_compile_options(hikogui PUBLIC -wd26465)
+        target_compile_options(hikogui PUBLIC -wd26467)
+        target_compile_options(hikogui PUBLIC -wd26471)
+        target_compile_options(hikogui PUBLIC -wd26472)
+        target_compile_options(hikogui PUBLIC -wd26473)
+        target_compile_options(hikogui PUBLIC -wd26474)
+        target_compile_options(hikogui PUBLIC -wd26475)
+        target_compile_options(hikogui PUBLIC -wd26476)
+        target_compile_options(hikogui PUBLIC -wd26478)
+        target_compile_options(hikogui PUBLIC -wd26485)
+        target_compile_options(hikogui PUBLIC -wd26490)
+        target_compile_options(hikogui PUBLIC -wd26491)
+        target_compile_options(hikogui PUBLIC -wd26492)
+        target_compile_options(hikogui PUBLIC -wd26493)
+        target_compile_options(hikogui PUBLIC -wd26494)
+        target_compile_options(hikogui PUBLIC -wd26495)
+        target_compile_options(hikogui PUBLIC -wd26496)
+        target_compile_options(hikogui PUBLIC -wd26497)
+        target_compile_options(hikogui PUBLIC -wd26498)
+        target_compile_options(hikogui PUBLIC -wd26800)
+        target_compile_options(hikogui PUBLIC -wd26813)
+        target_compile_options(hikogui PUBLIC -wd26814)
+        target_compile_options(hikogui PUBLIC -wd26817)
+        target_compile_options(hikogui PUBLIC -wd26818)
+        target_compile_options(hikogui PUBLIC -wd26820)
+        target_compile_options(hikogui PUBLIC -wd26830)
 
     endif()
 endif()
@@ -385,12 +449,12 @@ include(GNUInstallDirs)
 install(TARGETS hikogui RESOURCE)
 
 # Copy all header files for the library.
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING PATTERN "*.hpp")
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING PATTERN "*.h")
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
+#        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#        FILES_MATCHING PATTERN "*.hpp")
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
+#        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#        FILES_MATCHING PATTERN "*.h")
 
 # Copy all resource files needing to be added to the resource directory of an application
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/
@@ -401,6 +465,7 @@ get_target_property(target_type hikogui TYPE)
 if(WIN32 AND target_type STREQUAL DYNAMIC_LIBRARY)
     # Install the library and headers.
     install(TARGETS hikogui EXPORT hikogui
+        FILE_SET hikogui_include_files DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR} # <- .dll next to exe
@@ -408,6 +473,7 @@ if(WIN32 AND target_type STREQUAL DYNAMIC_LIBRARY)
 else()
     # Install the library and headers.
     install(TARGETS hikogui EXPORT hikogui
+        FILE_SET hikogui_include_files DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # <- .lib
@@ -470,7 +536,7 @@ show_build_target_properties(hikogui)
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
-    set(DOXYGEN_EXCLUDE_PATTERNS *_tests_impl.cpp *_impl.cpp *.mm)
+    set(DOXYGEN_EXCLUDE_PATTERNS *_tests.cpp *_impl.cpp *.mm)
     set(DOXYGEN_GENERATE_HTML YES)
     set(DOXYGEN_GENERATE_LATEX NO)
     set(DOXYGEN_QUIET YES)

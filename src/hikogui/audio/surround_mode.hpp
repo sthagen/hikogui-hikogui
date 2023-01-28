@@ -5,9 +5,8 @@
 #pragma once
 
 #include "speaker_mapping.hpp"
-#include "../text/hikogui_icon.hpp"
-#include "../enum_metadata.hpp"
-#include "../cast.hpp"
+#include "../font/module.hpp"
+#include "../utility/module.hpp"
 #include "../label.hpp"
 #include "../generator.hpp"
 #include <cstdint>

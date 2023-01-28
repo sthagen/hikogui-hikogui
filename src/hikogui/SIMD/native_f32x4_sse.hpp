@@ -5,7 +5,7 @@
 #pragma once
 
 #include "native_simd_utility.hpp"
-#include "../assert.hpp"
+#include "../utility/module.hpp"
 #include <span>
 #include <array>
 #include <ostream>
@@ -159,13 +159,13 @@ struct native_simd<float, 4> {
         uint64_t a_ = a;
 
         a_ <<= 31;
-        auto tmp = _mm_cvtsi32_si128(static_cast<uint32_t>(a_));
+        auto tmp = _mm_cvtsi32_si128(truncate<uint32_t>(a_));
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 1);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 1);
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 2);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 2);
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 3);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 3);
 
         tmp = _mm_srai_epi32(tmp, 31);
         return native_simd{_mm_castsi128_ps(tmp)};
@@ -175,7 +175,15 @@ struct native_simd<float, 4> {
      */
     [[nodiscard]] static native_simd ones() noexcept
     {
-        return native_simd{} == native_simd{};
+#ifdef HI_HAS_SSE2
+        auto ones = _mm_undefined_si128();
+        ones = _mm_cmpeq_epi32(ones, ones);
+        return native_simd{_mm_castsi128_ps(ones)};
+#else
+        auto ones = _mm_setzero_ps();
+        ones = _mm_cmpeq_ps(ones, ones);
+        return native_simd{ones};
+#endif
     }
 
     /** Concatenate the top bit of each element.
@@ -203,7 +211,7 @@ struct native_simd<float, 4> {
     [[nodiscard]] friend native_simd
     almost_eq(native_simd a, native_simd b, value_type epsilon = std::numeric_limits<value_type>::epsilon()) noexcept
     {
-        auto abs_diff = abs(a - b);
+        hilet abs_diff = abs(a - b);
         return abs_diff < broadcast(epsilon);
     }
 
@@ -574,7 +582,7 @@ struct native_simd<float, 4> {
      */
     [[nodiscard]] friend native_simd horizontal_sum(native_simd a) noexcept
     {
-        auto tmp = a + permute<"cdab">(a);
+        hilet tmp = a + permute<"cdab">(a);
         return tmp + permute<"badc">(tmp);
     }
 

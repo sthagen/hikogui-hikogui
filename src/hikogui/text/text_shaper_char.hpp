@@ -5,13 +5,10 @@
 #pragma once
 
 #include "text_style.hpp"
-#include "glyph_ids.hpp"
-#include "glyph_metrics.hpp"
-#include "font.hpp"
+#include "../font/module.hpp"
 #include "../unicode/unicode_description.hpp"
 #include "../unicode/grapheme.hpp"
-#include "../geometry/point.hpp"
-#include "../geometry/axis_aligned_rectangle.hpp"
+#include "../geometry/module.hpp"
 
 namespace hi::inline v1 {
 class font_book;

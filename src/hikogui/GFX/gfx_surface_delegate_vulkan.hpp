@@ -5,7 +5,7 @@
 #pragma once
 
 #include "gfx_surface_delegate.hpp"
-#include "../geometry/axis_aligned_rectangle.hpp"
+#include "../geometry/module.hpp"
 #include <vulkan/vulkan.hpp>
 #include <vector>
 #include <cstdint>
@@ -29,7 +29,7 @@ public:
      * @param instance The vulkan instance used by HikoGUI.
      * @param device The vulkan device used by HikoGUI.
      * @param graphics_queue The graphics queue for rendering on the swap-chain.
-     * @param graphic_queue_family_index The family-index of the @a graphics_queue.
+     * @param graphics_queue_family_index The family-index of the @a graphics_queue.
      */
     virtual void build_for_new_device(
         VmaAllocator allocator,

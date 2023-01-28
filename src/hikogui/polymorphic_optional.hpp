@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include "assert.hpp"
-#include "concepts.hpp"
-#include "memory.hpp"
-#include "utility.hpp"
+#include "utility/module.hpp"
 #include "counters.hpp"
 #include <array>
 #include <memory>
@@ -23,6 +20,9 @@ hi_warning_ignore_msvc(26432);
 // C26495: Variable '...' is uninitialized. Always initialize a member variable (type.6).
 // For performance reasons polymorphic_optional::_buffer must remain uninitialized.
 hi_warning_ignore_msvc(26495);
+// C26403: Reset or explicitly delete an owner<T> pointer 'new_ptr'
+// We can't use std::allocator because we can't hold a size and be compatible with unique_ptr at the same time.
+hi_warning_ignore_msvc(26403);
 
 namespace hi::inline v1 {
 
@@ -268,7 +268,8 @@ public:
             }
 
             // Overwrite the buffer with the new slot.
-            auto new_ptr = new (_buffer.data()) Value(std::forward<Args>(args)...);
+            hilet new_ptr = new (_buffer.data()) Value(std::forward<Args>(args)...);
+            hi_assume(new_ptr != nullptr);
             hi_axiom(equal_ptr(new_ptr, this));
 
             if constexpr (std::is_same_v<func_result, void>) {

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "native_simd_utility.hpp"
-#include "../assert.hpp"
+#include "../utility/module.hpp"
 #include <span>
 #include <array>
 #include <ostream>
@@ -149,7 +149,15 @@ struct native_simd<double,4> {
      */
     [[nodiscard]] static native_simd ones() noexcept
     {
-        return native_simd{} == native_simd{};
+#ifdef HI_HAS_AVX2
+        auto ones = _mm256_undefined_si256();
+        ones = _mm256_cmpeq_epi32(ones, ones);
+        return native_simd{_mm256_castsi256_pd(ones)};
+#else
+        auto ones = _mm256_setzero_pd();
+        ones = _mm256_cmpeq_pd(ones, ones);
+        return native_simd{ones};
+#endif
     }
 
     [[nodiscard]] static native_simd from_mask(size_t a) noexcept
@@ -159,13 +167,13 @@ struct native_simd<double,4> {
         uint64_t a_ = a;
 
         a_ <<= 31;
-        auto tmp = _mm_cvtsi32_si128(static_cast<uint32_t>(a_));
+        auto tmp = _mm_cvtsi32_si128(truncate<uint32_t>(a_));
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 1);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 1);
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 2);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 2);
         a_ >>= 1;
-        tmp = _mm_insert_epi32(tmp, static_cast<uint32_t>(a_), 3);
+        tmp = _mm_insert_epi32(tmp, truncate<uint32_t>(a_), 3);
 
         tmp = _mm_srai_epi32(tmp, 31);
         return native_simd{_mm256_castsi256_pd(_mm256_cvtepi32_epi64(tmp))};

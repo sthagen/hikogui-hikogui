@@ -5,9 +5,13 @@
 #pragma once
 
 #include "native_simd_utility.hpp"
-#include "../assert.hpp"
+#include "../utility/module.hpp"
 #include <array>
 #include <ostream>
+
+hi_warning_push();
+// Ignore "C26490: Don't use reinterpret_cast", needed for intrinsic loads and stores.
+hi_warning_ignore_msvc(26490);
 
 namespace hi { inline namespace v1 {
 
@@ -155,7 +159,8 @@ struct native_simd<uint32_t,4> {
 
     [[nodiscard]] static native_simd ones() noexcept
     {
-        return native_simd{_mm_castps_si128(_mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()))};
+        hilet tmp = _mm_undefined_si128();
+        return native_simd{_mm_cmpeq_epi32(tmp, tmp)};
     }
 
     /** For each bit in mask set corresponding element to all-ones or all-zeros.
@@ -228,7 +233,8 @@ struct native_simd<uint32_t,4> {
 
     [[nodiscard]] friend native_simd operator~(native_simd a) noexcept
     {
-        hilet ones = _mm_castps_si128(_mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps()));
+        auto ones = _mm_undefined_si128();
+        ones = _mm_cmpeq_epi32(ones, ones);
         return native_simd{_mm_andnot_si128(a.v, ones)};
     }
 
@@ -441,7 +447,7 @@ struct native_simd<uint32_t,4> {
      */
     [[nodiscard]] friend native_simd horizontal_sum(native_simd a) noexcept
     {
-        auto tmp = a + permute<"cdab">(a);
+        hilet tmp = a + permute<"cdab">(a);
         return tmp + permute<"badc">(tmp);
     }
 
@@ -487,3 +493,5 @@ struct native_simd<uint32_t,4> {
 #endif
 
 }} // namespace hi::v1
+
+hi_warning_pop();

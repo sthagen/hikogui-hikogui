@@ -2,15 +2,19 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-#include "win32_headers.hpp"
+#include "utility/win32_headers.hpp"
 
 #include "crt_utils.hpp"
 #include "GUI/gui_system.hpp"
-#include "subsystem.hpp"
+#include "utility/module.hpp"
 #include "console.hpp"
 #include "log.hpp"
-#include "thread.hpp"
-#include "exception.hpp"
+#include "terminate.hpp"
+
+hi_warning_push();
+// C26400: Do not assign the result of an allocation or a function cal with an owner<T> return value to... (i11)
+// For compatibility reasons we work with raw pointers here.
+hi_warning_ignore_msvc(26400);
 
 namespace hi::inline v1 {
 
@@ -76,3 +80,5 @@ int crt_finish(int argc, char **argv, int exit_code)
 }
 
 } // namespace hi::inline v1
+
+hi_warning_pop();

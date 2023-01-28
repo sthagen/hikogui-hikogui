@@ -3,7 +3,7 @@
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "window_traffic_lights_widget.hpp"
-#include "../text/font_book.hpp"
+#include "../font/module.hpp"
 #include <cmath>
 #include <typeinfo>
 
@@ -281,7 +281,7 @@ hitbox window_traffic_lights_widget::hitbox_test(point2i position) const noexcep
 
     if (*mode >= widget_mode::partial and layout().contains(position) and
         (closeRectangle.contains(position) or minimizeRectangle.contains(position) or maximizeRectangle.contains(position))) {
-        return hitbox{this, _layout.elevation, hitbox_type::button};
+        return hitbox{id, _layout.elevation, hitbox_type::button};
     } else {
         return {};
     }

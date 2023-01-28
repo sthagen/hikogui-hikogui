@@ -2,7 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-#include "../win32_headers.hpp"
+#include "../utility/win32_headers.hpp"
 
 #include "RenderDoc.hpp"
 #include "renderdoc_app.h"
@@ -21,20 +21,23 @@ RenderDoc::RenderDoc() noexcept
         std::filesystem::path{"C:/Program Files/RenderDoc/renderdoc.dll"},
         std::filesystem::path{"C:/Program Files (x86)/RenderDoc/renderdoc.dll"}};
 
-    HMODULE mod = nullptr;
-    for (hilet &dll_url : dll_urls) {
-        hi_log_debug("Trying to load: {}", dll_url.string());
+    auto mod = [&]() -> HMODULE {
+        for (hilet& dll_url : dll_urls) {
+            hi_log_debug("Trying to load: {}", dll_url.string());
 
-        if (mod = LoadLibraryW(dll_url.native().c_str()); mod != nullptr) {
-            goto found_dll;
+            if (auto mod = LoadLibraryW(dll_url.native().c_str())) {
+                return mod;
+            }
         }
+        return nullptr;
+    }();
+
+    if (mod == nullptr) {
+        hi_log_warning("Could not load renderdoc.dll");
+        return;
     }
-    hi_log_warning("Could not load renderdoc.dll");
-    return;
 
-found_dll:
-    pRENDERDOC_GetAPI RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
-
+    auto RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
     if (RENDERDOC_GetAPI == nullptr) {
         hi_log_error("Could not find RENDERDOC_GetAPI in renderdoc.dll");
         return;
@@ -62,7 +65,7 @@ found_dll:
 
 void RenderDoc::set_overlay(bool frameRate, bool frameNumber, bool captureList) noexcept
 {
-    if (!api) {
+    if (not api) {
         return;
     }
 
@@ -93,10 +96,10 @@ void RenderDoc::set_overlay(bool frameRate, bool frameNumber, bool captureList) 
         and_mask |= eRENDERDOC_Overlay_CaptureList;
     }
 
-    auto *api_ = reinterpret_cast<RENDERDOC_API_1_4_1 *>(api);
+    auto &api_ = *reinterpret_cast<RENDERDOC_API_1_4_1 *>(api);
 
     and_mask = ~and_mask;
-    api_->MaskOverlayBits(and_mask, or_mask);
+    api_.MaskOverlayBits(and_mask, or_mask);
 }
 
 } // namespace hi::inline v1

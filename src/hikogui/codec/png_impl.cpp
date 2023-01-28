@@ -5,11 +5,9 @@
 
 #include "png.hpp"
 #include "zlib.hpp"
-#include "../endian.hpp"
+#include "../utility/module.hpp"
 #include "../placement.hpp"
-#include "../color/sRGB.hpp"
-#include "../color/Rec2100.hpp"
-#include "../color/color_space.hpp"
+#include "../color/module.hpp"
 
 namespace hi::inline v1 {
 
@@ -99,8 +97,8 @@ void png::read_IHDR(std::span<std::byte const> bytes)
 {
     hilet ihdr = make_placement_ptr<IHDR>(bytes);
 
-    _width = ihdr->width.value();
-    _height = ihdr->height.value();
+    _width = *ihdr->width;
+    _height = *ihdr->height;
     _bit_depth = ihdr->bit_depth;
     _color_type = ihdr->color_type;
     _compression_method = ihdr->compression_method;
@@ -140,14 +138,14 @@ void png::read_cHRM(std::span<std::byte const> bytes)
     hilet chrm = make_placement_ptr<cHRM>(bytes);
 
     hilet color_to_XYZ = color_primaries_to_RGBtoXYZ(
-        narrow_cast<float>(chrm->white_point_x.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->white_point_y.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->red_x.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->red_y.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->green_x.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->green_y.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->blue_x.value()) / 100'000.0f,
-        narrow_cast<float>(chrm->blue_y.value()) / 100'000.0f);
+        narrow_cast<float>(*chrm->white_point_x) / 100'000.0f,
+        narrow_cast<float>(*chrm->white_point_y) / 100'000.0f,
+        narrow_cast<float>(*chrm->red_x) / 100'000.0f,
+        narrow_cast<float>(*chrm->red_y) / 100'000.0f,
+        narrow_cast<float>(*chrm->green_x) / 100'000.0f,
+        narrow_cast<float>(*chrm->green_y) / 100'000.0f,
+        narrow_cast<float>(*chrm->blue_x) / 100'000.0f,
+        narrow_cast<float>(*chrm->blue_y) / 100'000.0f);
 
     _color_to_sRGB = XYZ_to_sRGB * color_to_XYZ;
 }
@@ -155,7 +153,7 @@ void png::read_cHRM(std::span<std::byte const> bytes)
 void png::read_gAMA(std::span<std::byte const> bytes)
 {
     hilet gama = make_placement_ptr<gAMA>(bytes);
-    hilet gamma = narrow_cast<float>(gama->gamma.value()) / 100'000.0f;
+    hilet gamma = narrow_cast<float>(*gama->gamma) / 100'000.0f;
     hi_parse_check(gamma != 0.0f, "Gamma value can not be zero");
 
     generate_gamma_transfer_function(1.0f / gamma);
@@ -211,7 +209,7 @@ void png::read_chunks(std::span<std::byte const> bytes, std::size_t &offset)
 
     while (!has_IEND) {
         hilet header = make_placement_ptr<ChunkHeader>(bytes, offset);
-        hilet length = narrow_cast<ssize_t>(header->length.value());
+        hilet length = narrow_cast<ssize_t>(*header->length);
         hi_parse_check(length < 0x8000'0000, "Chunk length must be smaller than 2GB");
         hi_parse_check(offset + length + ssizeof(uint32_t) <= bytes.size(), "Chuck extents beyond file.");
 
@@ -409,7 +407,7 @@ u16x4 png::extract_pixel_from_line(std::span<std::byte const> bytes, int x) cons
     return u16x4{r, g, b, a};
 }
 
-void png::data_to_image_line(std::span<std::byte const> bytes, pixel_row<sfloat_rgba16> &line) const noexcept
+void png::data_to_image_line(std::span<std::byte const> bytes, std::span<sfloat_rgba16> line) const noexcept
 {
     hilet alpha_mul = _bit_depth == 16 ? 1.0f / 65535.0f : 1.0f / 255.0f;
     for (int x = 0; x != _width; ++x) {
@@ -426,7 +424,7 @@ void png::data_to_image_line(std::span<std::byte const> bytes, pixel_row<sfloat_
     }
 }
 
-void png::data_to_image(bstring bytes, pixel_map<sfloat_rgba16> &image) const noexcept
+void png::data_to_image(bstring bytes, pixmap_span<sfloat_rgba16> image) const noexcept
 {
     auto bytes_span = std::span(bytes);
 
@@ -439,7 +437,7 @@ void png::data_to_image(bstring bytes, pixel_map<sfloat_rgba16> &image) const no
     }
 }
 
-void png::decode_image(pixel_map<sfloat_rgba16> &image) const
+void png::decode_image(pixmap_span<sfloat_rgba16> image) const
 {
     // There is a filter selection byte in front of every line.
     hilet image_data_size = _stride * _height;
@@ -452,10 +450,10 @@ void png::decode_image(pixel_map<sfloat_rgba16> &image) const
     data_to_image(image_data, image);
 }
 
-pixel_map<sfloat_rgba16> png::load(std::filesystem::path const &path)
+pixmap<sfloat_rgba16> png::load(std::filesystem::path const &path)
 {
     hilet png_data = png(file_view{path});
-    auto image = pixel_map<sfloat_rgba16>{png_data.width(), png_data.height()};
+    auto image = pixmap<sfloat_rgba16>{png_data.width(), png_data.height()};
     png_data.decode_image(image);
     return image;
 }
