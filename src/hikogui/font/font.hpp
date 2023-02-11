@@ -10,13 +10,14 @@
 #include "font_weight.hpp"
 #include "font_variant.hpp"
 #include "font_metrics.hpp"
-#include "../unicode/unicode_mask.hpp"
+#include "font_char_map.hpp"
 #include "../unicode/gstring.hpp"
 #include "../i18n/iso_15924.hpp"
 #include "../i18n/iso_639.hpp"
 #include "../graphic_path.hpp"
 #include "../utility/module.hpp"
 #include "../hash_map.hpp"
+#include "../lean_vector.hpp"
 #include <span>
 #include <vector>
 #include <map>
@@ -49,12 +50,16 @@ public:
     font_weight weight = font_weight::Regular;
     float optical_size = 12.0;
 
+    /** A optimized character map.
+     *
+     * This character map is always available even if the font is not loaded.
+     */
+    font_char_map char_map;
+
     /** A string representing the features of a font.
      * This will be a comma separated list of features, mostly tables like 'kern' and 'GPOS'.
      */
     std::string features;
-
-    hi::unicode_mask unicode_mask;
 
     /** The metrics of a font.
      *
@@ -68,10 +73,10 @@ public:
 
     font() = default;
     virtual ~font() = default;
-    font(font const &) = delete;
-    font &operator=(font const &) = delete;
-    font(font &&) = delete;
-    font &operator=(font &&) = delete;
+    font(font const&) = delete;
+    font& operator=(font const&) = delete;
+    font(font&&) = delete;
+    font& operator=(font&&) = delete;
 
     /** Return if the font is loaded.
      *
@@ -82,21 +87,25 @@ public:
     /** Get the glyph for a code-point.
      * @return glyph-id, or invalid when not found or error.
      */
-    [[nodiscard]] virtual hi::glyph_id find_glyph(char32_t c) const = 0;
+    [[nodiscard]] glyph_id find_glyph(char32_t c) const noexcept
+    {
+        return char_map.find(c);
+    }
 
     /** Get the glyphs for a grapheme.
      * @return a set of glyph-ids, or invalid when not found or error.
      */
-    [[nodiscard]] hi::glyph_ids find_glyph(grapheme g) const;
+    [[nodiscard]] lean_vector<glyph_id> find_glyph(grapheme g) const;
 
-    /*! Load a glyph into a path.
+    /** Load a glyph into a path.
      * The glyph is directly loaded from the font file.
      *
-     * \param glyph_id the id of a glyph inside the font.
-     * \param path The path constructed by the loader.
-     * \return empty on failure, or the glyphID of the metrics to use.
+     * @param glyph_id the id of a glyph inside the font.
+     * @return The path loaded from the font file.
+     * @throws std::exception If there was an error while loading the path.
+     *         Recommend to disable the font on error.
      */
-    virtual std::optional<hi::glyph_id> load_glyph(hi::glyph_id glyph_id, graphic_path &path) const = 0;
+    [[nodiscard]] virtual graphic_path load_path(hi::glyph_id glyph_id) const = 0;
 
     /*! Load a glyph into a path.
      * The glyph is directly loaded from the font file.
@@ -106,10 +115,7 @@ public:
      * \param lookahead_glyph_id The id of a glyph to the right, needed for kerning.
      * \return true on success, false on error.
      */
-    virtual bool load_glyph_metrics(
-        hi::glyph_id glyph_id,
-        glyph_metrics &metrics,
-        hi::glyph_id lookahead_glyph_id = hi::glyph_id{}) const = 0;
+    [[nodiscard]] virtual glyph_metrics load_metrics(hi::glyph_id glyph_id) const = 0;
 
     /** Get the kerning between two glyphs.
      *
@@ -119,35 +125,63 @@ public:
      */
     [[nodiscard]] virtual vector2 get_kerning(hi::glyph_id current_glyph, hi::glyph_id next_glyph) const = 0;
 
-    struct substitution_and_kerning_type {
-        /** The glyph.
+    struct shape_run_result_type {
+        /** The bounding rectangle for each grapheme.
          *
-         * On input: the original glyph
-         * On output: the substituted glyph, possibly a ligature glyph. Or empty if this glyph was substituted
-         *            by a previous ligature.
+         * The coordinates are in EM units and start at zero
+         * at the left-most / first grapheme.
+         *
+         * There is exactly one entry for each grapheme in the call to `shape_run()`.
+         *
+         * These bounding rectangles are used for user-interacting
+         * with the graphemes.
          */
-        glyph_id glyph;
+        std::vector<aarectangle> grapheme_boxes;
 
-        /** The advance in font-unit coordinate system.
+        /** The glyphs representing all the graphemes.
          *
-         * On input: the original advance for the glyph
-         * On output: the advance adjusted by kerning, or the partial advance of the character within
-         *            a ligature. All advances of a ligature added together will be the total advance of
-         *            the full ligature including kerning.
+         * There may be zero or more glyphs for each grapheme.
+         * The difference may be due to having to add accent-glyphs
+         * or merging glyphs into ligatures.
          */
-        vector2 advance;
+        std::vector<glyph_id> glyphs;
+
+        /** The bounding rectangle for each glyph.
+         *
+         * The coordinates are in EM units and start at zero
+         * at the left-most / first grapheme.
+         *
+         * There is exactly one bounding rectangle for each glyph.
+         */
+        std::vector<aarectangle> glyph_boxes;
+
+        /** The advance for this run of graphemes.
+         *
+         * The value is in EM units.
+         */
+        float advance;
     };
 
-    /** Substitute and kern a run of glyphs.
+    /** Shape a run of graphemes.
      *
-     * @param language The language that the word is written in.
-     * @param script The script that the word is written in.
-     * @param[in,out] word A run of glyphs, from the same font, font-size and script of a word.
+     * A run of graphemes is a piece of text that is:
+     * - from the same style,
+     * - from the same font,
+     * - from the same language and script, and
+     * - on the same line.
+     *
+     * A run needs to be shaped by the font-file itself as it handles:
+     * - language/script depended glyph substitution for ligatures, accents and cursive text.
+     * - language/script depended glyph positioning for kerning, accents and cursive text.
+     *
+     * @param language The language of this run of graphemes.
+     * @param script The script of this run of graphemes.
+     * @param run The run of graphemes.
+     * @return The glyphs and coordinates to display, and coordinates of grapheme for interaction.
      */
-    virtual void substitution_and_kerning(iso_639 language, iso_15924 script, std::vector<substitution_and_kerning_type> &word)
-        const = 0;
+    [[nodiscard]] virtual shape_run_result_type shape_run(iso_639 language, iso_15924 script, gstring run) const = 0;
 
-    glyph_atlas_info &atlas_info(glyph_ids const &glyphs) const
+    glyph_atlas_info& atlas_info(glyph_ids const& glyphs) const
     {
         if (glyphs.has_num_glyphs<1>()) [[likely]] {
             hilet index = static_cast<std::size_t>(get<0>(glyphs));
@@ -166,7 +200,7 @@ public:
         return {weight, italic};
     }
 
-    [[nodiscard]] friend std::string to_string(font const &rhs) noexcept
+    [[nodiscard]] friend std::string to_string(font const& rhs) noexcept
     {
         return std::format(
             "{} - {}: style={}{}{}{}{}{}, features={}",
@@ -190,7 +224,7 @@ private:
 
 template<typename CharT>
 struct std::formatter<hi::font, CharT> : formatter<std::string_view, CharT> {
-    auto format(hi::font const &t, auto &fc)
+    auto format(hi::font const& t, auto& fc)
     {
         return formatter<string_view, CharT>::format(to_string(t), fc);
     }

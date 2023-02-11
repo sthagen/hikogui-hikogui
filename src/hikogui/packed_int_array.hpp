@@ -79,7 +79,7 @@ public:
         hilet byte_offset = offset / CHAR_BIT;
         hilet bit_offset = offset % CHAR_BIT;
 
-        return (load<value_type>(_v.data() + byte_offset) >> bit_offset) & mask;
+        return (unaligned_load<value_type>(_v.data() + byte_offset) >> bit_offset) & mask;
     }
 
     /** Get the integer at an index.
@@ -132,7 +132,7 @@ private:
 
             hilet arg = args_[i];
             hi_axiom(arg <= mask);
-            store_or(static_cast<value_type>(arg << bit_offset), r.data() + byte_offset);
+            store_or(arg << bit_offset, r.data() + byte_offset);
         }
 
         return r;

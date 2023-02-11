@@ -18,6 +18,9 @@ hi_warning_push();
 // C26474: Don't cast between pointer types when the conversion could be implicit (type.1).
 // False positive, template with potential two different pointer types.
 hi_warning_ignore_msvc(26474);
+// C26472: Don't use a static_cast for arithmetic conversions. Use brace initializations... (type.1).
+// Can't include cast.hpp for highlevel casts.
+hi_warning_ignore_msvc(26472);
 
 namespace hi::inline v1 {
 
@@ -168,14 +171,14 @@ constexpr bool is_aligned(T *p)
 template<typename T>
 constexpr T *ceil(T *ptr, std::size_t alignment) noexcept
 {
-    hilet aligned_byte_offset = ceil(reinterpret_cast<uintptr_t>(ptr), static_cast<uintptr_t>(alignment));
+    hilet aligned_byte_offset = ceil(reinterpret_cast<uintptr_t>(ptr), wide_cast<uintptr_t>(alignment));
     return reinterpret_cast<T *>(aligned_byte_offset);
 }
 
 template<typename T>
 constexpr T *floor(T *ptr, std::size_t alignment) noexcept
 {
-    hilet aligned_byte_offset = floor(reinterpret_cast<uintptr_t>(ptr), static_cast<uintptr_t>(alignment));
+    hilet aligned_byte_offset = floor(reinterpret_cast<uintptr_t>(ptr), wide_cast<uintptr_t>(alignment));
     return reinterpret_cast<T *>(aligned_byte_offset);
 }
 
@@ -261,7 +264,7 @@ inline std::shared_ptr<Value> try_make_shared(Map& map, Key key, Args... args)
 /** Make an unaligned load of an unsigned integer.
  */
 template<numeric T, byte_like B>
-[[nodiscard]] constexpr T load(B const *src) noexcept
+[[nodiscard]] constexpr T unaligned_load(B const *src) noexcept
 {
     auto r = T{};
 
@@ -273,12 +276,16 @@ template<numeric T, byte_like B>
 
     if constexpr (std::endian::native == std::endian::little) {
         for (auto i = sizeof(T); i != 0; --i) {
-            r <<= 8;
+            if constexpr (sizeof(r) > 1) {
+                r <<= 8;
+            }
             r |= static_cast<uint8_t>(src[i - 1]);
         }
     } else {
         for (auto i = 0; i != sizeof(T); ++i) {
-            r <<= 8;
+            if constexpr (sizeof(r) > 1) {
+                r <<= 8;
+            }
             r |= static_cast<uint8_t>(src[i]);
         }
     }
@@ -286,26 +293,21 @@ template<numeric T, byte_like B>
 }
 
 template<numeric T>
-[[nodiscard]] inline T load(void const *src) noexcept
+[[nodiscard]] inline T unaligned_load(void const *src) noexcept
 {
-    return load<T>(reinterpret_cast<std::byte const *>(src));
+    return unaligned_load<T>(static_cast<std::byte const *>(src));
 }
 
 template<numeric T, byte_like B>
-[[nodiscard]] constexpr void store(T src, B *dst) noexcept
+[[nodiscard]] constexpr void unaligned_store(T src, B *dst) noexcept
 {
     using unsigned_type = std::make_unsigned_t<T>;
 
     hilet src_ = static_cast<unsigned_type>(src);
 
     if (not std::is_constant_evaluated()) {
-#if HI_COMPILER == HI_CC_MSVC
-        *reinterpret_cast<__unaligned unsigned_type *>(dst) = src_;
-        return;
-#else
         std::memcpy(dst, &src, sizeof(T));
         return;
-#endif
     }
 
     if constexpr (std::endian::native == std::endian::little) {
@@ -322,38 +324,35 @@ template<numeric T, byte_like B>
 }
 
 template<numeric T>
-[[nodiscard]] inline void store(T src, void *dst) noexcept
+[[nodiscard]] inline void unaligned_store(T src, void *dst) noexcept
 {
-    return store(src, reinterpret_cast<std::byte *>(dst));
+    return unaligned_store(src, reinterpret_cast<std::byte *>(dst));
 }
 
 template<numeric T>
 [[nodiscard]] hi_force_inline constexpr void store_or(T src, uint8_t *dst) noexcept
 {
+    hi_axiom_not_null(dst);
+
     using unsigned_type = std::make_unsigned_t<T>;
 
-    auto src_ = static_cast<unsigned_type>(src);
+    auto src_ = truncate<unsigned_type>(src);
 
     if (not std::is_constant_evaluated()) {
-#if HI_COMPILER == HI_CC_MSVC
-        *reinterpret_cast<__unaligned unsigned_type *>(dst) |= src_;
-        return;
-#else
         decltype(src_) tmp;
         std::memcpy(&tmp, dst, sizeof(T));
         tmp |= src_;
         std::memcpy(dst, &tmp, sizeof(T));
-#endif
     }
 
     if constexpr (std::endian::native == std::endian::little) {
         for (auto i = 0; i != sizeof(T); ++i) {
-            dst[i] |= static_cast<uint8_t>(src_);
+            dst[i] |= truncate<uint8_t>(src_);
             src_ >>= 8;
         }
     } else {
         for (auto i = sizeof(T); i != 0; --i) {
-            dst[i] |= static_cast<uint8_t>(src_);
+            dst[i] |= truncate<uint8_t>(src_);
             src_ >>= 8;
         }
     }

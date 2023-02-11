@@ -29,6 +29,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/font/elusive_icon.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_book.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/font_char_map.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_family_id.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_grapheme_id.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_metrics.hpp
@@ -39,13 +40,18 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/font/glyph_ids.hpp
     ${HIKOGUI_SOURCE_DIR}/font/glyph_metrics.hpp
     ${HIKOGUI_SOURCE_DIR}/font/hikogui_icon.hpp
-    ${HIKOGUI_SOURCE_DIR}/font/otype_utilities.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_cmap.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_glyf.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_head.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_hhea.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_hmtx.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_kern.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_loca.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_maxp.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_name.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_os2.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_sfnt.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/otype_utilities.hpp
     ${HIKOGUI_SOURCE_DIR}/font/true_type_font.hpp
     ${HIKOGUI_SOURCE_DIR}/geometry/alignment.hpp
     ${HIKOGUI_SOURCE_DIR}/geometry/axis.hpp
@@ -100,7 +106,6 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/utility/assert.hpp
     ${HIKOGUI_SOURCE_DIR}/utility/cast.hpp
     ${HIKOGUI_SOURCE_DIR}/utility/charconv.hpp
-    ${HIKOGUI_SOURCE_DIR}/utility/check.hpp
     ${HIKOGUI_SOURCE_DIR}/utility/compare.hpp
     ${HIKOGUI_SOURCE_DIR}/utility/concepts.hpp
     ${HIKOGUI_SOURCE_DIR}/utility/debugger.hpp

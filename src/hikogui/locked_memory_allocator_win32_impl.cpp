@@ -40,12 +40,12 @@ namespace hi::inline v1 {
             }
         }
     }
-    return reinterpret_cast<std::byte *>(p);
+    return static_cast<std::byte *>(p);
 }
 
 void locked_memory_allocator_deallocate(std::byte *p, std::size_t n) noexcept
 {
-    if (!VirtualUnlock(reinterpret_cast<LPVOID>(p), n)) {
+    if (not VirtualUnlock(p, n)) {
         hi_log_warning("Could not unlock memory. '{}'", get_last_error_message());
 
     } else {
@@ -69,7 +69,7 @@ void locked_memory_allocator_deallocate(std::byte *p, std::size_t n) noexcept
         }
     }
 
-    if (!VirtualFree(reinterpret_cast<LPVOID>(p), 0, MEM_RELEASE)) {
+    if (not VirtualFree(p, 0, MEM_RELEASE)) {
         hi_log_fatal("Could not deallocate locked memory. '{}'", get_last_error_message());
     }
 }
