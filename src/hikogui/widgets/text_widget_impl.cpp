@@ -6,7 +6,7 @@
 #include "../os_settings.hpp"
 #include "../scoped_task.hpp"
 #include "../when_any.hpp"
-#include "../unicode/unicode_bidi.hpp"
+#include "../unicode/module.hpp"
 
 namespace hi::inline v1 {
 
@@ -25,7 +25,7 @@ text_widget::text_widget(widget *parent, std::shared_ptr<delegate_type> delegate
 
             // Constrain and layout according to the old layout.
             hilet new_constraints = update_constraints();
-            new_layout.shape.rectangle = aarectanglei{
+            new_layout.shape.rectangle = aarectangle{
                 new_layout.shape.x(),
                 new_layout.shape.y(),
                 std::max(new_layout.shape.width(), new_constraints.minimum.width()),
@@ -86,11 +86,10 @@ text_widget::~text_widget()
     // Create a new text_shaper with the new text.
     auto alignment_ = os_settings::left_to_right() ? *alignment : mirror(*alignment);
 
-    _shaped_text = text_shaper{
-        font_book::global(), _text_cache, actual_text_style, theme().scale, alignment_, os_settings::writing_direction()};
+    _shaped_text =
+        text_shaper{font_book::global(), _text_cache, actual_text_style, theme().scale, alignment_, os_settings::left_to_right()};
 
-    hilet shaped_text_rectangle =
-        narrow_cast<aarectanglei>(ceil(_shaped_text.bounding_rectangle(std::numeric_limits<float>::infinity())));
+    hilet shaped_text_rectangle = ceil(_shaped_text.bounding_rectangle(std::numeric_limits<float>::infinity()));
     hilet shaped_text_size = shaped_text_rectangle.size();
 
     if (*mode == widget_mode::partial) {
@@ -100,14 +99,14 @@ text_widget::~text_widget()
 
     } else {
         // Allow the text to be 550.0f pixels wide.
-        hilet preferred_shaped_text_rectangle = narrow_cast<aarectanglei>(ceil(_shaped_text.bounding_rectangle(550.0f)));
+        hilet preferred_shaped_text_rectangle = ceil(_shaped_text.bounding_rectangle(550.0f));
         hilet preferred_shaped_text_size = preferred_shaped_text_rectangle.size();
 
         hilet height = std::max(shaped_text_size.height(), preferred_shaped_text_size.height());
         return _constraints_cache = {
-                   extent2i{preferred_shaped_text_size.width(), height},
-                   extent2i{preferred_shaped_text_size.width(), height},
-                   extent2i{shaped_text_size.width(), height},
+                   extent2{preferred_shaped_text_size.width(), height},
+                   extent2{preferred_shaped_text_size.width(), height},
+                   extent2{shaped_text_size.width(), height},
                    _shaped_text.resolved_alignment(),
                    theme().margin()};
     }
@@ -118,8 +117,7 @@ void text_widget::set_layout(widget_layout const& context) noexcept
     if (compare_store(_layout, context)) {
         hi_assert(context.shape.baseline);
 
-        _shaped_text.layout(
-            narrow_cast<aarectangle>(context.rectangle()), narrow_cast<float>(*context.shape.baseline), context.sub_pixel_size);
+        _shaped_text.layout(context.rectangle(), *context.shape.baseline, context.sub_pixel_size);
     }
 }
 
@@ -129,7 +127,7 @@ void text_widget::scroll_to_show_selection() noexcept
         hilet cursor = _selection.cursor();
         hilet char_it = _shaped_text.begin() + cursor.index();
         if (char_it < _shaped_text.end()) {
-            scroll_to_show(narrow_cast<aarectanglei>(char_it->rectangle));
+            scroll_to_show(char_it->rectangle);
         }
     }
 }
@@ -278,23 +276,23 @@ void text_widget::replace_selection(gstring const& replacement) noexcept
 
 void text_widget::add_character(grapheme c, add_type keyboard_mode) noexcept
 {
-    hilet original_cursor = _selection.cursor();
+    hilet[start_selection, end_selection] = _selection.selection(_text_cache.size());
     auto original_grapheme = grapheme{char32_t{0xffff}};
 
-    if (_selection.empty() and _overwrite_mode and original_cursor.before()) {
-        original_grapheme = _text_cache[original_cursor.index()];
+    if (_selection.empty() and _overwrite_mode and start_selection.before()) {
+        original_grapheme = _text_cache[start_selection.index()];
 
-        hilet[first, last] = _shaped_text.select_char(original_cursor);
+        hilet[first, last] = _shaped_text.select_char(start_selection);
         _selection.drag_selection(last);
     }
     replace_selection(gstring{c});
 
     if (keyboard_mode == add_type::insert) {
         // The character was inserted, put the cursor back where it was.
-        _selection = original_cursor;
+        _selection = start_selection;
 
     } else if (keyboard_mode == add_type::dead) {
-        _selection = original_cursor.before_neighbor(_text_cache.size());
+        _selection = start_selection.before_neighbor(_text_cache.size());
         _has_dead_character = original_grapheme;
     }
 }
@@ -304,9 +302,10 @@ void text_widget::delete_dead_character() noexcept
     if (_has_dead_character) {
         hi_assert(_selection.cursor().before());
         hi_assert_bounds(_selection.cursor().index(), _text_cache);
-        if (_has_dead_character.valid()) {
+
+        if (_has_dead_character != U'\uffff') {
             auto text = _text_cache;
-            text[_selection.cursor().index()] = _has_dead_character;
+            text[_selection.cursor().index()] = *_has_dead_character;
             delegate->write(*this, text);
         } else {
             auto text = _text_cache;
@@ -314,7 +313,7 @@ void text_widget::delete_dead_character() noexcept
             delegate->write(*this, text);
         }
     }
-    _has_dead_character.clear();
+    _has_dead_character = std::nullopt;
 }
 
 void text_widget::delete_character_next() noexcept
@@ -438,12 +437,15 @@ bool text_widget::handle_event(gui_event const& event) noexcept
     case text_edit_paste:
         if (*mode >= partial) {
             reset_state("BDX");
-            replace_selection(to_gstring(event.clipboard_data(), U' '));
+            auto tmp = event.clipboard_data();
+            // Replace all paragraph separators with white-space.
+            std::replace(tmp.begin(), tmp.end(), grapheme{unicode_PS}, grapheme{' '});
+            replace_selection(tmp);
             return true;
 
         } else if (*mode >= enabled) {
             reset_state("BDX");
-            replace_selection(to_gstring(event.clipboard_data()));
+            replace_selection(event.clipboard_data());
             return true;
         }
         break;
@@ -452,7 +454,7 @@ bool text_widget::handle_event(gui_event const& event) noexcept
         if (*mode >= select) {
             reset_state("BDX");
             if (hilet selected_text_ = selected_text(); not selected_text_.empty()) {
-                process_event(gui_event::make_clipboard_event(gui_event_type::window_set_clipboard, to_string(selected_text_)));
+                process_event(gui_event::make_clipboard_event(gui_event_type::window_set_clipboard, selected_text_));
             }
             return true;
         }
@@ -461,7 +463,7 @@ bool text_widget::handle_event(gui_event const& event) noexcept
     case text_edit_cut:
         if (*mode >= select) {
             reset_state("BDX");
-            process_event(gui_event::make_clipboard_event(gui_event_type::window_set_clipboard, to_string(selected_text())));
+            process_event(gui_event::make_clipboard_event(gui_event_type::window_set_clipboard, selected_text()));
             if (*mode >= partial) {
                 replace_selection(gstring{});
             }
@@ -790,7 +792,7 @@ bool text_widget::handle_event(gui_event const& event) noexcept
 
     case mouse_down:
         if (*mode >= select) {
-            hilet cursor = _shaped_text.get_nearest_cursor(narrow_cast<point2>(event.mouse().position));
+            hilet cursor = _shaped_text.get_nearest_cursor(event.mouse().position);
             switch (event.mouse().click_count) {
             case 1:
                 reset_state("BDX");
@@ -824,7 +826,7 @@ bool text_widget::handle_event(gui_event const& event) noexcept
 
     case mouse_drag:
         if (*mode >= select) {
-            hilet cursor = _shaped_text.get_nearest_cursor(narrow_cast<point2>(event.mouse().position));
+            hilet cursor = _shaped_text.get_nearest_cursor(event.mouse().position);
             switch (event.mouse().click_count) {
             case 1:
                 reset_state("BDX");
@@ -862,7 +864,7 @@ bool text_widget::handle_event(gui_event const& event) noexcept
     return super::handle_event(event);
 }
 
-hitbox text_widget::hitbox_test(point2i position) const noexcept
+hitbox text_widget::hitbox_test(point2 position) const noexcept
 {
     hi_axiom(loop::main().on_thread());
 

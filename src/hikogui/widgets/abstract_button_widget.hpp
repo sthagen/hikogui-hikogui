@@ -12,7 +12,7 @@
 #include "button_delegate.hpp"
 #include "label_widget.hpp"
 #include "../animator.hpp"
-#include "../i18n/translate.hpp"
+#include "../l10n/module.hpp"
 #include "../notifier.hpp"
 #include <memory>
 #include <string>
@@ -85,7 +85,7 @@ public:
     }
 
     [[nodiscard]] color background_color() const noexcept override;
-    [[nodiscard]] hitbox hitbox_test(point2i position) const noexcept final;
+    [[nodiscard]] hitbox hitbox_test(point2 position) const noexcept final;
     [[nodiscard]] bool accepts_keyboard_focus(keyboard_focus_group group) const noexcept override;
     void activate() noexcept;
     bool handle_event(gui_event const& event) noexcept override;

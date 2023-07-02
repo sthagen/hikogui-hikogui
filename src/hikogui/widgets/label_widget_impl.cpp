@@ -25,34 +25,33 @@ label_widget::label_widget(widget *parent) noexcept : super(parent)
     });
     (*_alignment_cbt)(*alignment);
 
-    _text_style_cbt = text_style.subscribe(
-        [this](auto...) {
-            switch (*text_style) {
-            case semantic_text_style::label:
-                _icon_widget->color = color::foreground();
-                break;
-            case semantic_text_style::small_label:
-                _icon_widget->color = color::foreground();
-                break;
-            case semantic_text_style::warning:
-                _icon_widget->color = color::orange();
-                break;
-            case semantic_text_style::error:
-                _icon_widget->color = color::red();
-                break;
-            case semantic_text_style::help:
-                _icon_widget->color = color::indigo();
-                break;
-            case semantic_text_style::placeholder:
-                _icon_widget->color = color::gray();
-                break;
-            case semantic_text_style::link:
-                _icon_widget->color = color::blue();
-                break;
-            default:
-                _icon_widget->color = color::foreground();
-            }
-        });
+    _text_style_cbt = text_style.subscribe([this](auto...) {
+        switch (*text_style) {
+        case semantic_text_style::label:
+            _icon_widget->color = color::foreground();
+            break;
+        case semantic_text_style::small_label:
+            _icon_widget->color = color::foreground();
+            break;
+        case semantic_text_style::warning:
+            _icon_widget->color = color::orange();
+            break;
+        case semantic_text_style::error:
+            _icon_widget->color = color::red();
+            break;
+        case semantic_text_style::help:
+            _icon_widget->color = color::indigo();
+            break;
+        case semantic_text_style::placeholder:
+            _icon_widget->color = color::gray();
+            break;
+        case semantic_text_style::link:
+            _icon_widget->color = color::blue();
+            break;
+        default:
+            _icon_widget->color = color::foreground();
+        }
+    });
 }
 
 [[nodiscard]] box_constraints label_widget::update_constraints() noexcept
@@ -97,10 +96,10 @@ label_widget::label_widget(widget *parent) noexcept : super(parent)
     hilet icon_size =
         (resolved_alignment == horizontal_alignment::center or resolved_alignment == horizontal_alignment::justified) ?
         theme().large_icon_size() :
-        narrow_cast<int>(std::ceil(theme().text_style(*text_style)->size * theme().scale));
+        theme().text_style(*text_style)->size * theme().scale;
 
-    _icon_widget->minimum = extent2i{icon_size, icon_size};
-    _icon_widget->maximum = extent2i{icon_size, icon_size};
+    _icon_widget->minimum = extent2{icon_size, icon_size};
+    _icon_widget->maximum = extent2{icon_size, icon_size};
 
     for (auto& cell : _grid) {
         cell.set_constraints(cell.value->update_constraints());
@@ -129,7 +128,7 @@ void label_widget::draw(draw_context const& context) noexcept
     }
 }
 
-[[nodiscard]] hitbox label_widget::hitbox_test(point2i position) const noexcept
+[[nodiscard]] hitbox label_widget::hitbox_test(point2 position) const noexcept
 {
     hi_axiom(loop::main().on_thread());
 

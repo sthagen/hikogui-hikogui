@@ -36,23 +36,23 @@ theme::theme(hi::font_book const& font_book, std::filesystem::path const& path)
     r.scale = delta_scale * scale;
 
     // Scale each size, and round so that everything will stay aligned on pixel boundaries.
-    r._margin = round_cast<int>(delta_scale * _margin);
-    r._border_width = round_cast<int>(delta_scale * _border_width);
-    r._rounding_radius = round_cast<int>(delta_scale * _rounding_radius);
-    r._size = round_cast<int>(delta_scale * _size);
-    r._large_size = round_cast<int>(delta_scale * _large_size);
-    r._icon_size = round_cast<int>(delta_scale * _icon_size);
-    r._large_icon_size = round_cast<int>(delta_scale * _large_icon_size);
-    r._label_icon_size = round_cast<int>(delta_scale * _label_icon_size);
+    r._margin = std::round(delta_scale * _margin);
+    r._border_width = std::round(delta_scale * _border_width);
+    r._rounding_radius = std::round(delta_scale * _rounding_radius);
+    r._size = std::round(delta_scale * _size);
+    r._large_size = std::round(delta_scale * _large_size);
+    r._icon_size = std::round(delta_scale * _icon_size);
+    r._large_icon_size = std::round(delta_scale * _large_icon_size);
+    r._label_icon_size = std::round(delta_scale * _label_icon_size);
     // Cap height is not rounded, since the text-shaper will align the text to sub-pixel boundaries.
-    r._baseline_adjustment = ceil_cast<int>(delta_scale * _baseline_adjustment);
+    r._baseline_adjustment = std::round(delta_scale * _baseline_adjustment);
 
     return r;
 }
 
 [[nodiscard]] hi::color theme::color(hi::semantic_color original_color, ssize_t nesting_level) const noexcept
 {
-    hilet& shades = _colors[to_underlying(original_color)];
+    hilet& shades = _colors[std::to_underlying(original_color)];
     hi_assert(not shades.empty());
 
     nesting_level = std::max(ssize_t{0}, nesting_level);
@@ -70,7 +70,7 @@ theme::theme(hi::font_book const& font_book, std::filesystem::path const& path)
 
 [[nodiscard]] hi::text_style theme::text_style(semantic_text_style semantic_text_style) const noexcept
 {
-    return _text_styles[to_underlying(semantic_text_style)];
+    return _text_styles[std::to_underlying(semantic_text_style)];
 }
 
 [[nodiscard]] hi::text_style theme::text_style(hi::text_style original_style) const noexcept
@@ -293,7 +293,7 @@ theme::theme(hi::font_book const& font_book, std::filesystem::path const& path)
 
     auto sub_styles = std::vector<text_sub_style>{};
     sub_styles.emplace_back(
-        text_phrasing_mask::all, iso_639{}, iso_15924{}, family_id, variant, font_size, color, text_decoration{});
+        phrasing_mask::all, iso_639{}, iso_15924{}, family_id, variant, font_size, color, text_decoration{});
     return hi::text_style(sub_styles);
 }
 
@@ -327,53 +327,53 @@ void theme::parse(hi::font_book const& font_book, datum const& data)
         throw parse_error(std::format("Attribute 'mode' must be \"light\" or \"dark\", got \"{}\".", mode_name));
     }
 
-    std::get<to_underlying(semantic_color::blue)>(_colors) = parse_color_list(data, "blue");
-    std::get<to_underlying(semantic_color::green)>(_colors) = parse_color_list(data, "green");
-    std::get<to_underlying(semantic_color::indigo)>(_colors) = parse_color_list(data, "indigo");
-    std::get<to_underlying(semantic_color::orange)>(_colors) = parse_color_list(data, "orange");
-    std::get<to_underlying(semantic_color::pink)>(_colors) = parse_color_list(data, "pink");
-    std::get<to_underlying(semantic_color::purple)>(_colors) = parse_color_list(data, "purple");
-    std::get<to_underlying(semantic_color::red)>(_colors) = parse_color_list(data, "red");
-    std::get<to_underlying(semantic_color::teal)>(_colors) = parse_color_list(data, "teal");
-    std::get<to_underlying(semantic_color::yellow)>(_colors) = parse_color_list(data, "yellow");
+    std::get<std::to_underlying(semantic_color::blue)>(_colors) = parse_color_list(data, "blue");
+    std::get<std::to_underlying(semantic_color::green)>(_colors) = parse_color_list(data, "green");
+    std::get<std::to_underlying(semantic_color::indigo)>(_colors) = parse_color_list(data, "indigo");
+    std::get<std::to_underlying(semantic_color::orange)>(_colors) = parse_color_list(data, "orange");
+    std::get<std::to_underlying(semantic_color::pink)>(_colors) = parse_color_list(data, "pink");
+    std::get<std::to_underlying(semantic_color::purple)>(_colors) = parse_color_list(data, "purple");
+    std::get<std::to_underlying(semantic_color::red)>(_colors) = parse_color_list(data, "red");
+    std::get<std::to_underlying(semantic_color::teal)>(_colors) = parse_color_list(data, "teal");
+    std::get<std::to_underlying(semantic_color::yellow)>(_colors) = parse_color_list(data, "yellow");
 
-    std::get<to_underlying(semantic_color::gray)>(_colors) = parse_color_list(data, "gray");
-    std::get<to_underlying(semantic_color::gray2)>(_colors) = parse_color_list(data, "gray2");
-    std::get<to_underlying(semantic_color::gray3)>(_colors) = parse_color_list(data, "gray3");
-    std::get<to_underlying(semantic_color::gray4)>(_colors) = parse_color_list(data, "gray4");
-    std::get<to_underlying(semantic_color::gray5)>(_colors) = parse_color_list(data, "gray5");
-    std::get<to_underlying(semantic_color::gray6)>(_colors) = parse_color_list(data, "gray6");
+    std::get<std::to_underlying(semantic_color::gray)>(_colors) = parse_color_list(data, "gray");
+    std::get<std::to_underlying(semantic_color::gray2)>(_colors) = parse_color_list(data, "gray2");
+    std::get<std::to_underlying(semantic_color::gray3)>(_colors) = parse_color_list(data, "gray3");
+    std::get<std::to_underlying(semantic_color::gray4)>(_colors) = parse_color_list(data, "gray4");
+    std::get<std::to_underlying(semantic_color::gray5)>(_colors) = parse_color_list(data, "gray5");
+    std::get<std::to_underlying(semantic_color::gray6)>(_colors) = parse_color_list(data, "gray6");
 
-    std::get<to_underlying(semantic_color::foreground)>(_colors) = parse_color_list(data, "foreground-color");
-    std::get<to_underlying(semantic_color::border)>(_colors) = parse_color_list(data, "border-color");
-    std::get<to_underlying(semantic_color::fill)>(_colors) = parse_color_list(data, "fill-color");
-    std::get<to_underlying(semantic_color::accent)>(_colors) = parse_color_list(data, "accent-color");
-    std::get<to_underlying(semantic_color::text_select)>(_colors) = parse_color_list(data, "text-select-color");
-    std::get<to_underlying(semantic_color::primary_cursor)>(_colors) = parse_color_list(data, "primary-cursor-color");
-    std::get<to_underlying(semantic_color::secondary_cursor)>(_colors) = parse_color_list(data, "secondary-cursor-color");
+    std::get<std::to_underlying(semantic_color::foreground)>(_colors) = parse_color_list(data, "foreground-color");
+    std::get<std::to_underlying(semantic_color::border)>(_colors) = parse_color_list(data, "border-color");
+    std::get<std::to_underlying(semantic_color::fill)>(_colors) = parse_color_list(data, "fill-color");
+    std::get<std::to_underlying(semantic_color::accent)>(_colors) = parse_color_list(data, "accent-color");
+    std::get<std::to_underlying(semantic_color::text_select)>(_colors) = parse_color_list(data, "text-select-color");
+    std::get<std::to_underlying(semantic_color::primary_cursor)>(_colors) = parse_color_list(data, "primary-cursor-color");
+    std::get<std::to_underlying(semantic_color::secondary_cursor)>(_colors) = parse_color_list(data, "secondary-cursor-color");
 
-    std::get<to_underlying(semantic_text_style::label)>(_text_styles) = parse_text_style(font_book, data, "label-style");
-    std::get<to_underlying(semantic_text_style::small_label)>(_text_styles) =
+    std::get<std::to_underlying(semantic_text_style::label)>(_text_styles) = parse_text_style(font_book, data, "label-style");
+    std::get<std::to_underlying(semantic_text_style::small_label)>(_text_styles) =
         parse_text_style(font_book, data, "small-label-style");
-    std::get<to_underlying(semantic_text_style::warning)>(_text_styles) =
+    std::get<std::to_underlying(semantic_text_style::warning)>(_text_styles) =
         parse_text_style(font_book, data, "warning-label-style");
-    std::get<to_underlying(semantic_text_style::error)>(_text_styles) = parse_text_style(font_book, data, "error-label-style");
-    std::get<to_underlying(semantic_text_style::help)>(_text_styles) = parse_text_style(font_book, data, "help-label-style");
-    std::get<to_underlying(semantic_text_style::placeholder)>(_text_styles) =
+    std::get<std::to_underlying(semantic_text_style::error)>(_text_styles) = parse_text_style(font_book, data, "error-label-style");
+    std::get<std::to_underlying(semantic_text_style::help)>(_text_styles) = parse_text_style(font_book, data, "help-label-style");
+    std::get<std::to_underlying(semantic_text_style::placeholder)>(_text_styles) =
         parse_text_style(font_book, data, "placeholder-label-style");
-    std::get<to_underlying(semantic_text_style::link)>(_text_styles) = parse_text_style(font_book, data, "link-label-style");
+    std::get<std::to_underlying(semantic_text_style::link)>(_text_styles) = parse_text_style(font_book, data, "link-label-style");
 
-    _margin = parse_int(data, "margin");
-    _border_width = parse_int(data, "border-width");
-    _rounding_radius = parse_int(data, "rounding-radius");
-    _size = parse_int(data, "size");
-    _large_size = parse_int(data, "large-size");
-    _icon_size = parse_int(data, "icon-size");
-    _large_icon_size = parse_int(data, "large-icon-size");
-    _label_icon_size = parse_int(data, "label-icon-size");
+    _margin = narrow_cast<float>(parse_int(data, "margin"));
+    _border_width = narrow_cast<float>(parse_int(data, "border-width"));
+    _rounding_radius = narrow_cast<float>(parse_int(data, "rounding-radius"));
+    _size = narrow_cast<float>(parse_int(data, "size"));
+    _large_size = narrow_cast<float>(parse_int(data, "large-size"));
+    _icon_size = narrow_cast<float>(parse_int(data, "icon-size"));
+    _large_icon_size = narrow_cast<float>(parse_int(data, "large-icon-size"));
+    _label_icon_size = narrow_cast<float>(parse_int(data, "label-icon-size"));
 
     _baseline_adjustment =
-        narrow_cast<int>(std::ceil(std::get<to_underlying(semantic_text_style::label)>(_text_styles)->cap_height(font_book)));
+        std::ceil(std::get<std::to_underlying(semantic_text_style::label)>(_text_styles)->cap_height(font_book));
 }
 
 } // namespace hi::inline v1

@@ -11,11 +11,7 @@
 #include "../layout/box_constraints.hpp"
 #include "../font/module.hpp"
 #include "../geometry/module.hpp"
-#include "../unicode/unicode_description.hpp"
-#include "../unicode/unicode_break_opportunity.hpp"
-#include "../unicode/unicode_bidi.hpp"
-#include "../unicode/grapheme.hpp"
-#include "../unicode/gstring.hpp"
+#include "../unicode/module.hpp"
 #include <vector>
 #include <tuple>
 
@@ -87,8 +83,8 @@ public:
         text_style const& style,
         float dpi_scale,
         hi::alignment alignment,
-        unicode_bidi_class text_direction,
-        unicode_script script = unicode_script::Common) noexcept;
+        bool left_to_right,
+        iso_15924 script = iso_15924{"Zyyy"}) noexcept;
 
     [[nodiscard]] text_shaper(
         hi::font_book& font_book,
@@ -96,8 +92,8 @@ public:
         text_style const& style,
         float dpi_scale,
         hi::alignment alignment,
-        unicode_bidi_class text_direction,
-        unicode_script script = unicode_script::Common) noexcept;
+        bool left_to_right,
+        iso_15924 script = iso_15924{"Zyyy"}) noexcept;
 
     [[nodiscard]] bool empty() const noexcept
     {
@@ -458,7 +454,7 @@ private:
 
     /** The default script of the text.
      */
-    unicode_script _script;
+    iso_15924 _script;
 
     /** A list of lines top-to-bottom order.
      *

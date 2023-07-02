@@ -7,27 +7,10 @@
 
 #pragma once
 
+#include "ucd_sentence_break_properties.hpp"
 #include <tuple>
 
 namespace hi::inline v1 {
-
-enum class unicode_sentence_break_property : uint8_t {
-    Other,
-    CR,
-    LF,
-    Extend,
-    Sep,
-    Format,
-    Sp,
-    Lower,
-    Upper,
-    OLetter,
-    Numeric,
-    ATerm,
-    SContinue,
-    STerm,
-    Close
-};
 
 namespace detail {
 
@@ -40,7 +23,7 @@ public:
     constexpr unicode_sentence_break_info &operator=(unicode_sentence_break_info const &) noexcept = default;
     constexpr unicode_sentence_break_info &operator=(unicode_sentence_break_info &&) noexcept = default;
 
-    constexpr unicode_sentence_break_info(unicode_sentence_break_property const &sentence_break_property) noexcept : _value(to_underlying(sentence_break_property))
+    constexpr unicode_sentence_break_info(unicode_sentence_break_property const &sentence_break_property) noexcept : _value(std::to_underlying(sentence_break_property))
     {}
 
     constexpr unicode_sentence_break_info &make_skip() noexcept
@@ -56,7 +39,7 @@ public:
 
     [[nodiscard]] constexpr friend bool operator==(unicode_sentence_break_info const &lhs, unicode_sentence_break_property const &rhs) noexcept
     {
-        return (lhs._value & 0x3f) == to_underlying(rhs);
+        return (lhs._value & 0x3f) == std::to_underlying(rhs);
     }
 
     [[nodiscard]] constexpr friend bool operator==(unicode_sentence_break_info const &, unicode_sentence_break_info const &) noexcept = default;
@@ -259,11 +242,12 @@ private:
 *
 * @param first An iterator to the first character.
 * @param last An iterator to the last character.
-* @param description_func A function to get a reference to unicode_description from a character.
+* @param code_point_func A function to get a code-point from an dereferenced iterator.
 * @return A list of unicode_break_opportunity before each character.
  */
-template<typename It, typename ItEnd, typename DescriptionFunc>
-[[nodiscard]] inline unicode_break_vector unicode_sentence_break(It first, ItEnd last, DescriptionFunc const &description_func) noexcept
+template<typename It, typename ItEnd, typename CodePointFunc>
+[[nodiscard]] inline unicode_break_vector
+unicode_sentence_break(It first, ItEnd last, CodePointFunc const& code_point_func) noexcept
 {
     auto size = narrow_cast<size_t>(std::distance(first, last));
     auto r = unicode_break_vector{size + 1, unicode_break_opportunity::unassigned};
@@ -271,8 +255,8 @@ template<typename It, typename ItEnd, typename DescriptionFunc>
     auto infos = std::vector<detail::unicode_sentence_break_info>{};
     infos.reserve(size);
     std::transform(first, last, std::back_inserter(infos), [&] (hilet &item) {
-        hilet &description = description_func(item);
-        return detail::unicode_sentence_break_info{description.sentence_break_property()};
+        hilet code_point = code_point_func(item);
+        return detail::unicode_sentence_break_info{ucd_get_sentence_break_property(code_point)};
         });
 
     detail::unicode_sentence_break_SB1_SB4(r, infos);

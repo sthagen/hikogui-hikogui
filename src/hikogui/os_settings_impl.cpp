@@ -41,17 +41,14 @@ void os_settings::gather() noexcept
             language_tags.emplace_back("en");
         }
 
-        auto writing_direction = language_tags.front().writing_direction();
-
-        auto languages = language::make_languages(language_tags);
+        auto left_to_right = language_tags.front().left_to_right();
 
         auto language_changed = compare_store(_language_tags, language_tags);
-        language_changed |= compare_store(_languages, languages);
-        language_changed |= compare_store(_writing_direction, writing_direction);
+        language_changed |= compare_store(_left_to_right, left_to_right);
 
         if (language_changed) {
             setting_has_changed = true;
-            hi_log_info("OS language order has changed: {}", _languages);
+            hi_log_info("OS language order has changed: {}", _language_tags);
         }
     } catch (std::exception const& e) {
         hi_log_error("Failed to get OS language: {}", e.what());
@@ -203,6 +200,15 @@ void os_settings::gather() noexcept
         }
     } catch (std::exception const& e) {
         hi_log_error("Failed to get OS desktop rectangle: {}", e.what());
+    }
+
+    try {
+        if (compare_store(_gpu_policy, gather_gpu_policy())) {
+            setting_has_changed = true;
+            hi_log_info("GPU policy has changed: {}", _gpu_policy.load());
+        }
+    } catch (std::exception const& e) {
+        hi_log_error("Failed to get the GPU policy: {}", e.what());
     }
 
     _populated.store(true, std::memory_order::release);

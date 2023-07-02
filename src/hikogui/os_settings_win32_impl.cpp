@@ -8,8 +8,67 @@
 #include "registry_win32.hpp"
 #include "log.hpp"
 #include "utility/module.hpp"
+#include "file/path_location.hpp"
+#include "defer.hpp"
 
-namespace hi::inline v1 {
+namespace hi { inline namespace v1 {
+
+[[nodiscard]] std::vector<uuid> os_settings::preferred_gpus(hi::policy performance_policy) noexcept
+{
+    auto r = std::vector<uuid>{};
+
+    auto actual_policy = os_settings::gpu_policy();
+    if (actual_policy == hi::policy::unspecified) {
+        actual_policy = performance_policy;
+    }
+    if (actual_policy == hi::policy::unspecified) {
+        actual_policy = policy();
+    }
+    hilet actual_policy_ = actual_policy == hi::policy::low_power ? DXGI_GPU_PREFERENCE_MINIMUM_POWER :
+        actual_policy == hi::policy::high_performance             ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE :
+                                                                    DXGI_GPU_PREFERENCE_UNSPECIFIED;
+
+    IDXGIFactory *factory = nullptr;
+    if (FAILED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void **)&factory))) {
+        hi_log_error("Could not IDXGIFactory. {}", get_last_error_message());
+        return r;
+    }
+    hi_assert_not_null(factory);
+    hilet d1 = defer([&] {
+        factory->Release();
+    });
+
+    IDXGIFactory6 *factory6 = nullptr;
+    if (FAILED(factory->QueryInterface(__uuidof(IDXGIFactory6), (void **)&factory6))) {
+        hi_log_error("Could not IDXGIFactory::QueryInterface(IDXGIFactory6). {}", get_last_error_message());
+        return r;
+    }
+    hi_assert_not_null(factory6);
+    hilet d2 = defer([&] {
+        factory6->Release();
+    });
+
+    IDXGIAdapter1 *adapter = nullptr;
+    for (UINT i = 0;
+         SUCCEEDED(factory6->EnumAdapterByGpuPreference(i, actual_policy_, __uuidof(IDXGIAdapter1), (void **)&adapter));
+         ++i) {
+        hilet d3 = defer([&] {
+            adapter->Release();
+        });
+
+        DXGI_ADAPTER_DESC1 description;
+        if (FAILED(adapter->GetDesc1(&description))) {
+            hi_log_error("Could not IDXGIAdapter1::GetDesc1(). {}", get_last_error_message());
+            return r;
+        }
+
+        static_assert(sizeof(description.AdapterLuid) <= sizeof(uuid));
+        r.emplace_back();
+        std::memcpy(std::addressof(r.back()), std::addressof(description.AdapterLuid), sizeof(description.AdapterLuid));
+    }
+
+    return r;
+}
 
 /**
  * GetUserPreferredUILanguages() returns at most two of the selected languages in random order
@@ -22,22 +81,28 @@ namespace hi::inline v1 {
  */
 [[nodiscard]] std::vector<language_tag> os_settings::gather_languages()
 {
-    hilet strings = registry_read_current_user_multi_string("Control Panel\\International\\User Profile", "Languages");
-
     auto r = std::vector<language_tag>{};
-    r.reserve(strings.size());
-    for (hilet& string : strings) {
-        r.push_back(language_tag{string});
+
+    if (hilet languages = registry_read_current_user_multi_string("Control Panel\\International\\User Profile", "Languages")) {
+        r.reserve(languages->size());
+        for (hilet& language : *languages) {
+            r.push_back(language_tag{language});
+        }
     }
+
     return r;
 }
 
 [[nodiscard]] hi::theme_mode os_settings::gather_theme_mode()
 {
     try {
-        hilet result = registry_read_current_user_dword(
-            "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
-        return result ? theme_mode::light : theme_mode::dark;
+        if (hilet result = registry_read_current_user_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme")) {
+            return *result ? theme_mode::light : theme_mode::dark;
+        } else {
+            return theme_mode::light;
+        }
+
     } catch (...) {
         return theme_mode::light;
     }
@@ -183,42 +248,42 @@ namespace hi::inline v1 {
     return std::max(gather_keyboard_repeat_delay(), gather_keyboard_repeat_interval());
 }
 
-[[nodiscard]] int os_settings::gather_minimum_window_width()
+[[nodiscard]] float os_settings::gather_minimum_window_width()
 {
     hilet width = GetSystemMetrics(SM_CXMINTRACK);
     if (width == 0) {
         throw os_error("Could not retrieve SM_CXMINTRACK");
     }
-    return width;
+    return narrow_cast<float>(width);
 }
 
-[[nodiscard]] int os_settings::gather_minimum_window_height()
+[[nodiscard]] float os_settings::gather_minimum_window_height()
 {
     hilet height = GetSystemMetrics(SM_CYMINTRACK);
     if (height == 0) {
         throw os_error("Could not retrieve SM_CYMINTRACK");
     }
 
-    return height;
+    return narrow_cast<float>(height);
 }
 
-[[nodiscard]] int os_settings::gather_maximum_window_width()
+[[nodiscard]] float os_settings::gather_maximum_window_width()
 {
     hilet width = GetSystemMetrics(SM_CXMAXTRACK);
     if (width == 0) {
         throw os_error("Could not retrieve SM_CXMAXTRACK");
     }
-    return width;
+    return narrow_cast<float>(width);
 }
 
-[[nodiscard]] int os_settings::gather_maximum_window_height()
+[[nodiscard]] float os_settings::gather_maximum_window_height()
 {
     hilet height = GetSystemMetrics(SM_CYMAXTRACK);
     if (height == 0) {
         throw os_error("Could not retrieve SM_CYMAXTRACK");
     }
 
-    return height;
+    return narrow_cast<float>(height);
 }
 
 [[nodiscard]] uintptr_t os_settings::gather_primary_monitor_id()
@@ -228,7 +293,7 @@ namespace hi::inline v1 {
     return std::bit_cast<uintptr_t>(monitor);
 }
 
-[[nodiscard]] aarectanglei os_settings::gather_primary_monitor_rectangle()
+[[nodiscard]] aarectangle os_settings::gather_primary_monitor_rectangle()
 {
     hilet width = GetSystemMetrics(SM_CXSCREEN);
     if (width == 0) {
@@ -241,10 +306,10 @@ namespace hi::inline v1 {
     }
 
     // The origin of the primary monitor is also the origin of the desktop.
-    return aarectanglei{extent2i{width, height}};
+    return aarectangle{extent2{narrow_cast<float>(width), narrow_cast<float>(height)}};
 }
 
-[[nodiscard]] aarectanglei os_settings::gather_desktop_rectangle()
+[[nodiscard]] aarectangle os_settings::gather_desktop_rectangle()
 {
     hilet primary_monitor_height = GetSystemMetrics(SM_CYSCREEN);
     if (primary_monitor_height == 0) {
@@ -268,7 +333,40 @@ namespace hi::inline v1 {
 
     // Calculate the bottom as compared to a y-axis up coordinate system.
     hilet inv_bottom = primary_monitor_height - bottom; // 0, 600
-    return aarectanglei{left, inv_bottom, width, height};
+    return aarectangle{
+        narrow_cast<float>(left), narrow_cast<float>(inv_bottom), narrow_cast<float>(width), narrow_cast<float>(height)};
 }
 
-} // namespace hi::inline v1
+[[nodiscard]] policy os_settings::gather_gpu_policy()
+{
+    using namespace std::literals;
+
+    hilet executable_path = get_path(path_location::executable_file).string();
+    hilet user_gpu_preferences_key = "Software\\Microsoft\\DirectX\\UserGpuPreferences";
+
+    try {
+        if (hilet result = registry_read_current_user_string(user_gpu_preferences_key, executable_path)) {
+            for (auto entry : std::views::split(std::string_view{*result}, ";"sv)) {
+                auto entry_sv = std::string_view{entry};
+                if (entry_sv.starts_with("GpuPreference=")) {
+                    if (entry_sv.ends_with("=0")) {
+                        return policy::unspecified;
+                    } else if (entry_sv.ends_with("=1")) {
+                        return policy::low_power;
+                    } else if (entry_sv.ends_with("=2")) {
+                        return policy::high_performance;
+                    } else {
+                        throw os_error(std::format("Unexpected GpuPreference value \"{}\".", entry_sv));
+                    }
+                }
+            }
+        }
+        return policy::unspecified;
+
+    } catch (...) {
+        // If the registry is not set.
+        return policy::unspecified;
+    }
+}
+
+}} // namespace hi::v1

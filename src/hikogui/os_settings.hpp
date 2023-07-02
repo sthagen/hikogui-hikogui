@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "i18n/language_tag.hpp"
-#include "i18n/language.hpp"
+#include "i18n/module.hpp"
 #include "GUI/theme_mode.hpp"
 #include "GFX/subpixel_orientation.hpp"
 #include "geometry/module.hpp"
 #include "utility/module.hpp"
 #include "loop.hpp"
 #include "notifier.hpp"
+#include "bigint.hpp"
 #include <vector>
 #include <mutex>
 
@@ -34,46 +34,14 @@ public:
         return _language_tags;
     }
 
-    /** Get the configured languages.
-     *
-     * @note The list of languages include both the configured region-specific-languages and the generic-languages.
-     * @return A list of languages in order of priority.
-     */
-    [[nodiscard]] static std::vector<language *> languages() noexcept
-    {
-        hi_axiom(_populated.load(std::memory_order::acquire));
-        hilet lock = std::scoped_lock(_mutex);
-        return _languages;
-    }
-
-    /** Get the configured writing direction.
-     *
-     * The writing-direction is extracted from the first language/script configured on the system.
-     *
-     * @return Either `unicode_bidi_class::L` for left-to-right; or `unicode_bidi_class::R` for right-to-left.
-     */
-    [[nodiscard]] static unicode_bidi_class writing_direction() noexcept
-    {
-        hi_axiom(_populated.load(std::memory_order::acquire));
-        return _writing_direction.load(std::memory_order::relaxed);
-    }
-
     /** Check if the configured writing direction is left-to-right.
      *
      * @retval true If the writing direction is left-to-right.
      */
     [[nodiscard]] static bool left_to_right() noexcept
     {
-        return writing_direction() == unicode_bidi_class::L;
-    }
-
-    /** Check if the configured writing direction is right-to-left.
-     *
-     * @retval true If the writing direction is right-to-left.
-     */
-    [[nodiscard]] static bool right_to_left() noexcept
-    {
-        return not left_to_right();
+        hi_axiom(_populated.load(std::memory_order::acquire));
+        return _left_to_right.load(std::memory_order::relaxed);
     }
 
     /** Get the configured light/dark theme mode
@@ -169,7 +137,7 @@ public:
      *
      * @return The minimum window width.
      */
-    [[nodiscard]] static int minimum_window_width() noexcept
+    [[nodiscard]] static float minimum_window_width() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         return _minimum_window_width.load(std::memory_order::relaxed);
@@ -179,7 +147,7 @@ public:
      *
      * @return The minimum window height.
      */
-    [[nodiscard]] static int minimum_window_height() noexcept
+    [[nodiscard]] static float minimum_window_height() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         return _minimum_window_height.load(std::memory_order::relaxed);
@@ -189,7 +157,7 @@ public:
      *
      * @return The maximum window width.
      */
-    [[nodiscard]] static int maximum_window_width() noexcept
+    [[nodiscard]] static float maximum_window_width() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         return _maximum_window_width.load(std::memory_order::relaxed);
@@ -199,7 +167,7 @@ public:
      *
      * @return The maximum window height.
      */
-    [[nodiscard]] static int maximum_window_height() noexcept
+    [[nodiscard]] static float maximum_window_height() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         return _maximum_window_height.load(std::memory_order::relaxed);
@@ -209,7 +177,7 @@ public:
      *
      * @return The rectangle describing the size and location inside the desktop.
      */
-    [[nodiscard]] static aarectanglei primary_monitor_rectangle() noexcept
+    [[nodiscard]] static aarectangle primary_monitor_rectangle() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         hilet lock = std::scoped_lock(_mutex);
@@ -228,12 +196,54 @@ public:
      *
      * @return The bounding rectangle around the desktop. With the origin being equal to the origin of the primary monitor.
      */
-    [[nodiscard]] static aarectanglei desktop_rectangle() noexcept
+    [[nodiscard]] static aarectangle desktop_rectangle() noexcept
     {
         hi_axiom(_populated.load(std::memory_order::acquire));
         hilet lock = std::scoped_lock(_mutex);
         return _desktop_rectangle;
     }
+
+    /** Get the global performance policy.
+     *
+     * @return The performance policy selected by the operating system.
+     */
+    [[nodiscard]] static hi::policy policy() noexcept
+    {
+        return policy::unspecified;
+    }
+
+    /** Get the policy for selecting a GPU.
+     *
+     * @return The performance policy for selecting a GPU.
+     */
+    [[nodiscard]] static hi::policy gpu_policy() noexcept
+    {
+        hi_axiom(_populated.load(std::memory_order::acquire));
+        return _gpu_policy.load(std::memory_order::relaxed);
+    }
+
+    /** Get a list of GPUs ordered best to worst.
+     *
+     * The performance policy is calculated from several sources,
+     * in order from high priority to low priority:
+     *  1. os_settings::gpu_policy() if not policy::unspecified.
+     *  2. performance_policy argument if not policy::unspecified.
+     *  3. os_settings::policy()
+     *
+     * On win32 the GPU identifiers returned are LUIDs which are smaller
+     * then UUIDs. Vulkan specifically includes VkPhysicalDeviceIDProperties::deviceLUID
+     * to match with these return values.
+     *
+     * On other operating systems the return value here is a UUID which will
+     * match with VkPhysicalDeviceIDProperties::deviceUUID.
+     *
+     * Use VkPhysicalDeviceIDProperties::deviceLUIDValid to know which one to match
+     * and VK_LUID_SIZE for the size of the comparison.
+     * 
+     * @param performance_policy The performance policy of the application.
+     * @return A list of GPU identifiers ordered best to worst.
+     */
+    [[nodiscard]] static std::vector<uuid> preferred_gpus(hi::policy performance_policy) noexcept;
 
     /** Gather the settings from the operating system now.
      */
@@ -268,8 +278,7 @@ private:
     static inline notifier_type _notifier;
 
     static inline std::vector<language_tag> _language_tags = {};
-    static inline std::vector<language *> _languages = {};
-    static inline std::atomic<hi::unicode_bidi_class> _writing_direction = hi::unicode_bidi_class::L;
+    static inline std::atomic<bool> _left_to_right = true;
     static inline std::atomic<hi::theme_mode> _theme_mode = theme_mode::dark;
     static inline std::atomic<bool> _uniform_HDR = false;
     static inline std::atomic<hi::subpixel_orientation> _subpixel_orientation = hi::subpixel_orientation::unknown;
@@ -279,13 +288,14 @@ private:
     static inline std::atomic<std::chrono::milliseconds> _keyboard_repeat_interval = std::chrono::milliseconds(33);
     static inline std::atomic<std::chrono::milliseconds> _cursor_blink_interval = std::chrono::milliseconds(1000);
     static inline std::atomic<std::chrono::milliseconds> _cursor_blink_delay = std::chrono::milliseconds(1000);
-    static inline std::atomic<int> _minimum_window_width = 40;
-    static inline std::atomic<int> _minimum_window_height = 25;
-    static inline std::atomic<int> _maximum_window_width = 1920;
-    static inline std::atomic<int> _maximum_window_height = 1080;
+    static inline std::atomic<float> _minimum_window_width = 40.0f;
+    static inline std::atomic<float> _minimum_window_height = 25.0f;
+    static inline std::atomic<float> _maximum_window_width = 1920.0f;
+    static inline std::atomic<float> _maximum_window_height = 1080.0f;
     static inline std::atomic<uintptr_t> _primary_monitor_id = 0;
-    static inline aarectanglei _primary_monitor_rectangle = aarectanglei{0, 0, 1920, 1080};
-    static inline aarectanglei _desktop_rectangle = aarectanglei{0, 0, 1920, 1080};
+    static inline aarectangle _primary_monitor_rectangle = aarectangle{0.0f, 0.0f, 1920.0f, 1080.0f};
+    static inline aarectangle _desktop_rectangle = aarectangle{0.0f, 0.0f, 1920.0f, 1080.0f};
+    static inline std::atomic<hi::policy> _gpu_policy = policy::unspecified;
 
     [[nodiscard]] static bool subsystem_init() noexcept;
     static void subsystem_deinit() noexcept;
@@ -300,13 +310,14 @@ private:
     [[nodiscard]] static std::chrono::milliseconds gather_keyboard_repeat_interval();
     [[nodiscard]] static std::chrono::milliseconds gather_cursor_blink_interval();
     [[nodiscard]] static std::chrono::milliseconds gather_cursor_blink_delay();
-    [[nodiscard]] static int gather_minimum_window_width();
-    [[nodiscard]] static int gather_minimum_window_height();
-    [[nodiscard]] static int gather_maximum_window_width();
-    [[nodiscard]] static int gather_maximum_window_height();
+    [[nodiscard]] static float gather_minimum_window_width();
+    [[nodiscard]] static float gather_minimum_window_height();
+    [[nodiscard]] static float gather_maximum_window_width();
+    [[nodiscard]] static float gather_maximum_window_height();
     [[nodiscard]] static uintptr_t gather_primary_monitor_id();
-    [[nodiscard]] static aarectanglei gather_primary_monitor_rectangle();
-    [[nodiscard]] static aarectanglei gather_desktop_rectangle();
+    [[nodiscard]] static aarectangle gather_primary_monitor_rectangle();
+    [[nodiscard]] static aarectangle gather_desktop_rectangle();
+    [[nodiscard]] static hi::policy gather_gpu_policy();
 };
 
 } // namespace hi::inline v1

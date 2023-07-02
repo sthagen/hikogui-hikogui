@@ -29,207 +29,283 @@ hi_warning_ignore_msvc(26472);
 
 namespace hi::inline v1 {
 
-template<std::unsigned_integral T>
-[[nodiscard]] constexpr T byte_swap(T x) noexcept
-{
-    if (not std::is_constant_evaluated()) {
-#if HI_COMPILER == HI_CC_CLANG || HI_COMPILER == HI_CC_GCC
-        if constexpr (sizeof(T) == sizeof(uint64_t)) {
-            return static_cast<T>(__builtin_bswap64(static_cast<uint64_t>(x)));
-        } else if constexpr (sizeof(T) == sizeof(uint32_t)) {
-            return static_cast<T>(__builtin_bswap32(static_cast<uint32_t>(x)));
-        } else if constexpr (sizeof(T) == sizeof(uint16_t)) {
-            return static_cast<T>(__builtin_bswap16(static_cast<uint16_t>(x)));
-        }
-#elif HI_COMPILER == HI_CC_MSVC
-        if constexpr (sizeof(T) == sizeof(uint64_t)) {
-            return static_cast<T>(_byteswap_uint64(static_cast<uint64_t>(x)));
-        } else if constexpr (sizeof(T) == sizeof(unsigned long)) {
-            return static_cast<T>(_byteswap_ulong(static_cast<unsigned long>(x)));
-        } else if constexpr (sizeof(T) == sizeof(unsigned short)) {
-            return static_cast<T>(_byteswap_ushort(static_cast<unsigned short>(x)));
-        }
-#endif
-    }
-
-    if constexpr (sizeof(T) == 1) {
-        return x;
-    } else {
-        auto r = T{};
-        for (auto i = 0_uz; i != sizeof(T); ++i) {
-            r <<= 8;
-            r |= static_cast<uint8_t>(x);
-            x >>= 8;
-        }
-        return r;
-    }
-}
-
-template<std::signed_integral T>
-[[nodiscard]] constexpr T byte_swap(T x) noexcept
-{
-    return static_cast<T>(byte_swap(static_cast<std::make_unsigned_t<T>>(x)));
-}
-
-template<std::floating_point T>
-[[nodiscard]] constexpr T byte_swap(T x) noexcept
-{
-    if constexpr (std::is_same_v<T, float>) {
-        auto utmp = std::bit_cast<uint32_t>(x);
-        utmp = byte_swap(utmp);
-        return std::bit_cast<float>(x);
-    } else if constexpr (std::is_same_v<T, double>) {
-        auto utmp = std::bit_cast<uint64_t>(x);
-        utmp = byte_swap(utmp);
-        return std::bit_cast<double>(x);
-    } else {
-        hi_static_no_default();
-    }
-}
-
+/** Convert an integral from little-to-native endian.
+ */
 template<std::integral T>
 [[nodiscard]] constexpr T little_to_native(T x)
 {
     if constexpr (std::endian::native == std::endian::little) {
         return x;
     } else {
-        return byte_swap(x);
+        return std::byteswap(x);
     }
 }
 
+/** Convert an integral from big-to-native endian.
+ */
 template<std::integral T>
 [[nodiscard]] constexpr T big_to_native(T x)
 {
     if constexpr (std::endian::native == std::endian::big) {
         return x;
     } else {
-        return byte_swap(x);
+        return std::byteswap(x);
     }
 }
 
+/** Convert an integral from native-to-little endian.
+ */
 template<std::integral T>
 [[nodiscard]] constexpr T native_to_little(T x)
 {
     if constexpr (std::endian::native == std::endian::little) {
         return x;
     } else {
-        return byte_swap(x);
+        return std::byteswap(x);
     }
 }
 
+/** Convert an integral from native-to-big endian.
+ */
 template<std::integral T>
 [[nodiscard]] constexpr T native_to_big(T x)
 {
     if constexpr (std::endian::native == std::endian::big) {
         return x;
     } else {
-        return byte_swap(x);
+        return std::byteswap(x);
     }
 }
 
-template<numeric T, std::endian Endian = std::endian::native>
+/** Load a numeric value from memory.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @tparam Endian The endiances of the data.
+ * @param src A pointer to the numeric value.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T, std::endian Endian = std::endian::native>
 [[nodiscard]] constexpr T load(T const *src) noexcept
 {
     auto value = *src;
     if constexpr (Endian != std::endian::native) {
-        value = byte_swap(value);
+        value = std::byteswap(value);
     }
     return value;
 }
 
-template<numeric T, std::endian Endian = std::endian::native, byte_like B>
+/** Unaligned Load of a numeric value from a byte-like array.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @tparam Endian The endiances of the data.
+ * @param src A pointer to byte-like array.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T, std::endian Endian = std::endian::native, byte_like B>
 [[nodiscard]] constexpr T load(B const *src) noexcept
 {
     auto value = unaligned_load<T>(src);
     if constexpr (Endian != std::endian::native) {
-        value = byte_swap(value);
+        value = std::byteswap(value);
     }
     return value;
 }
 
-template<numeric T, std::endian Endian = std::endian::native>
+/** Unaligned Load of a numeric value from a byte-like array.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @tparam Endian The endiances of the data.
+ * @param src A pointer to memory.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T, std::endian Endian = std::endian::native>
 [[nodiscard]] inline T load(void const *src) noexcept
 {
     auto value = unaligned_load<T>(src);
     if constexpr (Endian != std::endian::native) {
-        value = byte_swap(value);
+        value = std::byteswap(value);
     }
     return value;
 }
 
-template<numeric T>
+/** Load of a numeric value encoded in little-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to the numeric value.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T>
 [[nodiscard]] constexpr T load_le(T const *src) noexcept
 {
     return load<T, std::endian::little>(src);
 }
 
-template<numeric T, byte_like B>
+/** Unaligned load of a numeric value encoded in little-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to a byte like memory.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T, byte_like B>
 [[nodiscard]] constexpr T load_le(B const *src) noexcept
 {
     return load<T, std::endian::little>(src);
 }
 
-template<numeric T>
+/** Unaligned load of a numeric value encoded in little-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to memory.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T>
 [[nodiscard]] inline T load_le(void const *src) noexcept
 {
     return load<T, std::endian::little>(src);
 }
 
-template<numeric T>
+/** Load of a numeric value encoded in big-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to a byte like memory.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T>
 [[nodiscard]] constexpr T load_be(T const *src) noexcept
 {
     return load<T, std::endian::big>(src);
 }
 
-template<numeric T, byte_like B>
+/** Unaligned load of a numeric value encoded in byte-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to a byte like buffer.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T, byte_like B>
 [[nodiscard]] constexpr T load_be(B const *src) noexcept
 {
     return load<T, std::endian::big>(src);
 }
 
-template<numeric T>
+/** Unaligned load of a numeric value encoded in byte-endian format.
+ *
+ * @tparam T The type of the integer or floating point value to load.
+ * @param src A pointer to memory.
+ * @return The numeric value after endian conversion.
+ */
+template<std::integral T>
 [[nodiscard]] inline T load_be(void const *src) noexcept
 {
     return load<T, std::endian::big>(src);
 }
 
-template<std::endian Endian = std::endian::native, numeric T, byte_like B>
+/** Unaligned load bits from a big-endian buffer at a bit-offset.
+ *
+ * To create the packed byte array from values.
+ *  - Shift each value into a bigint object.
+ *  - Shift by an aditional 0 to 7 bits to align the first value to the MSB of a byte.
+ *  - Shift by an aditional 128 bits for the over-read extension.
+ *  - Make a byte buffer with how many bits where added to the bigint.
+ *  - Reverse iterate over the bytes in the buffer and shift out bytes from the bigint.
+ *
+ * @note The src buffer should be extented by 128-bits to allow over-reading beyond the end of the data.
+ * @tparam NumBits the number of bits to read.
+ * @param src A byte-like buffer to load bits from.
+ * @param bit_index The bit offset into the buffer. 0 is the 7th bit of the 1st byte in @a src.
+ * @return The loaded bits in the least-signigicant-bits of an unsigned integer type that can hold the bits requested.
+ */
+template<unsigned int NumBits, byte_like B>
+[[nodiscard]] constexpr auto load_bits_be(B const *src, size_t bit_index) noexcept
+{
+    static_assert(NumBits <= sizeof(unsigned long long) * CHAR_BIT);
+
+    constexpr auto num_bits = NumBits;
+    constexpr auto num_bytes = (num_bits + CHAR_BIT - 1) / CHAR_BIT;
+
+    // Determine an unsigned type that can be used to read NumBits in a single `load_be()` on every bit offset.
+    // clang-format off
+    using value_type =
+        std::conditional_t<num_bytes < sizeof(unsigned short), unsigned short,
+        std::conditional_t<num_bytes < sizeof(unsigned int), unsigned int,
+        std::conditional_t<num_bytes < sizeof(unsigned long), unsigned long, unsigned long long>>>;
+    // clang-format on
+
+    constexpr auto value_bits = sizeof(value_type) * CHAR_BIT;
+
+    hilet byte_offset = bit_index / CHAR_BIT;
+    hilet bit_offset = bit_index % CHAR_BIT;
+
+    // Optimization of reading a byte, aligned to a byte.
+    if constexpr (num_bits == CHAR_BIT) {
+        if (bit_offset == 0) {
+            return char_cast<value_type>(src[byte_offset]);
+        }
+    }
+
+    // load_be allows unaligned reads.
+    auto r = load_be<value_type>(std::addressof(src[byte_offset]));
+
+    // Align to most significant bit. In preparation for loading
+    // one more byte.
+    r <<= bit_offset;
+
+    if constexpr (num_bytes == sizeof(value_type)) {
+        // In this case it is possible we could not read the whole value in one go.
+        // We may need to read one more byte.
+
+        auto bits_done = value_bits - bit_offset;
+        if (bits_done < num_bits) {
+            auto rest = char_cast<value_type>(src[byte_offset + sizeof(value_type)]);
+            rest >>= CHAR_BIT - bit_offset;
+            r |= rest;
+        }
+    }
+
+    // Align number to least significant bit.
+    r >>= value_bits - num_bits;
+    return r;
+}
+
+
+
+template<std::endian Endian = std::endian::native, std::integral T, byte_like B>
 constexpr void store(T value, B const *dst) noexcept
 {
     if constexpr (Endian != std::endian::native) {
-        value = byte_swap(value);
+        value = std::byteswap(value);
     }
     unaligned_store<T>(value, dst);
 }
 
-template<std::endian Endian = std::endian::native, numeric T>
+template<std::endian Endian = std::endian::native, std::integral T>
 constexpr void store(T value, void const *dst) noexcept
 {
     if constexpr (Endian != std::endian::native) {
-        value = byte_swap(value);
+        value = std::byteswap(value);
     }
     unaligned_store<T>(value, dst);
 }
 
-template<numeric T, byte_like B>
+template<std::integral T, byte_like B>
 constexpr void store_le(T value, B const *dst) noexcept
 {
     store<std::endian::little>(value, dst);
 }
 
-template<numeric T>
+template<std::integral T>
 inline void store_le(T value, void const *dst) noexcept
 {
     store<std::endian::little>(value, dst);
 }
 
-template<numeric T, byte_like B>
+template<std::integral T, byte_like B>
 constexpr void store_be(T value, B const *dst) noexcept
 {
     store<std::endian::big>(value, dst);
 }
 
-template<numeric T>
+template<std::integral T>
 inline void store_be(T value, void const *dst) noexcept
 {
     store<std::endian::big>(value, dst);

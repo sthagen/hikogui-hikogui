@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "../i18n/translate.hpp"
-#include "../unicode/gstring.hpp"
+#include "../l10n/module.hpp"
+#include "../unicode/module.hpp"
 #include "../label.hpp"
 #include <string>
 #include <memory>
@@ -193,7 +193,7 @@ public:
 
     [[nodiscard]] gstring read(text_widget& sender) noexcept override
     {
-        return to_gstring(value.read()());
+        return value.read()();
     }
 
     void write(text_widget& sender, gstring const& text) noexcept override
