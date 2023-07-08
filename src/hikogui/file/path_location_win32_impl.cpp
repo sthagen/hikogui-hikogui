@@ -5,9 +5,9 @@
 #include "../utility/win32_headers.hpp"
 
 #include "path_location.hpp"
-#include "../log.hpp"
-#include "../metadata.hpp"
-#include "../defer.hpp"
+#include "../telemetry/module.hpp"
+#include "../settings/metadata.hpp"
+#include "../utility/module.hpp"
 #include <filesystem>
 #include <string>
 
@@ -110,11 +110,7 @@ namespace hi::inline v1 {
         {
             // FOLDERID_LocalAppData has the default path: %LOCALAPPDATA% (%USERPROFILE%\AppData\Local)
             hilet local_app_data = get_path_by_id(FOLDERID_LocalAppData);
-            if (metadata::application().vendor.empty()) {
-                co_yield local_app_data / metadata::application().display_name / "";
-            } else {
-                co_yield local_app_data / metadata::application().vendor / metadata::application().display_name / "";
-            }
+            co_yield local_app_data / get_application_vendor() / get_application_name() / "";
         }
         break;
 

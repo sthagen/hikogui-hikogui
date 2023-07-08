@@ -3,10 +3,7 @@
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "hikogui/module.hpp"
-#include "hikogui/GUI/gui_system.hpp"
-#include "hikogui/widgets/widget.hpp"
 #include "hikogui/crt.hpp"
-#include "hikogui/loop.hpp"
 
 // Every widget must inherit from hi::widget.
 class minimum_widget : public hi::widget {
@@ -73,9 +70,13 @@ private:
 
 int hi_main(int argc, char *argv[])
 {
+    hi::set_application_name("Minimum custom widget example");
+    hi::set_application_vendor("HikoGUI");
+    hi::set_application_version({1, 0, 0});
+
     auto gui = hi::gui_system::make_unique();
-    auto window = gui->make_window(hi::tr("Minimum Custom Widget"));
-    window->content().make_widget<minimum_widget>("A1");
+    auto [window, widget] = gui->make_window<hi::window_widget>(hi::tr("Minimum Custom Widget"));
+    widget.content().make_widget<minimum_widget>("A1");
 
     auto close_cbt = window->closing.subscribe(
         [&] {

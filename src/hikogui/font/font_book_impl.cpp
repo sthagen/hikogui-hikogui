@@ -4,10 +4,9 @@
 
 #include "font_book.hpp"
 #include "true_type_font.hpp"
-#include "../file/glob.hpp"
-#include "../trace.hpp"
+#include "../file/module.hpp"
+#include "../telemetry/module.hpp"
 #include "../ranges.hpp"
-#include "../log.hpp"
 #include <ranges>
 #include <vector>
 
@@ -302,10 +301,10 @@ void font_book::post_process() noexcept
 
     for (hilet grapheme: run) {
         hilet glyphs = find_glyph(font, grapheme);
-        hilet &font = glyphs.font();
+        hilet &actual_font = glyphs.font();
 
-        r.fonts.push_back(&font);
-        r.advances.push_back(font.get_advance(get<0>(glyphs)));
+        r.fonts.push_back(&actual_font);
+        r.advances.push_back(actual_font.get_advance(get<0>(glyphs)));
     }
 
     return r;

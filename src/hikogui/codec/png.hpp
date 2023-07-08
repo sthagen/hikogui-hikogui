@@ -8,7 +8,7 @@
 #include "../utility/module.hpp"
 #include "../image/module.hpp"
 #include "../geometry/module.hpp"
-#include "../byte_string.hpp"
+#include "../container/module.hpp"
 #include "../strings.hpp"
 #include <span>
 #include <vector>
@@ -44,7 +44,7 @@ private:
     /** Matrix to convert png color values to sRGB.
      * The default are sRGB color primaries and white-point.
      */
-    matrix3 _color_to_sRGB = geo::identity();
+    matrix3 _color_to_sRGB = {};
 
     /** The gamma curve to convert a sample directly to linear float.
      */
