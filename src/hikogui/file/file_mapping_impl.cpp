@@ -4,7 +4,7 @@
 
 #include "file_mapping.hpp"
 #include "../utility/module.hpp"
-#include "../telementry/log.hpp"
+#include "../telemetry/module.hpp"
 #include <mutex>
 
 namespace hi::inline v1 {

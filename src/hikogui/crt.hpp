@@ -20,9 +20,6 @@
 
 #pragma once
 
-#include "utility/module.hpp"
-#include "crt_utils.hpp"
-
 #if not defined(HI_CRT_NO_MAIN)
 
 /** Main entry-point.

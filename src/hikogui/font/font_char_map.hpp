@@ -9,13 +9,14 @@
 #pragma once
 
 #include "glyph_id.hpp"
-#include "../algorithm.hpp"
+#include "../algorithm/module.hpp"
 #include "../utility/module.hpp"
 #include <bitset>
 #include <cstdint>
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <string>
 
 namespace hi { inline namespace v1 {
 
@@ -63,7 +64,7 @@ public:
     constexpr size_t update_mask(std::bitset<0x11'0000>& mask) const noexcept
     {
         auto r = 0_uz;
-        for (hilet &entry: _map) {
+        for (hilet& entry : _map) {
             // Make sure this loop is inclusive.
             for (auto cp = entry.start_code_point(); cp <= entry.end_code_point; ++cp) {
                 if (not mask.test(cp)) {
