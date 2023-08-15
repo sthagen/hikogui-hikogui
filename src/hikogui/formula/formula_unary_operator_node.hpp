@@ -5,14 +5,17 @@
 #pragma once
 
 #include "formula_node.hpp"
+#include "../macros.hpp"
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.formula.formula_unary_operator_node);
 
-struct formula_unary_operator_node : formula_node {
+namespace hi { inline namespace v1 {
+
+hi_export struct formula_unary_operator_node : formula_node {
     std::unique_ptr<formula_node> rhs;
 
-    formula_unary_operator_node(parse_location location, std::unique_ptr<formula_node> rhs) :
-        formula_node(std::move(location)), rhs(std::move(rhs))
+    formula_unary_operator_node(size_t line_nr, size_t column_nr, std::unique_ptr<formula_node> rhs) :
+        formula_node(line_nr, column_nr), rhs(std::move(rhs))
     {
     }
 
@@ -27,4 +30,4 @@ struct formula_unary_operator_node : formula_node {
     }
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1

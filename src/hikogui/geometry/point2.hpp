@@ -7,9 +7,12 @@
 #include "vector2.hpp"
 #include "extent2.hpp"
 #include "../SIMD/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <format>
 #include <concepts>
+
+
 
 namespace hi::inline v1 {
 
@@ -249,7 +252,7 @@ struct std::formatter<hi::point2, CharT> {
         return pc.end();
     }
 
-    auto format(hi::point2 const& t, auto& fc)
+    auto format(hi::point2 const& t, auto& fc) const
     {
         return std::vformat_to(fc.out(), "<{}, {}>", std::make_format_args(t.x(), t.y()));
     }

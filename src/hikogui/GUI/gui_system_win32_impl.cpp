@@ -7,9 +7,10 @@
 #include "theme_book.hpp"
 #include "../GFX/module.hpp"
 #include "../font/module.hpp"
-#include "../file/module.hpp"
+#include "../path/path.hpp"
 #include "../telemetry/module.hpp"
-#include "../settings/module.hpp"
+#include "../settings/settings.hpp"
+#include "../macros.hpp"
 #include <memory>
 
 namespace hi::inline v1 {

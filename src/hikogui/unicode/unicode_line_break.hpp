@@ -12,11 +12,14 @@
 #include "ucd_grapheme_cluster_breaks.hpp"
 #include "ucd_line_break_classes.hpp"
 #include "ucd_east_asian_widths.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <cstdint>
 #include <vector>
 #include <algorithm>
 #include <numeric>
+
+
 
 namespace hi::inline v1 {
 namespace detail {

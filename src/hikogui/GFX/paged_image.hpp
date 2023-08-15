@@ -6,6 +6,7 @@
 
 #include "../geometry/module.hpp"
 #include "../image/module.hpp"
+#include "../macros.hpp"
 #include <cstdlib>
 #include <span>
 #include <atomic>
@@ -22,7 +23,7 @@ class gfx_device;
 struct paged_image {
     enum class state_type { uninitialized, drawing, uploaded };
 
-    static constexpr std::size_t page_size = 62; // 64x64 including a 1 pixel border.
+    constexpr static std::size_t page_size = 62; // 64x64 including a 1 pixel border.
 
     mutable std::atomic<state_type> state = state_type::uninitialized;
     gfx_device *device = nullptr;

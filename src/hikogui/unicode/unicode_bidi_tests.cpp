@@ -4,9 +4,10 @@
 
 #include "unicode_bidi.hpp"
 #include "../file/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../algorithm/module.hpp"
 #include "../coroutine/module.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
@@ -14,6 +15,8 @@
 #include <span>
 #include <format>
 #include <ranges>
+
+
 
 using namespace hi;
 

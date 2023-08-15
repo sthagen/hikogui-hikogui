@@ -5,15 +5,18 @@
 #pragma once
 
 #include "../geometry/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <vector>
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.graphic_path.bezier_point);
+
+namespace hi { inline namespace v1 {
 
 /*! A point or control-point on contour of bezier curves.
  * The bezier curves can be linear (a line), quadratic or cubic.
  */
-struct bezier_point {
+hi_export struct bezier_point {
     enum class Type { Anchor, QuadraticControl, CubicControl1, CubicControl2 };
 
     Type type;
@@ -62,7 +65,9 @@ struct bezier_point {
                 r.push_back(*it);
                 break;
 
-            case bezier_point::Type::CubicControl1: r.push_back(*it); break;
+            case bezier_point::Type::CubicControl1:
+                r.push_back(*it);
+                break;
 
             case bezier_point::Type::CubicControl2:
                 if (prev_it->type == bezier_point::Type::Anchor) {
@@ -75,7 +80,8 @@ struct bezier_point {
                 r.push_back(*it);
                 break;
 
-            default: hi_no_default();
+            default:
+                hi_no_default();
             }
 
             prev_prev_it = prev_it;
@@ -98,10 +104,10 @@ struct bezier_point {
 
     /** Transform the point.
      */
-    [[nodiscard]] constexpr friend bezier_point operator*(transformer2 auto const &lhs, bezier_point const &rhs) noexcept
+    [[nodiscard]] constexpr friend bezier_point operator*(transformer2 auto const& lhs, bezier_point const& rhs) noexcept
     {
         return {lhs * rhs.p, rhs.type};
     }
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::v1

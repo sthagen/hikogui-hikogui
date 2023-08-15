@@ -6,8 +6,9 @@
 
 #include "awaitable.hpp"
 #include "scoped_task.hpp"
-#include "../utility/module.hpp"
-#include "../concurrency/module.hpp"
+#include "../utility/utility.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../macros.hpp"
 #include <coroutine>
 #include <cstddef>
 #include <type_traits>
@@ -15,6 +16,8 @@
 #include <variant>
 #include <tuple>
 #include <chrono>
+
+
 
 namespace hi::inline v1 {
 

@@ -6,6 +6,7 @@
 
 #include "gui_window.hpp"
 #include "../GFX/module.hpp"
+#include "../macros.hpp"
 #include <unordered_map>
 
 struct HWND__;
@@ -38,10 +39,11 @@ public:
     void put_text_on_clipboard(gstring_view str) const noexcept override;
 
 private:
-    static constexpr UINT_PTR move_and_resize_timer_id = 2;
+    constexpr static UINT_PTR move_and_resize_timer_id = 2;
 
     notifier<>::callback_token _setting_change_cbt;
     observer<std::string>::callback_token _selected_theme_cbt;
+    loop::render_callback_token _render_cbt;
 
     TRACKMOUSEEVENT track_mouse_leave_event_parameters;
     bool tracking_mouse_leave_event = false;

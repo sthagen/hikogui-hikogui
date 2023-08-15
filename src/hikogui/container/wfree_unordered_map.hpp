@@ -4,13 +4,16 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <atomic>
 #include <array>
 #include <optional>
 #include <vector>
 #include <typeinfo>
 #include <typeindex>
+
+
 
 namespace hi::inline v1 {
 
@@ -58,7 +61,7 @@ public:
     using mapped_type = V;
 
 private:
-    static constexpr std::size_t CAPACITY = MAX_NR_ITEMS * 2;
+    constexpr static std::size_t CAPACITY = MAX_NR_ITEMS * 2;
 
     std::array<wfree_unordered_map_item<K, V>, CAPACITY> items = {};
 

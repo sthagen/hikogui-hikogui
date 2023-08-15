@@ -5,10 +5,13 @@
 #pragma once
 
 #include "../security/module.hpp"
+#include "../macros.hpp"
 #include <type_traits>
 #include <cstddef>
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.memory.secure_memory_allocator);
+
+hi_export namespace hi::inline v1 {
 
 /** Memory allocator which will securely clear the memory when deallocated.
  */

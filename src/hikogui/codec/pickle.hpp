@@ -4,20 +4,23 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "datum.hpp"
 #include "base_n.hpp"
+#include "../macros.hpp"
 #include <string>
 #include <limits>
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.codec.pickle);
+
+namespace hi { inline namespace v1 {
 
 /** Encode and decode a type to and from a UTF-8 string.
  *
  * This codec is used to serialize data into strings, for example
  * in JSON configuration files.
  */
-template<typename T>
+hi_export template<typename T>
 struct pickle {
     /** Encode the value of a type into a UTF-8 string.
      *
@@ -47,12 +50,14 @@ struct pickle {
         hi_static_not_implemented();
     }
 
-    [[nodiscard]] T decode(datum rhs) const requires(std::has_unique_object_representations_v<T> and not std::is_pointer_v<T>)
+    [[nodiscard]] T decode(datum rhs) const
+        requires(std::has_unique_object_representations_v<T> and not std::is_pointer_v<T>)
     {
         if (auto *b = get_if<std::string>(rhs)) {
             auto tmp = base64::decode(*b);
             if (tmp.size() != sizeof(T)) {
-                throw parse_error(std::format("Length of base64 encoded object is {}, expected length {}", tmp.size(), sizeof(T)));
+                throw parse_error(
+                    std::format("Length of base64 encoded object is {}, expected length {}", tmp.size(), sizeof(T)));
             }
 
             auto r = T{};
@@ -65,7 +70,7 @@ struct pickle {
     }
 };
 
-template<numeric_integral T>
+hi_export template<numeric_integral T>
 struct pickle<T> {
     [[nodiscard]] datum encode(T const& rhs) const noexcept
     {
@@ -85,7 +90,7 @@ struct pickle<T> {
     }
 };
 
-template<std::floating_point T>
+hi_export template<std::floating_point T>
 struct pickle<T> {
     [[nodiscard]] datum encode(T const& rhs) const noexcept
     {
@@ -106,7 +111,7 @@ struct pickle<T> {
     }
 };
 
-template<>
+hi_export template<>
 struct pickle<bool> {
     [[nodiscard]] datum encode(bool const& rhs) const noexcept
     {
@@ -124,7 +129,7 @@ struct pickle<bool> {
     }
 };
 
-template<>
+hi_export template<>
 struct pickle<std::string> {
     [[nodiscard]] datum encode(std::string const& rhs) const noexcept
     {
@@ -142,5 +147,4 @@ struct pickle<std::string> {
     }
 };
 
-
-} // namespace hi::inline v1
+}} // namespace hi::v1

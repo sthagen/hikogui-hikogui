@@ -5,20 +5,23 @@
 #pragma once
 
 #include "formula_node.hpp"
+#include "../macros.hpp"
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.formula.formula_name_node);
 
-struct formula_name_node final : formula_node {
+namespace hi { inline namespace v1 {
+
+hi_export struct formula_name_node final : formula_node {
     std::string name;
     mutable formula_post_process_context::function_type function;
 
-    formula_name_node(parse_location location, std::string_view name) : formula_node(std::move(location)), name(name) {}
+    formula_name_node(size_t line_nr, size_t column_nr, std::string_view name) : formula_node(line_nr, column_nr), name(name) {}
 
     void resolve_function_pointer(formula_post_process_context &context) override
     {
         function = context.get_function(name);
         if (!function) {
-            throw parse_error(std::format("{}: Could not find function {}().", location, name));
+            throw parse_error(std::format("{}:{}: Could not find function {}().", line_nr, column_nr, name));
         }
     }
 
@@ -29,7 +32,7 @@ struct formula_name_node final : formula_node {
         try {
             return const_context.get(name);
         } catch (std::exception const &e) {
-            throw operation_error(std::format("{}: Can not evaluate function.\n{}", location, e.what()));
+            throw operation_error(std::format("{}:{}: Can not evaluate function.\n{}", line_nr, column_nr, e.what()));
         }
     }
 
@@ -38,7 +41,7 @@ struct formula_name_node final : formula_node {
         try {
             return context.get(name);
         } catch (std::exception const &e) {
-            throw operation_error(std::format("{}: Can not evaluate function.\n{}", location, e.what()));
+            throw operation_error(std::format("{}:{}: Can not evaluate function.\n{}", line_nr, column_nr, e.what()));
         }
     }
 
@@ -54,7 +57,7 @@ struct formula_name_node final : formula_node {
         try {
             return context.get(name);
         } catch (std::exception const &e) {
-            throw operation_error(std::format("{}: Can not evaluate function.\n{}", location, e.what()));
+            throw operation_error(std::format("{}:{}: Can not evaluate function.\n{}", line_nr, column_nr, e.what()));
         }
     }
 
@@ -63,7 +66,7 @@ struct formula_name_node final : formula_node {
         try {
             return context.set(name, rhs);
         } catch (std::exception const &e) {
-            throw operation_error(std::format("{}: Can not evaluate function.\n{}", location, e.what()));
+            throw operation_error(std::format("{}:{}: Can not evaluate function.\n{}", line_nr, column_nr, e.what()));
         }
     }
 
@@ -83,4 +86,4 @@ struct formula_name_node final : formula_node {
     }
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1

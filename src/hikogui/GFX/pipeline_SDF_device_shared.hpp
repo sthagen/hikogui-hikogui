@@ -8,15 +8,18 @@
 #include "pipeline_SDF_vertex.hpp"
 #include "pipeline_SDF_specialization_constants.hpp"
 #include "../font/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../telemetry/module.hpp"
 #include "../container/module.hpp"
 #include "../geometry/module.hpp"
 #include "../color/module.hpp"
+#include "../macros.hpp"
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 #include <mutex>
 #include <unordered_map>
+
+
 
 namespace hi::inline v1 {
 class mat;
@@ -34,18 +37,18 @@ struct device_shared {
     // For latin characters we can store about 7 * 12 == 84 characters in a single image, which is enough
     // for the full alpha numeric range that an application will use.
 
-    static constexpr int atlasImageWidth = 256; // 7-12 characters, of 34 pixels wide.
-    static constexpr int atlasImageHeight = 256; // 7 characters, of 34 pixels height.
+    constexpr static int atlasImageWidth = 256; // 7-12 characters, of 34 pixels wide.
+    constexpr static int atlasImageHeight = 256; // 7 characters, of 34 pixels height.
     static_assert(atlasImageWidth == atlasImageHeight, "needed for fwidth(textureCoord)");
 
-    static constexpr int atlasMaximumNrImages = 128; // 128 * 49 characters.
-    static constexpr int stagingImageWidth = 64; // One 'em' is 28 pixels, with edges 34 pixels.
-    static constexpr int stagingImageHeight = 64;
+    constexpr static int atlasMaximumNrImages = 128; // 128 * 49 characters.
+    constexpr static int stagingImageWidth = 64; // One 'em' is 28 pixels, with edges 34 pixels.
+    constexpr static int stagingImageHeight = 64;
 
-    static constexpr float atlasTextureCoordinateMultiplier = 1.0f / atlasImageWidth;
-    static constexpr float drawfontSize = 28.0f;
-    static constexpr float drawBorder = sdf_r8::max_distance;
-    static constexpr float scaledDrawBorder = drawBorder / drawfontSize;
+    constexpr static float atlasTextureCoordinateMultiplier = 1.0f / atlasImageWidth;
+    constexpr static float drawfontSize = 28.0f;
+    constexpr static float drawBorder = sdf_r8::max_distance;
+    constexpr static float scaledDrawBorder = drawBorder / drawfontSize;
 
     gfx_device_vulkan const &device;
 

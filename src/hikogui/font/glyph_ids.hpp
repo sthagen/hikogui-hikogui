@@ -7,15 +7,18 @@
 #include "glyph_id.hpp"
 #include "glyph_atlas_info.hpp"
 #include "../geometry/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../container/module.hpp"
-#include "../graphic_path/module.hpp"
+#include "../graphic_path/graphic_path.hpp"
+#include "../macros.hpp"
 #include <bit>
 #include <memory>
 #include <cstddef>
 #include <array>
 #include <cstdint>
 #include <functional>
+
+
 
 hi_warning_push();
 // C26401: Do not delete a raw pointer that is not an owner<T> (i.11).
@@ -377,10 +380,10 @@ public:
 private:
     static_assert(sizeof(std::size_t) == sizeof(detail::glyph_ids_long *));
 
-    static constexpr std::size_t num_glyphs_shift = 1;
-    static constexpr std::size_t num_glyphs_mask = sizeof(std::size_t) == 4 ? 1 : 3;
-    static constexpr std::size_t num_graphemes_shift = 4;
-    static constexpr std::size_t num_graphemes_mask = 15;
+    constexpr static std::size_t num_glyphs_shift = 1;
+    constexpr static std::size_t num_glyphs_mask = sizeof(std::size_t) == 4 ? 1 : 3;
+    constexpr static std::size_t num_graphemes_shift = 4;
+    constexpr static std::size_t num_graphemes_mask = 15;
 
     hi::font const *_font;
 
@@ -438,12 +441,12 @@ private:
         return not is_short();
     }
 
-    [[nodiscard]] static constexpr detail::glyph_ids_long *make_ptr(std::size_t value) noexcept
+    [[nodiscard]] constexpr static detail::glyph_ids_long *make_ptr(std::size_t value) noexcept
     {
         return std::bit_cast<detail::glyph_ids_long *>(value);
     }
 
-    [[nodiscard]] static constexpr std::size_t make_value(detail::glyph_ids_long *ptr) noexcept
+    [[nodiscard]] constexpr static std::size_t make_value(detail::glyph_ids_long *ptr) noexcept
     {
         return std::bit_cast<std::size_t>(ptr);
     }

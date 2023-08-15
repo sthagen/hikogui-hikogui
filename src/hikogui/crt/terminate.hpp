@@ -5,12 +5,15 @@
 /** @file terminate.hpp Utilities for throwing exceptions and terminating the application.
  */
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <exception>
 #include <stdexcept>
 #include <atomic>
 #include <bit>
 #include <format>
+
+
 
 #pragma once
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../SIMD/module.hpp"
+#include "../macros.hpp"
 
 namespace hi { inline namespace v1 {
 
@@ -314,7 +315,7 @@ struct std::formatter<hi::vector2, CharT> {
         return pc.end();
     }
 
-    auto format(hi::vector2 const& t, auto& fc)
+    auto format(hi::vector2 const& t, auto& fc) const
     {
         return std::vformat_to(fc.out(), "({}, {})", std::make_format_args(t.x(), t.y()));
     }

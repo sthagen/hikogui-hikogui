@@ -4,11 +4,14 @@
 
 #include "point3.hpp"
 #include "point2.hpp"
-#include "../utility/module.hpp"
-#include "../utility/test.hpp"
+#include "../utility/utility.hpp"
+#include "../test.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+
+
 
 using namespace hi;
 

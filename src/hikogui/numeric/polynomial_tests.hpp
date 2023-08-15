@@ -5,10 +5,13 @@
 #pragma once
 
 #include "polynomial.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+
+
 
 template<typename T, typename U, int N>
 double maxAbsDiff(hi::results<T, N> const &lhs, hi::results<U, N> const &rhs)

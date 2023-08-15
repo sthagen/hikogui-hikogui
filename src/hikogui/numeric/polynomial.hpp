@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <numbers>
 #include <array>
+
+
 
 namespace hi::inline v1 {
 
@@ -100,7 +103,7 @@ public:
     }
 
 private:
-    static constexpr std::size_t _capacity = N;
+    constexpr static std::size_t _capacity = N;
 
     array_type _v;
     std::size_t _size;

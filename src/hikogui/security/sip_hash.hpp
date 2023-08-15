@@ -2,11 +2,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-#include "../random/module.hpp"
-#include "../utility/module.hpp"
+#include "../random/random.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <string_view>
 #include <string>
 #include <span>
+
+
 
 namespace hi::inline v1 {
 namespace detail {
@@ -192,7 +195,7 @@ private:
     debug_state_type _debug_state;
 #endif
 
-    hi_force_inline static constexpr void _round(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3) noexcept
+    hi_force_inline constexpr static void _round(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3) noexcept
     {
         v0 += v1;
         v2 += v3;
@@ -211,7 +214,7 @@ private:
         v2 = std::rotl(v2, 32);
     }
 
-    static constexpr void _compress(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3, uint64_t m) noexcept
+    constexpr static void _compress(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3, uint64_t m) noexcept
     {
         hilet m_ = m;
 
@@ -222,7 +225,7 @@ private:
         v0 ^= m_;
     }
 
-    static constexpr void _finalize(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3) noexcept
+    constexpr static void _finalize(uint64_t& v0, uint64_t& v1, uint64_t& v2, uint64_t& v3) noexcept
     {
         v2 ^= 0xff;
         for (auto i = 0_uz; i != D; ++i) {

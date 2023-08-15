@@ -4,9 +4,10 @@
 
 #include "theme_book.hpp"
 #include "../font/module.hpp"
-#include "../file/module.hpp"
-#include "../utility/module.hpp"
+#include "../path/path.hpp"
+#include "../utility/utility.hpp"
 #include "../telemetry/module.hpp"
+#include "../macros.hpp"
 
 namespace hi::inline v1 {
 

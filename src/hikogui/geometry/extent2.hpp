@@ -10,9 +10,12 @@
 
 #include "vector2.hpp"
 #include "../SIMD/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <compare>
 #include <concepts>
+
+
 
 namespace hi { inline namespace v1 {
 
@@ -69,17 +72,17 @@ public:
         hi_axiom(holds_invariant());
     }
 
-    [[nodiscard]] static constexpr extent2 infinity() noexcept
+    [[nodiscard]] constexpr static extent2 infinity() noexcept
     {
         return extent2{std::numeric_limits<value_type>::infinity(), std::numeric_limits<value_type>::infinity()};
     }
 
-    [[nodiscard]] static constexpr extent2 large() noexcept
+    [[nodiscard]] constexpr static extent2 large() noexcept
     {
         return extent2{large_number_v<float>, large_number_v<float>};
     }
 
-    [[nodiscard]] static constexpr extent2 nan() noexcept
+    [[nodiscard]] constexpr static extent2 nan() noexcept
     {
         auto r = extent2{};
         r._v.x() = std::numeric_limits<value_type>::signaling_NaN();
@@ -350,7 +353,7 @@ struct std::formatter<hi::extent2, CharT> {
         return pc.end();
     }
 
-    auto format(hi::extent2 const& t, auto& fc)
+    auto format(hi::extent2 const& t, auto& fc) const
     {
         return std::vformat_to(fc.out(), "[{}, {}]", std::make_format_args(t.width(), t.height()));
     }

@@ -9,13 +9,16 @@
 #include "../color/module.hpp"
 #include "../i18n/module.hpp"
 #include "../unicode/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../font/module.hpp"
 #include "../telemetry/module.hpp"
 #include "../container/module.hpp"
+#include "../macros.hpp"
 #include <ostream>
 #include <vector>
 #include <algorithm>
+
+
 
 namespace hi::inline v1 {
 class font_book;

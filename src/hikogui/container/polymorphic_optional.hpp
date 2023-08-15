@@ -4,13 +4,16 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <array>
 #include <memory>
 #include <type_traits>
 #include <atomic>
 #include <concepts>
 #include <thread>
+
+
 
 hi_warning_push();
 // C26432: If you define or delete any default operation in the type '...', define or delete them all (c.21).
@@ -45,11 +48,11 @@ public:
 
     /** The maximum size of a value that can be placed inside the buffer of this.
      */
-    static constexpr std::size_t capacity = Size - sizeof(std::atomic<pointer>);
+    constexpr static std::size_t capacity = Size - sizeof(std::atomic<pointer>);
 
     /** The alignment of this.
      */
-    static constexpr std::size_t alignment = Alignment;
+    constexpr static std::size_t alignment = Alignment;
 
     ~polymorphic_optional()
     {

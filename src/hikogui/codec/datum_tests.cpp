@@ -4,6 +4,7 @@
 
 #include "datum.hpp"
 #include "JSON.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
@@ -133,7 +134,7 @@ TEST(datum, ArrayOperations)
     ASSERT_EQ(v[-1], 15);
 }
 
-static datum bookstore = parse_JSON(
+inline datum bookstore = parse_JSON(
     "{\n"
     "    \"store\" : {\n"
     "        \"book\" : [\n"

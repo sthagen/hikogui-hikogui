@@ -4,24 +4,25 @@
 
 #pragma once
 
-#include "../settings/module.hpp"
+#include "../settings/settings.hpp"
 #include "../text/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../color/module.hpp"
 #include "../geometry/module.hpp"
-#include "../codec/module.hpp"
+#include "../codec/codec.hpp"
+#include "../macros.hpp"
 #include <array>
 #include <filesystem>
 #include <string>
 #include <vector>
+
+
 
 namespace hi::inline v1 {
 class font_book;
 
 class theme {
 public:
-    operating_system operating_system = operating_system::windows;
-
     /** The DPI of the size values.
      */
     float dpi = 72;

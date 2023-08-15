@@ -12,8 +12,10 @@
 #include "toolbar_widget.hpp"
 #include "system_menu_widget.hpp"
 #include "grid_widget.hpp"
-#include "window_traffic_lights_widget.hpp"
-#include "../l10n/module.hpp"
+#include "window_controls_macos_widget.hpp"
+#include "window_controls_win32_widget.hpp"
+#include "../l10n/l10n.hpp"
+#include "../macros.hpp"
 
 namespace hi { inline namespace v1 {
 
@@ -33,17 +35,17 @@ public:
     {
         _toolbar = std::make_unique<toolbar_widget>(this);
 
-        if (operating_system::current == operating_system::windows) {
 #if HI_OPERATING_SYSTEM == HI_OS_WINDOWS
-            _system_menu = &_toolbar->make_widget<system_menu_widget>();
-            this->_system_menu->icon = this->title.get<"icon">();
+        _system_menu = &_toolbar->make_widget<system_menu_widget>();
+        this->_system_menu->icon = this->title.get<"icon">();
+        _toolbar->make_widget<window_controls_win32_widget, horizontal_alignment::right>();
+
+#elif HI_OPERATING_SYSTEM == HI_OS_MACOS
+        _toolbar->make_widget<window_controls_macos_widget>();
+
+#else
+#error "Not implemented"
 #endif
-            _toolbar->make_widget<window_traffic_lights_widget, horizontal_alignment::right>();
-        } else if (operating_system::current == operating_system::macos) {
-            _toolbar->make_widget<window_traffic_lights_widget>();
-        } else {
-            hi_no_default();
-        }
 
         _content = std::make_unique<grid_widget>(this);
     }

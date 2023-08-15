@@ -9,12 +9,15 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../i18n/module.hpp"
+#include "../macros.hpp"
 #include <concepts>
 #include <array>
 #include <cstdint>
 #include <cstddef>
+
+
 
 namespace hi { inline namespace v1 {
 
@@ -90,7 +93,7 @@ struct plurality {
     constexpr plurality(plurality_value value, plurality_mask mask) noexcept : value(value), mask(mask)
     {
         // Check if the value uses only bits that are set in the mask.
-        hi_axiom(not to_bool(std::to_underlying(value) & ~std::to_underlying(mask)));
+        hi_axiom(not to_bool((1 << std::to_underlying(value)) & ~std::to_underlying(mask)));
     }
 
     /** Get an index to select between translations.

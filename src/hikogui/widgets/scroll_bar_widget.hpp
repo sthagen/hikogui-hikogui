@@ -12,12 +12,15 @@
 #include "../GUI/module.hpp"
 #include "../geometry/module.hpp"
 #include "../observer/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <string>
 #include <array>
 #include <optional>
 #include <future>
+
+
 
 namespace hi { inline namespace v1 {
 
@@ -35,7 +38,7 @@ class scroll_bar_widget final : public widget {
 public:
     using super = widget;
 
-    static constexpr hi::axis axis = Axis;
+    constexpr static hi::axis axis = Axis;
 
     observer<float> offset;
     observer<float> aperture;

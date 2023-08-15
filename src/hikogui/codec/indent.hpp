@@ -4,15 +4,18 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.codec.indent);
+
+namespace hi { inline namespace v1 {
 
 /** Indentation for writing out text files.
  * This type is used to pass indentation information recursivly to
  * add indentation to text files, like for example json.
  */
-class indent {
+hi_export class indent {
 public:
     [[nodiscard]] constexpr ~indent() noexcept = default;
     [[nodiscard]] constexpr indent() noexcept = default;
@@ -66,4 +69,4 @@ private:
     int _depth = 0;
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1

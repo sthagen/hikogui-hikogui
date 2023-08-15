@@ -4,15 +4,18 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <bit>
 #include <cstdint>
 #include <string>
 #include <format>
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.audio.pcm_format);
 
-class pcm_format {
+namespace hi { inline namespace v1 {
+
+hi_export class pcm_format {
 public:
     constexpr pcm_format() noexcept = default;
     constexpr pcm_format(pcm_format&&) noexcept = default;
@@ -290,11 +293,11 @@ private:
     uint16_t _num_minor_bits : 6 = 0;
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1
 
-template<typename CharT>
+hi_export template<typename CharT>
 struct std::formatter<hi::pcm_format, CharT> : std::formatter<std::string_view, CharT> {
-    auto format(hi::pcm_format const& t, auto& fc)
+    auto format(hi::pcm_format const& t, auto& fc) const
     {
         return std::formatter<std::string_view, CharT>::format(to_string(t), fc);
     }

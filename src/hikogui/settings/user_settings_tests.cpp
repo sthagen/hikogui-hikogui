@@ -3,8 +3,9 @@
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "user_settings.hpp"
-#include "metadata.hpp"
-#include "../concurrency/module.hpp"
+#include "../path/path.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <format>
 

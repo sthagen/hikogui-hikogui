@@ -5,7 +5,9 @@
 #pragma once
 
 #include "math.hpp"
+#include "../macros.hpp"
 #include "concepts.hpp"
+#include "exception.hpp"
 #include <concepts>
 #include <memory>
 #include <vector>
@@ -13,6 +15,8 @@
 #include <unordered_map>
 #include <type_traits>
 #include <string.h>
+
+hi_export_module(hikogui.utility.memory);
 
 hi_warning_push();
 // C26474: Don't cast between pointer types when the conversion could be implicit (type.1).
@@ -22,7 +26,7 @@ hi_warning_ignore_msvc(26474);
 // Can't include cast.hpp for highlevel casts.
 hi_warning_ignore_msvc(26472);
 
-namespace hi::inline v1 {
+hi_export namespace hi::inline v1 {
 
 [[nodiscard]] bool equal_ptr(auto *p1, auto *p2) noexcept
 {

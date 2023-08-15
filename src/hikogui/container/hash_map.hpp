@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <iterator>
+
+
 
 namespace hi::inline v1 {
 namespace detail {
@@ -256,7 +259,7 @@ public:
     }
 
 private:
-    static constexpr std::size_t initial_capacity = 307;
+    constexpr static std::size_t initial_capacity = 307;
 
     node_type *_nodes = nullptr;
     std::size_t _capacity = 0;

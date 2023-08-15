@@ -5,7 +5,8 @@
 #pragma once
 
 #include "theme.hpp"
-#include "../settings/module.hpp"
+#include "../settings/settings.hpp"
+#include "../macros.hpp"
 #include <limits>
 #include <vector>
 #include <memory>

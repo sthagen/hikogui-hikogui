@@ -5,8 +5,9 @@
 #pragma once
 
 #include "algorithm.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../char_maps/module.hpp"
+#include "../macros.hpp"
 #include <string>
 #include <string_view>
 #include <iterator>
@@ -15,6 +16,8 @@
 #include <type_traits>
 #include <cstdlib>
 #include <bit>
+
+
 
 hi_warning_push();
 // C26409: Avoid calling new and delete explicitly, use std::make_unique<T> instead (r.11).

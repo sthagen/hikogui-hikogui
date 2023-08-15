@@ -4,13 +4,16 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../SIMD/module.hpp"
+#include "../macros.hpp"
 #include <type_traits>
 #include <limits>
 #include <concepts>
 #include <algorithm>
 #include <compare>
+
+
 
 namespace hi::inline v1 {
 
@@ -67,7 +70,7 @@ public:
      * @param bounds The bounds x=lower, y=-upper.
      * @return An interval.
      */
-    [[nodiscard]] static constexpr interval raw(bound_type bounds) noexcept
+    [[nodiscard]] constexpr static interval raw(bound_type bounds) noexcept
     {
         interval r;
         r.v = bounds;

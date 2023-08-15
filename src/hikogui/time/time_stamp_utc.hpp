@@ -6,11 +6,14 @@
 
 #include "chrono.hpp"
 #include "time_stamp_count.hpp"
-#include "../utility/module.hpp"
-#include "../concurrency/module.hpp"
+#include "../utility/utility.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../macros.hpp"
 #include <array>
 #include <atomic>
 #include <thread>
+
+
 
 namespace hi::inline v1 {
 

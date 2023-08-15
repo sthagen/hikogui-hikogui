@@ -7,15 +7,19 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../unicode/module.hpp"
 #include "../image/module.hpp"
 #include "../font/module.hpp"
 #include "translate.hpp"
+#include "../macros.hpp"
 #include <string>
 #include <type_traits>
 #include <memory>
 #include <variant>
+
+hi_export_module(hikogui.l10n.label);
+
 
 namespace hi::inline v1 {
 
@@ -90,7 +94,7 @@ class icon : public std::variant<std::monostate, elusive_icon, hikogui_icon, gly
 
 template<typename CharT>
 struct std::formatter<hi::text, CharT> : std::formatter<std::string_view, CharT> {
-    auto format(hi::text const& t, auto& fc)
+    auto format(hi::text const& t, auto& fc) const
     {
         return std::formatter<std::string_view, CharT>::format(to_string(t), fc);
     }
@@ -187,7 +191,7 @@ struct selector<label> {
 
 template<typename CharT>
 struct std::formatter<hi::label, CharT> : std::formatter<hi::text, CharT> {
-    auto format(hi::label const& t, auto& fc)
+    auto format(hi::label const& t, auto& fc) const
     {
         return std::formatter<hi::text, CharT>::format(t.text, fc);
     }

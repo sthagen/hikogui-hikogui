@@ -12,8 +12,9 @@
 #include "button_delegate.hpp"
 #include "label_widget.hpp"
 #include "../algorithm/module.hpp"
-#include "../l10n/module.hpp"
+#include "../l10n/l10n.hpp"
 #include "../observer/module.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <string>
 #include <array>

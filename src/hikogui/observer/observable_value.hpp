@@ -5,8 +5,11 @@
 #pragma once
 
 #include "observable.hpp"
-#include "../concurrency/module.hpp"
-#include "../utility/module.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
+
+
 
 namespace hi::inline v1 {
 template<typename>

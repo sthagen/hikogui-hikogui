@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <array>
 #include <utility>
 #include <optional>
 #include <type_traits>
+
+
 
 namespace hi::inline v1 {
 
@@ -21,7 +24,7 @@ public:
         K key;
         V value;
     };
-    static constexpr int capacity = N;
+    constexpr static int capacity = N;
     using array_type = std::array<item_type, capacity>;
 
 private:

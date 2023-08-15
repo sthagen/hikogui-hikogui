@@ -8,10 +8,13 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <atomic>
 #include <type_traits>
 #include <bit>
+
+
 
 hi_warning_push();
 // C26490: Don't use reinterpret_cast
@@ -89,7 +92,7 @@ struct std::atomic<hi::global_state_type> {
     using atomic_type = std::atomic<underlying_type_t<value_type>>;
     atomic_type v;
 
-    static constexpr bool is_always_lock_free = atomic_type::is_always_lock_free;
+    constexpr static bool is_always_lock_free = atomic_type::is_always_lock_free;
 
     constexpr atomic() noexcept = default;
     atomic(atomic const&) = delete;

@@ -5,17 +5,20 @@
 #pragma once
 
 #include "safe_int.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <type_traits>
 #include <limits>
 #include <concepts>
+
+
 
 namespace hi::inline v1 {
 
 template<typename T, int M>
 struct fixed {
     using value_type = T;
-    static constexpr int multiplier = M;
+    constexpr static int multiplier = M;
 
     T value;
 

@@ -5,13 +5,16 @@
 #pragma once
 
 #include "../time/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../SIMD/module.hpp"
+#include "../macros.hpp"
 #include <span>
 
-namespace hi::inline v1 {
+hi_export_module(hikogui.audio.audio_block);
 
-enum class audio_block_state { normal, silent, corrupt };
+namespace hi { inline namespace v1 {
+
+hi_export enum class audio_block_state { normal, silent, corrupt };
 
 /** A block of audio data.
  * This represents a block of audio data received from, or to be send to,
@@ -21,7 +24,7 @@ enum class audio_block_state { normal, silent, corrupt };
  * easy processing. The samples are stored continues for each channel so that
  * processing can be done at a per-channel basis using SSE instructions.
  */
-class audio_block {
+hi_export class audio_block {
 public:
     /** A list of pointers to non-interleaved sample buffers.
      * It is undefined behavour to modify the samples on input.
@@ -70,4 +73,4 @@ public:
     audio_block_state state;
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1

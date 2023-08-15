@@ -12,8 +12,11 @@
 #include "pipeline_alpha.hpp"
 #include "pipeline_tone_mapper.hpp"
 #include "../telemetry/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <vector>
+
+
 
 namespace hi::inline v1 {
 

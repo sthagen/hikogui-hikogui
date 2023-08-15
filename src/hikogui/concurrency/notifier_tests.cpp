@@ -4,7 +4,8 @@
 
 #include "notifier.hpp"
 #include "../coroutine/module.hpp"
-#include "../loop/module.hpp"
+#include "../dispatch/dispatch.hpp"
+#include "../macros.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>

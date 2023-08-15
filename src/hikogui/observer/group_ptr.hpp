@@ -4,12 +4,15 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
-#include "../concurrency/module.hpp"
+#include "../utility/utility.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <vector>
 #include <functional>
 #include <tuple>
+
+
 
 namespace hi::inline v1 {
 
@@ -100,7 +103,7 @@ private:
 
     /** Reseat all the owners with the replacement.
      *
-     * @note It is undefined behavior to pass a nullptr to @a owner, or to pass nullptr to @a replacement or @replacement points
+     * @note It is undefined behavior to pass nullptr to @a replacement or @replacement points
      *       to `this`.
      * @param replacement The replacement object.
      */
@@ -109,7 +112,7 @@ private:
         hilet lock = std::scoped_lock(_enable_group_ptr_mutex);
 
         hi_assert_not_null(replacement);
-        hi_assert_not_null(replacement.get());
+        hi_assert(replacement.get() != this);
 
         while (not _enable_group_ptr_owners.empty()) {
             auto *owner = _enable_group_ptr_owners.back();

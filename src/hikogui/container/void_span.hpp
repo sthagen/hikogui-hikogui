@@ -5,12 +5,15 @@
 #pragma once
 
 #include "byte_string.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <span>
 #include <cstddef>
 #include <bit>
 #include <type_traits>
 #include <string_view>
+
+
 
 namespace hi::inline v1 {
 
@@ -21,7 +24,7 @@ public:
     using pointer = void *;
     using const_pointer = void const *;
 
-    static constexpr std::size_t extent = std::dynamic_extent;
+    constexpr static std::size_t extent = std::dynamic_extent;
 
     constexpr ~void_span() = default;
     constexpr void_span() noexcept = default;
@@ -158,7 +161,7 @@ public:
     using pointer = void const *;
     using const_pointer = void const *;
 
-    static constexpr std::size_t extent = std::dynamic_extent;
+    constexpr static std::size_t extent = std::dynamic_extent;
 
     constexpr ~const_void_span() = default;
     constexpr const_void_span() noexcept = default;

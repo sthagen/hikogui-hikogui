@@ -9,7 +9,10 @@
 #pragma once
 
 #include "snorm_r8.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
+
+
 
 hi_warning_push();
 // C26434: Function '...' hides a non-virtual function '...'.

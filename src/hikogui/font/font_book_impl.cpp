@@ -4,9 +4,10 @@
 
 #include "font_book.hpp"
 #include "true_type_font.hpp"
-#include "../file/module.hpp"
+#include "../path/path.hpp"
 #include "../telemetry/module.hpp"
 #include "../algorithm/module.hpp"
+#include "../macros.hpp"
 #include <ranges>
 #include <vector>
 

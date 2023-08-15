@@ -5,12 +5,15 @@
 #pragma once
 
 #include "gfx_device.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <span>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
+
+
 
 namespace hi::inline v1 {
 class gfx_surface;

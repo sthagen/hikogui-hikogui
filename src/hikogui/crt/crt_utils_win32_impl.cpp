@@ -2,16 +2,19 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-#include "../utility/win32_headers.hpp"
+#include "../win32_headers.hpp"
 
 #include "crt_utils.hpp"
 #include "terminate.hpp"
 #include "../telemetry/module.hpp"
 #include "../console/module.hpp"
-#include "../utility/module.hpp"
-#include "../concurrency/module.hpp"
+#include "../utility/utility.hpp"
+#include "../concurrency/concurrency.hpp"
 #include "../char_maps/module.hpp"
 #include "../time/module.hpp"
+#include "../macros.hpp"
+
+
 
 hi_warning_push();
 // C26400: Do not assign the result of an allocation or a function cal with an owner<T> return value to... (i11)
@@ -44,8 +47,6 @@ namespace hi::inline v1 {
 
 std::pair<int, char **> crt_start(int, char **, void *instance, int show_cmd)
 {
-    set_thread_name("main");
-
     // Switch out the terminate handler with one that can print an error message.
     old_terminate_handler = std::set_terminate(hi::terminate_handler);
 

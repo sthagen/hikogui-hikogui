@@ -16,8 +16,9 @@
 #include "../GFX/module.hpp"
 #include "../geometry/module.hpp"
 #include "../time/module.hpp"
-#include "../l10n/module.hpp"
+#include "../l10n/l10n.hpp"
 #include "../algorithm/module.hpp"
+#include "../macros.hpp"
 #include <unordered_set>
 #include <memory>
 #include <mutex>
@@ -230,7 +231,7 @@ public:
     bool process_event(gui_event const& event) noexcept;
 
 protected:
-    static constexpr std::chrono::nanoseconds _animation_duration = std::chrono::milliseconds(150);
+    constexpr static std::chrono::nanoseconds _animation_duration = std::chrono::milliseconds(150);
 
     /** The label of the window that is passed to the operating system.
      */

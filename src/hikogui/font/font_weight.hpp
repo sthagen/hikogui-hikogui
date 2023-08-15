@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <string>
 #include <unordered_map>
 #include <ostream>
 #include <array>
+
+
 
 namespace hi::inline v1 {
 
@@ -157,7 +160,7 @@ constexpr auto font_weight_alternative_table = font_weight_alternative_table_gen
 
 template<typename CharT>
 struct std::formatter<hi::font_weight, CharT> : std::formatter<char const *, CharT> {
-    auto format(hi::font_weight const &t, auto &fc)
+    auto format(hi::font_weight const &t, auto &fc) const
     {
         return std::formatter<char const *, CharT>::format(hi::to_const_string(t), fc);
     }

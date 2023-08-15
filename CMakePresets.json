@@ -8,8 +8,7 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_VERBOSE_MAKEFILE": "ON",
-                "HI_ARCHITECTURE": "x86-64-v3"
+                "CMAKE_VERBOSE_MAKEFILE": "ON"
             },
             "architecture": {
                 "value": "x64",
@@ -89,15 +88,6 @@
             }
         },
         {
-            "name": "vc17-x64-windows-static-dbg-nopch",
-            "displayName": "MSVC-x64-Debug (no-PCH)",
-            "inherits": "vc17-x64-windows-static",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "HI_ENABLE_PCH": "OFF"
-            }
-        },
-        {
             "name": "vc17-x64-windows-static-dbg-asan",
             "hidden": true,
             "displayName": "MSVC-x64-Debug (ASAN)",
@@ -111,8 +101,7 @@
             "displayName": "MSVC-x64-Release",
             "inherits": "vc17-x64-windows-static",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "HI_ENABLE_PCH": "OFF"
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
@@ -124,18 +113,6 @@
             }
         },
         {
-            "name": "vc17-x64-windows-static-dbg-vcpkg",
-            "displayName": "MSVC-x64-Debug (vcpkg)",
-            "inherits": "vc17-x64-windows-static-dbg",
-            "toolchainFile": "C:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        },
-        {
-            "name": "vc17-x64-windows-static-rel-vcpkg",
-            "displayName": "MSVC-x64-Release (vcpkg)",
-            "inherits": "vc17-x64-windows-static-rel",
-            "toolchainFile": "C:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        },
-        {
             "name": "clang-x64-windows-static-dbg",
             "displayName": "ZZ clang-x64-Debug",
             "inherits": "clang-x64-windows-static",
@@ -144,62 +121,85 @@
             }
         },
         {
-            "name": "vc17-x64-windows-static-rel-local",
+            "name": "vc17-x64-windows-static-rel-ci",
             "displayName": "ZZ MSVC-x64-Release (for CI)",
             "inherits": "vc17-x64-windows-static-rel",
-            "binaryDir": "build-rel",
+            "binaryDir": "build",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "install",
-                "HI_ENABLE_PCH": "OFF"
+                "CMAKE_C_COMPILER_LAUNCHER": "sccache",
+                "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
             }
         },
         {
-            "name": "vc17-x64-windows-static-dbg-local",
+            "name": "vc17-x64-windows-static-dbg-ci",
             "displayName": "ZZ MSVC-x64-Debug (for CI)",
             "inherits": "vc17-x64-windows-static-dbg",
-            "binaryDir": "build-dbg",
+            "binaryDir": "build",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "install",
-                "HI_ENABLE_PCH": "OFF"
+                "CMAKE_C_COMPILER_LAUNCHER": "sccache",
+                "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
             }
         }
     ],
     "buildPresets": [
         {
             "name": "vc17-x64-windows-static-dbg-all",
-            "displayName": "Library",
+            "displayName": "All",
             "configurePreset": "vc17-x64-windows-static-dbg",
-            "targets": [ "hikogui", "hikogui_all_tests"]
+            "targets": [ "hikogui", "hikogui_all_tests", "hikogui_demo", "examples" ]
+        },
+        {
+            "name": "vc17-x64-windows-static-dbg-tests",
+            "displayName": "Library + Tests",
+            "configurePreset": "vc17-x64-windows-static-dbg",
+            "targets": [ "hikogui", "hikogui_all_tests" ]
         },
         {
             "name": "vc17-x64-windows-static-dbg-examples",
             "displayName": "Library + Examples",
             "configurePreset": "vc17-x64-windows-static-dbg",
-            "targets": [ "hikogui", "hikogui_all_tests", "examples" ]
-        },
-{
-            "name": "vc17-x64-windows-static-dbg-nopch-all",
-            "displayName": "Library",
-            "configurePreset": "vc17-x64-windows-static-dbg-nopch",
-            "targets": [ "hikogui", "hikogui_all_tests"]
+            "targets": [ "hikogui", "examples" ]
         },
         {
-            "name": "vc17-x64-windows-static-dbg-nopch-examples",
-            "displayName": "Library + Examples",
-            "configurePreset": "vc17-x64-windows-static-dbg-nopch",
-            "targets": [ "hikogui", "hikogui_all_tests", "examples" ]
+            "name": "vc17-x64-windows-static-dbg-demo",
+            "displayName": "Library + Demo",
+            "configurePreset": "vc17-x64-windows-static-dbg",
+            "targets": [ "hikogui", "hikogui_demo" ]
         },
         {
             "name": "vc17-x64-windows-static-rel-all",
-            "displayName": "Library",
+            "displayName": "All",
             "configurePreset": "vc17-x64-windows-static-rel",
-            "targets": [ "hikogui", "hikogui_all_tests"]
+            "targets": [ "hikogui", "hikogui_all_tests", "hikogui_demo", "examples" ]
+        },
+        {
+            "name": "vc17-x64-windows-static-rel-tests",
+            "displayName": "Library + Tests",
+            "configurePreset": "vc17-x64-windows-static-rel",
+            "targets": [ "hikogui", "hikogui_all_tests" ]
         },
         {
             "name": "vc17-x64-windows-static-rel-examples",
             "displayName": "Library + Examples",
             "configurePreset": "vc17-x64-windows-static-rel",
-            "targets": [ "hikogui", "hikogui_all_tests", "examples" ]
+            "targets": [ "hikogui", "examples" ]
+        },
+        {
+            "name": "vc17-x64-windows-static-rel-demo",
+            "displayName": "Library + Demo",
+            "configurePreset": "vc17-x64-windows-static-rel",
+            "targets": [ "hikogui", "hikogui_demo" ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "vc17-x64-windows-static-dbg-test-base",
+            "displayName": "Generic Tests",
+            "configurePreset": "vc17-x64-windows-static-dbg",
+            "output": {"outputOnFailure": true, "verbosity": "verbose"},
+            "execution": {"noTestsAction": "error", "stopOnFailure": false, "jobs": 8}
         }
     ]
 }

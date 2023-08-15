@@ -10,8 +10,9 @@
 #include "widget_intf.hpp"
 #include "../unicode/module.hpp"
 #include "../GFX/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../observer/module.hpp"
+#include "../macros.hpp"
 #include <span>
 #include <memory>
 #include <mutex>
@@ -19,6 +20,8 @@
 #include <vector>
 #include <concepts>
 #include <utility>
+
+
 
 namespace hi::inline v1 {
 class gfx_system;

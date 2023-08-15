@@ -10,8 +10,9 @@
 
 #include "selection_widget.hpp"
 #include "grid_widget.hpp"
-#include "../audio/module.hpp"
-#include "../l10n/module.hpp"
+#include "../audio/audio.hpp"
+#include "../l10n/l10n.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <string>
 #include <array>

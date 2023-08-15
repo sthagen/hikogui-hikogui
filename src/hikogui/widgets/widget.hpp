@@ -13,10 +13,11 @@
 #include "../geometry/module.hpp"
 #include "../observer/module.hpp"
 #include "../time/module.hpp"
-#include "../settings/module.hpp"
+#include "../settings/settings.hpp"
 #include "../numeric/module.hpp"
 #include "../GUI/module.hpp"
 #include "../coroutine/module.hpp"
+#include "../macros.hpp"
 #include <memory>
 #include <vector>
 #include <string>

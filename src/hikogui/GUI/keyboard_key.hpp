@@ -6,9 +6,12 @@
 
 #include "keyboard_modifiers.hpp"
 #include "keyboard_virtual_key.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <string_view>
 #include <unordered_map>
+
+
 
 namespace hi::inline v1 {
 

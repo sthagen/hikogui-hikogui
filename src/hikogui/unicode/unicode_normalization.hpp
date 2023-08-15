@@ -9,10 +9,13 @@
 #include "ucd_canonical_combining_classes.hpp"
 #include "unicode_description.hpp"
 #include "../algorithm/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <cstdint>
 #include <string>
 #include <string_view>
+
+
 
 namespace hi::inline v1 {
 

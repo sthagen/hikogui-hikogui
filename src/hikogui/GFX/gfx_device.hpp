@@ -6,11 +6,14 @@
 
 #include "gfx_system_globals.hpp"
 #include "gfx_surface.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../numeric/module.hpp"
+#include "../macros.hpp"
 #include <unordered_set>
 #include <mutex>
 #include <tuple>
+
+
 
 namespace hi::inline v1 {
 class gfx_system;

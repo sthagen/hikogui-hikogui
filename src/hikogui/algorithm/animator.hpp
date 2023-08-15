@@ -5,9 +5,12 @@
 #pragma once
 
 #include "algorithm.hpp"
-#include "../utility/module.hpp"
+#include "../macros.hpp"
+#include "../utility/utility.hpp"
 #include "../time/module.hpp"
 #include <cmath>
+
+
 
 namespace hi::inline v1 {
 

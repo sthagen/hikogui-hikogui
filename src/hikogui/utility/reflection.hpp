@@ -4,14 +4,19 @@
 
 #pragma once
 
-#include "utility.hpp"
-#include "assert.hpp"
 #include "fixed_string.hpp"
+#include "misc.hpp"
+#include "../macros.hpp"
+#include "assert.hpp"
+#include "debugger.hpp"
+#include "exception.hpp"
 #include <type_traits>
 #include <string>
 #include <string_view>
 
-namespace hi { inline namespace v1 {
+hi_export_module(hikogui.utility.reflection);
+
+hi_export namespace hi { inline namespace v1 {
 
 /** A type that can be implicitly converted to any type.
  */

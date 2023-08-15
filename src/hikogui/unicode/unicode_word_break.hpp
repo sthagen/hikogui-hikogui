@@ -11,9 +11,12 @@
 #include "ucd_general_categories.hpp"
 #include "ucd_grapheme_cluster_breaks.hpp"
 #include "ucd_word_break_properties.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <algorithm>
 #include <vector>
+
+
 
 namespace hi::inline v1 {
 

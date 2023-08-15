@@ -12,8 +12,11 @@
 #include "../layout/module.hpp"
 #include "../geometry/module.hpp"
 #include "../time/module.hpp"
-#include "../utility/module.hpp"
-#include "../settings/module.hpp"
+#include "../utility/utility.hpp"
+#include "../settings/settings.hpp"
+#include "../macros.hpp"
+
+
 
 namespace hi { inline namespace v1 {
 
@@ -38,7 +41,7 @@ public:
      *
      * Widgets are allowed to draw inside their margins, in most cases this will just be a border.
      */
-    static constexpr int redraw_overhang = 2;
+    constexpr static int redraw_overhang = 2;
 
     /** Shape of the widget.
      * Since a widget_layout is always in local coordinates, the `left` and `bottom` values are zero.

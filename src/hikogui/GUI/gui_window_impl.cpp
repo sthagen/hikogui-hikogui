@@ -6,9 +6,10 @@
 #include "gui_system.hpp"
 #include "keyboard_bindings.hpp"
 #include "theme_book.hpp"
-#include "../settings/module.hpp"
+#include "../settings/settings.hpp"
 #include "../GFX/module.hpp"
 #include "../telemetry/module.hpp"
+#include "../macros.hpp"
 
 namespace hi::inline v1 {
 
@@ -34,6 +35,11 @@ void gui_window::set_device(gfx_device *device) noexcept
 
 void gui_window::render(utc_nanoseconds display_time_point)
 {
+    if (surface->device() == nullptr) {
+        // If there is no device configured for the surface don't try to render.
+        return;
+    }
+
     hilet t1 = trace<"window::render">();
 
     hi_axiom(loop::main().on_thread());

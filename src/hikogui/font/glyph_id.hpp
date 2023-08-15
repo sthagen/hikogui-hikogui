@@ -4,9 +4,12 @@
 #pragma once
 
 #include "../unicode/module.hpp"
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <algorithm>
 #include <utility>
+
+
 
 namespace hi::inline v1 {
 

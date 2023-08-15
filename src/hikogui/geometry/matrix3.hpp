@@ -12,6 +12,7 @@
 #include "translate3.hpp"
 #include "scale3.hpp"
 #include "rotate3.hpp"
+#include "../macros.hpp"
 #include <array>
 
 namespace hi { inline namespace v1 {
@@ -489,7 +490,7 @@ private:
     f32x4 _col3;
 
     template<char Axis>
-    [[nodiscard]] static constexpr f32x4 reflect_column() noexcept
+    [[nodiscard]] constexpr static f32x4 reflect_column() noexcept
     {
         if constexpr (Axis == 'x') {
             return f32x4{1.0f, 0.0f, 0.0f, 0.0f};

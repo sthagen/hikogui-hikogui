@@ -4,14 +4,17 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
-#include "../concurrency/module.hpp"
+#include "../utility/utility.hpp"
+#include "../concurrency/concurrency.hpp"
+#include "../macros.hpp"
 #include <mutex>
 #include <memory>
 #include <atomic>
 #include <map>
 #include <unordered_map>
 #include <functional>
+
+
 
 namespace hi::inline v1 {
 

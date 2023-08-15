@@ -13,13 +13,16 @@
 #include "font_char_map.hpp"
 #include "../unicode/module.hpp"
 #include "../i18n/module.hpp"
-#include "../graphic_path/module.hpp"
-#include "../utility/module.hpp"
+#include "../graphic_path/graphic_path.hpp"
+#include "../utility/utility.hpp"
 #include "../container/module.hpp"
+#include "../macros.hpp"
 #include <span>
 #include <vector>
 #include <map>
 #include <string>
+
+
 
 namespace hi::inline v1 {
 
@@ -239,7 +242,7 @@ private:
 
 template<typename CharT>
 struct std::formatter<hi::font, CharT> : formatter<std::string_view, CharT> {
-    auto format(hi::font const& t, auto& fc)
+    auto format(hi::font const& t, auto& fc) const
     {
         return formatter<string_view, CharT>::format(to_string(t), fc);
     }

@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include "../l10n/module.hpp"
+#include "../l10n/l10n.hpp"
 #include "../observer/module.hpp"
+#include "../macros.hpp"
 #include <string>
 #include <string_view>
 #include <optional>

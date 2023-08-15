@@ -4,8 +4,11 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
+#include "../macros.hpp"
 #include <span>
+
+
 
 hi_warning_push();
 // C26492: Don't use const_cast to cast away const or volatile (type.3).

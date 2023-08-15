@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include "../utility/module.hpp"
+#include "../utility/utility.hpp"
 #include "../algorithm/module.hpp"
+#include "../macros.hpp"
 #include <cstdint>
+
+
 
 namespace hi::inline v1 {
 
@@ -107,7 +110,7 @@ struct std::hash<hi::keyboard_modifiers> {
 
 template<typename CharT>
 struct std::formatter<hi::keyboard_modifiers, CharT> : std::formatter<std::string_view, CharT> {
-    auto format(hi::keyboard_modifiers const& t, auto& fc)
+    auto format(hi::keyboard_modifiers const& t, auto& fc) const
     {
         return std::formatter<std::string_view, CharT>::format(hi::to_string(t), fc);
     }
