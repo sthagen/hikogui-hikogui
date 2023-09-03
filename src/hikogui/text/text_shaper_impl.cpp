@@ -3,9 +3,9 @@
 // (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
 #include "text_shaper.hpp"
-#include "../font/module.hpp"
-#include "../unicode/module.hpp"
-#include "../telemetry/module.hpp"
+#include "../font/font.hpp"
+#include "../unicode/unicode.hpp"
+#include "../telemetry/telemetry.hpp"
 #include "../coroutine/module.hpp"
 #include "../macros.hpp"
 #include <numeric>
@@ -109,7 +109,7 @@ bidi_algorithm(text_shaper::line_vector& lines, text_shaper::char_vector& text, 
         char_its.end(),
         [&](text_shaper::char_const_iterator it) {
             if (it != text.end()) {
-                return it->grapheme[0];
+                return it->grapheme.starter();
             } else {
                 return unicode_LS;
             }
@@ -171,20 +171,18 @@ bidi_algorithm(text_shaper::line_vector& lines, text_shaper::char_vector& text, 
 }
 
 [[nodiscard]] text_shaper::text_shaper(
-    hi::font_book& font_book,
     gstring const& text,
     text_style const& style,
     float dpi_scale,
     hi::alignment alignment,
     bool left_to_right,
     iso_15924 script) noexcept :
-    _font_book(&font_book),
     _bidi_context(left_to_right ? unicode_bidi_class::L : unicode_bidi_class::R),
     _dpi_scale(dpi_scale),
     _alignment(alignment),
     _script(script)
 {
-    hilet& font = font_book.find_font(style->family_id, style->variant);
+    hilet& font = find_font(style->family_id, style->variant);
     _initial_line_metrics = (style->size * dpi_scale) * font.metrics;
 
     _text.reserve(text.size());
@@ -192,19 +190,19 @@ bidi_algorithm(text_shaper::line_vector& lines, text_shaper::char_vector& text, 
         hilet clean_c = c == '\n' ? grapheme{unicode_PS} : c;
 
         auto& tmp = _text.emplace_back(clean_c, style, dpi_scale);
-        tmp.initialize_glyph(font_book, font);
+        tmp.initialize_glyph(font);
     }
 
     _text_direction = unicode_bidi_direction(
         _text.begin(),
         _text.end(),
         [](text_shaper::char_const_reference it) {
-            return it.grapheme[0];
+            return it.grapheme.starter();
         },
         _bidi_context);
 
     _line_break_opportunities = unicode_line_break(_text.begin(), _text.end(), [](hilet& c) -> decltype(auto) {
-        return c.grapheme[0];
+        return c.grapheme.starter();
     });
 
     _line_break_widths.reserve(text.size());
@@ -213,25 +211,24 @@ bidi_algorithm(text_shaper::line_vector& lines, text_shaper::char_vector& text, 
     }
 
     _word_break_opportunities = unicode_word_break(_text.begin(), _text.end(), [](hilet& c) -> decltype(auto) {
-        return c.grapheme[0];
+        return c.grapheme.starter();
     });
 
     _sentence_break_opportunities = unicode_sentence_break(_text.begin(), _text.end(), [](hilet& c) -> decltype(auto) {
-        return c.grapheme[0];
+        return c.grapheme.starter();
     });
 
     resolve_script();
 }
 
 [[nodiscard]] text_shaper::text_shaper(
-    font_book& font_book,
     std::string_view text,
     text_style const& style,
     float dpi_scale,
     hi::alignment alignment,
     bool left_to_right,
     iso_15924 script) noexcept :
-    text_shaper(font_book, to_gstring(text), style, dpi_scale, alignment, left_to_right, script)
+    text_shaper(to_gstring(text), style, dpi_scale, alignment, left_to_right, script)
 {
 }
 
@@ -291,7 +288,7 @@ void text_shaper::position_glyphs(aarectangle rectangle, extent2 sub_pixel_size)
     // Find the first script in the text if no script is found use the text_shaper's default script.
     auto first_script = _script;
     for (auto& c : _text) {
-        hilet script = ucd_get_script(c.grapheme[0]);
+        hilet script = ucd_get_script(c.grapheme.starter());
         if (script != iso_15924::wildcard() or script == iso_15924::uncoded() or script == iso_15924::common() or
             script == iso_15924::inherited()) {
             first_script = script;
@@ -311,9 +308,9 @@ void text_shaper::position_glyphs(aarectangle rectangle, extent2 sub_pixel_size)
             word_script = iso_15924::common();
         }
 
-        c.script = ucd_get_script(c.grapheme[0]);
+        c.script = ucd_get_script(c.grapheme.starter());
         if (c.script == iso_15924::uncoded() or c.script == iso_15924::common()) {
-            hilet bracket_type = ucd_get_bidi_paired_bracket_type(c.grapheme[0]);
+            hilet bracket_type = ucd_get_bidi_paired_bracket_type(c.grapheme.starter());
             // clang-format off
             c.script =
                 bracket_type == unicode_bidi_paired_bracket_type::o ? previous_script :

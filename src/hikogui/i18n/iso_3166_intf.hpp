@@ -14,7 +14,7 @@ namespace hi::inline v1 {
 
 /** ISO-3166 country code.
  */
-class iso_3166 {
+hi_export class iso_3166 {
 public:
     constexpr iso_3166(iso_3166 const&) noexcept = default;
     constexpr iso_3166(iso_3166&&) noexcept = default;
@@ -60,8 +60,13 @@ public:
         return _v;
     }
 
-    [[nodiscard]] constexpr std::string_view code2() const noexcept;
-    [[nodiscard]] constexpr std::string_view code3() const noexcept;
+    [[nodiscard]] constexpr std::string code2() const noexcept;
+    [[nodiscard]] constexpr std::string code3() const noexcept;
+
+    [[nodiscard]] constexpr friend std::string to_string(iso_3166 const &rhs) noexcept
+    {
+        return rhs.code2();
+    }
 
     [[nodiscard]] constexpr friend bool operator==(iso_3166 const& lhs, iso_3166 const& rhs) noexcept = default;
     [[nodiscard]] constexpr friend auto operator<=>(iso_3166 const& lhs, iso_3166 const& rhs) noexcept = default;

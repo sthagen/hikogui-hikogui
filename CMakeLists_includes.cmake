@@ -86,7 +86,12 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/concurrency/wfree_idle_count.hpp
     ${HIKOGUI_SOURCE_DIR}/console/console.hpp
     ${HIKOGUI_SOURCE_DIR}/console/dialog.hpp
-    ${HIKOGUI_SOURCE_DIR}/console/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/console/dialog_intf.hpp
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/console/dialog_win32_impl.hpp>
+    $<$<PLATFORM_ID:MacOS>:${HIKOGUI_SOURCE_DIR}/console/dialog_macos_impl.hpp>
+    ${HIKOGUI_SOURCE_DIR}/console/print.hpp
+    ${HIKOGUI_SOURCE_DIR}/console/print_intf.hpp
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/console/print_win32_impl.hpp>
     ${HIKOGUI_SOURCE_DIR}/container/byte_string.hpp
     ${HIKOGUI_SOURCE_DIR}/container/function_fifo.hpp
     ${HIKOGUI_SOURCE_DIR}/container/functional.hpp
@@ -113,29 +118,36 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/coroutine/scoped_task.hpp
     ${HIKOGUI_SOURCE_DIR}/coroutine/task.hpp
     ${HIKOGUI_SOURCE_DIR}/coroutine/when_any.hpp
+    ${HIKOGUI_SOURCE_DIR}/crt/crt.hpp
     ${HIKOGUI_SOURCE_DIR}/crt/crt_utils.hpp
-    ${HIKOGUI_SOURCE_DIR}/crt/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/crt/crt_utils_intf.hpp
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/crt/crt_utils_win32_impl.hpp>
     ${HIKOGUI_SOURCE_DIR}/crt/terminate.hpp
-    ${HIKOGUI_SOURCE_DIR}/file/file.hpp
+    ${HIKOGUI_SOURCE_DIR}/file/access_mode.hpp
+    ${HIKOGUI_SOURCE_DIR}/file/file_file_intf.hpp
+    $<$<PLATFORM_ID:Linux>:${HIKOGUI_SOURCE_DIR}/file/file_file_posix_impl.hpp>
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/file/file_file_win32_impl.hpp>
+    ${HIKOGUI_SOURCE_DIR}/file/file_file.hpp
+    ${HIKOGUI_SOURCE_DIR}/file/file_view_intf.hpp
+    $<$<PLATFORM_ID:Linux>:${HIKOGUI_SOURCE_DIR}/file/file_view_posix_impl.hpp>
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/file/file_view_win32_impl.hpp>
     ${HIKOGUI_SOURCE_DIR}/file/file_view.hpp
-    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/file/file_win32.hpp>
-    ${HIKOGUI_SOURCE_DIR}/file/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/file/file.hpp
     ${HIKOGUI_SOURCE_DIR}/file/resource_view.hpp
+    ${HIKOGUI_SOURCE_DIR}/file/seek_whence.hpp
     ${HIKOGUI_SOURCE_DIR}/font/elusive_icon.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_book.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_char_map.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_family_id.hpp
-    ${HIKOGUI_SOURCE_DIR}/font/font_grapheme_id.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_metrics.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_variant.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font_weight.hpp
     ${HIKOGUI_SOURCE_DIR}/font/glyph_atlas_info.hpp
     ${HIKOGUI_SOURCE_DIR}/font/glyph_id.hpp
-    ${HIKOGUI_SOURCE_DIR}/font/glyph_ids.hpp
     ${HIKOGUI_SOURCE_DIR}/font/glyph_metrics.hpp
     ${HIKOGUI_SOURCE_DIR}/font/hikogui_icon.hpp
-    ${HIKOGUI_SOURCE_DIR}/font/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/font.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_cmap.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_glyf.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_head.hpp
@@ -203,44 +215,30 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/formula/formula_vector_literal_node.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/draw_context.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_device.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/draw_context_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_device_vulkan_impl.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_device_vulkan.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_queue_vulkan.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_delegate.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_delegate_vulkan.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_state.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_vulkan.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_vulkan_impl.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system_globals.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system_vulkan.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/module.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/paged_image.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_alpha.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_alpha_device_shared.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_alpha_push_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_alpha_vertex.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_box.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_box_device_shared.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_box_push_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_box_vertex.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_image.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_image_device_shared.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_image_push_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_image_texture_map.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_image_vertex.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF_device_shared.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF_push_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF_specialization_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF_texture_map.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_SDF_vertex.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_tone_mapper.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_tone_mapper_device_shared.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_tone_mapper_push_constants.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/pipeline_vulkan.hpp
-    ${HIKOGUI_SOURCE_DIR}/GFX/RenderDoc.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/GFX.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_alpha_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_alpha_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_box_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_box_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_image_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_image_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_SDF_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_SDF_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_tone_mapper_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_tone_mapper_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_vulkan_impl.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/render_doc.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event_type.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event_variant.hpp
@@ -311,7 +309,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/i18n/language_tag.hpp
     ${HIKOGUI_SOURCE_DIR}/i18n/language_tag_intf.hpp
     ${HIKOGUI_SOURCE_DIR}/i18n/language_tag_impl.hpp
-    ${HIKOGUI_SOURCE_DIR}/i18n/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/i18n/i18n.hpp
     ${HIKOGUI_SOURCE_DIR}/image/module.hpp
     ${HIKOGUI_SOURCE_DIR}/image/pixmap.hpp
     ${HIKOGUI_SOURCE_DIR}/image/pixmap_span.hpp
@@ -329,7 +327,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/l10n/label.hpp
     ${HIKOGUI_SOURCE_DIR}/l10n/l10n.hpp
     ${HIKOGUI_SOURCE_DIR}/l10n/po_parser.hpp
-    ${HIKOGUI_SOURCE_DIR}/l10n/translate.hpp
+    ${HIKOGUI_SOURCE_DIR}/l10n/txt.hpp
     ${HIKOGUI_SOURCE_DIR}/l10n/translation.hpp
     ${HIKOGUI_SOURCE_DIR}/dispatch/awaitable_timer.hpp
     ${HIKOGUI_SOURCE_DIR}/dispatch/awaitable_timer_intf.hpp
@@ -422,7 +420,6 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/settings/os_settings_intf.hpp
     $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/settings/os_settings_win32_impl.hpp>
     ${HIKOGUI_SOURCE_DIR}/settings/preferences.hpp
-    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/settings/registry_win32.hpp>
     ${HIKOGUI_SOURCE_DIR}/settings/theme_mode.hpp
     ${HIKOGUI_SOURCE_DIR}/settings/subpixel_orientation.hpp
     ${HIKOGUI_SOURCE_DIR}/settings/user_settings.hpp
@@ -448,7 +445,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/telemetry/delayed_format.hpp
     ${HIKOGUI_SOURCE_DIR}/telemetry/format_check.hpp
     ${HIKOGUI_SOURCE_DIR}/telemetry/log.hpp
-    ${HIKOGUI_SOURCE_DIR}/telemetry/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/telemetry/telemetry.hpp
     ${HIKOGUI_SOURCE_DIR}/telemetry/trace.hpp
     ${HIKOGUI_SOURCE_DIR}/text/module.hpp
     ${HIKOGUI_SOURCE_DIR}/text/semantic_text_style.hpp
@@ -465,7 +462,8 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/time/time_stamp_utc.hpp
     ${HIKOGUI_SOURCE_DIR}/unicode/grapheme.hpp
     ${HIKOGUI_SOURCE_DIR}/unicode/gstring.hpp
-    ${HIKOGUI_SOURCE_DIR}/unicode/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/unicode/unicode.hpp
+    ${HIKOGUI_SOURCE_DIR}/unicode/markup.hpp
     ${HIKOGUI_SOURCE_DIR}/unicode/phrasing.hpp
     ${HIKOGUI_SOURCE_DIR}/unicode/ucd_bidi_classes.hpp
     ${HIKOGUI_SOURCE_DIR}/unicode/ucd_bidi_mirroring_glyphs.hpp
@@ -557,7 +555,10 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/widgets/window_controls_macos_widget.hpp
     ${HIKOGUI_SOURCE_DIR}/widgets/window_controls_win32_widget.hpp
     ${HIKOGUI_SOURCE_DIR}/widgets/window_widget.hpp
-
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/win32/base.hpp>
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/win32/win32.hpp>
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/win32/winnls.hpp>
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/win32/winreg.hpp>
     ${HIKOGUI_SOURCE_DIR}/macros.hpp
     ${HIKOGUI_SOURCE_DIR}/crt.hpp
     ${HIKOGUI_SOURCE_DIR}/module.hpp

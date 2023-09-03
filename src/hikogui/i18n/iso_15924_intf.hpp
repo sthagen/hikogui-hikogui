@@ -12,12 +12,12 @@
 
 hi_export_module(hikogui.i18n.iso_15924 : intf);
 
-namespace hi::inline v1 {
+namespace hi { inline namespace v1 {
 
 /** ISO-15924 script code.
  * A 4 letter title case script code:
  */
-class iso_15924 {
+hi_export class iso_15924 {
 public:
     constexpr iso_15924() noexcept : _v(0) {}
     constexpr iso_15924(iso_15924 const&) noexcept = default;
@@ -95,11 +95,16 @@ public:
 
     /** Get the iso-15924 4-letter code.
      */
-    [[nodiscard]] constexpr std::string_view code4() const noexcept;
+    [[nodiscard]] constexpr std::string code4() const noexcept;
 
     /** Get the 4-letter code used by open-type.
      */
-    [[nodiscard]] constexpr std::string_view code4_open_type() const noexcept;
+    [[nodiscard]] constexpr std::string code4_open_type() const noexcept;
+
+    [[nodiscard]] constexpr friend std::string to_string(iso_15924 const &rhs) noexcept
+    {
+        return rhs.code4();
+    }
 
     /** Is this script written left-to-right.
      */
@@ -123,9 +128,9 @@ private:
     uint16_t _v;
 };
 
-} // namespace hi::inline v1
+}} // namespace hi::inline v1
 
-template<>
+hi_export template<>
 struct std::hash<hi::iso_15924> {
     [[nodiscard]] size_t operator()(hi::iso_15924 const& rhs) const noexcept
     {

@@ -5,8 +5,8 @@
 #pragma once
 
 #include "translation.hpp"
-#include "../i18n/module.hpp"
-#include "../file/module.hpp"
+#include "../i18n/i18n.hpp"
+#include "../file/file.hpp"
 #include "../parser/parser.hpp"
 #include "../macros.hpp"
 #include <string>

@@ -7,11 +7,11 @@
 #include "text_decoration.hpp"
 #include "semantic_text_style.hpp"
 #include "../color/module.hpp"
-#include "../i18n/module.hpp"
-#include "../unicode/module.hpp"
+#include "../i18n/i18n.hpp"
+#include "../unicode/unicode.hpp"
 #include "../utility/utility.hpp"
-#include "../font/module.hpp"
-#include "../telemetry/module.hpp"
+#include "../font/font.hpp"
+#include "../telemetry/telemetry.hpp"
 #include "../container/module.hpp"
 #include "../macros.hpp"
 #include <ostream>
@@ -21,7 +21,6 @@
 
 
 namespace hi::inline v1 {
-class font_book;
 
 struct text_sub_style {
     phrasing_mask phrasing_mask;
@@ -70,8 +69,8 @@ struct text_sub_style {
         return r;
     }
 
-    [[nodiscard]] float cap_height(font_book const& font_book) const noexcept;
-    [[nodiscard]] float x_height(font_book const& font_book) const noexcept;
+    [[nodiscard]] float cap_height() const noexcept;
+    [[nodiscard]] float x_height() const noexcept;
 
     [[nodiscard]] bool matches(phrasing phrasing, iso_639 language, iso_15924 script) const noexcept
     {

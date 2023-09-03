@@ -14,13 +14,13 @@ int hi_main(int argc, char *argv[])
     set_application_version({1, 0, 0});
 
     auto gui = gui_system::make_unique();
-    auto [window, widget] = gui->make_window<window_widget>(tr("Label example"));
+    auto [window, widget] = gui->make_window<window_widget>(txt("Label example"));
 
     // Start the logger system, so logging is done asynchronously.
-    hi::log::start_subsystem(hi::global_state_type::log_level_info);
+    log::start_subsystem(hi::global_state_type::log_level_info);
 
     // Startup renderdoc for debugging
-    auto render_doc = hi::RenderDoc();
+    start_render_doc();
 
     auto latin_text = std::string(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "

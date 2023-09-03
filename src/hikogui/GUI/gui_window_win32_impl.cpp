@@ -8,12 +8,12 @@
 #include "gui_system.hpp"
 #include "keyboard_virtual_key.hpp"
 #include "theme_book.hpp"
-#include "../GFX/module.hpp"
-#include "../telemetry/module.hpp"
-#include "../unicode/module.hpp"
+#include "../GFX/GFX.hpp"
+#include "../telemetry/telemetry.hpp"
+#include "../unicode/unicode.hpp"
 #include "../utility/utility.hpp"
 #include "../settings/settings.hpp"
-#include "../crt/module.hpp"
+#include "../crt/crt.hpp"
 #include "../algorithm/module.hpp"
 #include "../dispatch/dispatch.hpp"
 #include "../macros.hpp"
@@ -106,7 +106,7 @@ void gui_window_win32::create_window(extent2 new_size)
 
     createWindowClass();
 
-    auto u16title = to_wstring(to_string(_title.text));
+    auto u16title = to_wstring(std::format("{}", _title));
 
     hi_log_info("Create window of size {} with title '{}'", new_size, _title);
 
@@ -173,7 +173,7 @@ void gui_window_win32::create_window(extent2 new_size)
     }
     dpi = narrow_cast<float>(_dpi);
 
-    surface = gui.gfx->make_surface(crt_application_instance, win32Window);
+    surface = make_unique_gfx_surface(crt_application_instance, win32Window);
 }
 
 gui_window_win32::gui_window_win32(gui_system& gui, std::unique_ptr<widget_intf> widget) noexcept :
