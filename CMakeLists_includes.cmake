@@ -1,9 +1,13 @@
 
 configure_file(
     ${HIKOGUI_SOURCE_DIR}/metadata/library_metadata.hpp.in
-    ${HIKOGUI_SOURCE_DIR}/metadata/library_metadata.hpp @ONLY)
+    ${CMAKE_CURRENT_BINARY_DIR}/src/hikogui/metadata/library_metadata.hpp @ONLY)
 
-target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/" FILES
+target_sources(hikogui INTERFACE FILE_SET hikogui_generated_include_files TYPE HEADERS BASE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/src/" FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/src/hikogui/metadata/library_metadata.hpp
+)
+
+target_sources(hikogui INTERFACE FILE_SET hikogui_include_files TYPE HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/"  FILES
     ${HIKOGUI_SOURCE_DIR}/audio/audio_block.hpp
     ${HIKOGUI_SOURCE_DIR}/audio/audio_channel.hpp
     ${HIKOGUI_SOURCE_DIR}/audio/audio_device.hpp
@@ -148,6 +152,8 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/font/glyph_metrics.hpp
     ${HIKOGUI_SOURCE_DIR}/font/hikogui_icon.hpp
     ${HIKOGUI_SOURCE_DIR}/font/font.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/font_font.hpp
+    ${HIKOGUI_SOURCE_DIR}/font/font_style.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_cmap.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_glyf.hpp
     ${HIKOGUI_SOURCE_DIR}/font/otype_head.hpp
@@ -204,6 +210,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/formula/formula_name_node.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula_ne_node.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula_node.hpp
+    ${HIKOGUI_SOURCE_DIR}/formula/formula_parser.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula_plus_node.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula_post_process_context.hpp
     ${HIKOGUI_SOURCE_DIR}/formula/formula_pow_node.hpp
@@ -225,6 +232,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_surface_vulkan_impl.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system_globals.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system_vulkan.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/gfx_system_vulkan_impl.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/GFX.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_alpha_vulkan.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_alpha_vulkan_impl.hpp
@@ -239,13 +247,10 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_vulkan.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/gfx_pipeline_vulkan_impl.hpp
     ${HIKOGUI_SOURCE_DIR}/GFX/render_doc.hpp
+    ${HIKOGUI_SOURCE_DIR}/GFX/renderdoc_app.h
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event_type.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_event_variant.hpp
-    ${HIKOGUI_SOURCE_DIR}/GUI/gui_system.hpp
-    ${HIKOGUI_SOURCE_DIR}/GUI/gui_system_delegate.hpp
-    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/GUI/gui_system_win32.hpp>
-    ${HIKOGUI_SOURCE_DIR}/GUI/gui_window.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/gui_window_size.hpp
     $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/GUI/gui_window_win32.hpp>
     ${HIKOGUI_SOURCE_DIR}/GUI/hitbox.hpp
@@ -256,7 +261,8 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/GUI/keyboard_modifiers.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/keyboard_state.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/keyboard_virtual_key.hpp
-    ${HIKOGUI_SOURCE_DIR}/GUI/module.hpp
+    $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/GUI/keyboard_virtual_key_win32_impl.hpp>
+    ${HIKOGUI_SOURCE_DIR}/GUI/GUI.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/mouse_buttons.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/mouse_cursor.hpp
     ${HIKOGUI_SOURCE_DIR}/GUI/theme.hpp
@@ -352,7 +358,6 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/memory/memory.hpp
     ${HIKOGUI_SOURCE_DIR}/memory/secure_memory_allocator.hpp
     ${HIKOGUI_SOURCE_DIR}/metadata/application_metadata.hpp
-    ${HIKOGUI_SOURCE_DIR}/metadata/library_metadata.hpp # generated.
     ${HIKOGUI_SOURCE_DIR}/metadata/metadata.hpp
     ${HIKOGUI_SOURCE_DIR}/metadata/semantic_version.hpp
     ${HIKOGUI_SOURCE_DIR}/net/module.hpp
@@ -423,6 +428,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     ${HIKOGUI_SOURCE_DIR}/settings/theme_mode.hpp
     ${HIKOGUI_SOURCE_DIR}/settings/subpixel_orientation.hpp
     ${HIKOGUI_SOURCE_DIR}/settings/user_settings.hpp
+    ${HIKOGUI_SOURCE_DIR}/settings/user_settings_intf.hpp
     $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/settings/user_settings_win32_impl.hpp>
     ${HIKOGUI_SOURCE_DIR}/skeleton/module.hpp
     ${HIKOGUI_SOURCE_DIR}/skeleton/skeleton.hpp
@@ -561,7 +567,7 @@ target_sources(hikogui PUBLIC FILE_SET hikogui_include_files TYPE HEADERS BASE_D
     $<$<PLATFORM_ID:Windows>:${HIKOGUI_SOURCE_DIR}/win32/winreg.hpp>
     ${HIKOGUI_SOURCE_DIR}/macros.hpp
     ${HIKOGUI_SOURCE_DIR}/crt.hpp
-    ${HIKOGUI_SOURCE_DIR}/module.hpp
+    ${HIKOGUI_SOURCE_DIR}/hikogui.hpp
     ${HIKOGUI_SOURCE_DIR}/test.hpp
     ${HIKOGUI_SOURCE_DIR}/win32_headers.hpp
 )
