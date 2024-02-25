@@ -5,6 +5,8 @@
 #pragma once
 
 #include "array_intrinsic.hpp"
+#include "half.hpp"
+#include "half_to_float.hpp"
 #include "../macros.hpp"
 #include <cstddef>
 #include <array>
@@ -44,6 +46,11 @@ struct array_intrinsic<float, 4> {
         auto r = array_type{};
         _mm_storeu_ps(r.data(), a);
         return r;
+    }
+
+    [[nodiscard]] hi_force_inline static array_type convert(std::array<half, 4> a) noexcept
+    {
+        return half_to_float(std::bit_cast<std::array<uint16_t, 4>>(a));
     }
 
     [[nodiscard]] hi_force_inline static array_type undefined() noexcept
@@ -105,18 +112,19 @@ struct array_intrinsic<float, 4> {
         return S(_mm_shuffle_ps(L(a), L(a), 0));
     }
 
+#if defined(HI_HAS_SSE2)
     [[nodiscard]] hi_force_inline static array_type set_mask(std::size_t mask) noexcept
     {
-        auto a = _mm_set_epi32(0, 0, 0, static_cast<int32_t>(mask) << 31);
-        auto b = _mm_set_epi32(0, 0, 0, static_cast<int32_t>(mask) << 30);
-        auto c = _mm_set_epi32(0, 0, 0, static_cast<int32_t>(mask) << 29);
-        auto d = _mm_set_epi32(0, 0, 0, static_cast<int32_t>(mask) << 28);
-        auto lo = _mm_castsi128_ps(_mm_unpacklo_epi32(a, b));
-        auto hi = _mm_castsi128_ps(_mm_unpacklo_epi32(c, d));
-
-        auto tmp = _mm_castps_si128(_mm_shuffle_ps(lo, hi, 0b01'00'01'00));
+        // clang-format off
+        auto const tmp = _mm_set_epi32(
+            static_cast<int32_t>(mask) << 28,
+            static_cast<int32_t>(mask) << 29,
+            static_cast<int32_t>(mask) << 30,
+            static_cast<int32_t>(mask) << 31);
+        // clang-format on
         return S(_mm_castsi128_ps(_mm_srai_epi32(tmp, 31)));
     }
+#endif
 
     /** Store a register as a mask-integer.
      */
